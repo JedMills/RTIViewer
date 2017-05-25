@@ -1,7 +1,8 @@
-import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
+import utils.ShaderUtils;
+import utils.Utils;
 
 import java.nio.*;
 
@@ -9,9 +10,7 @@ import java.nio.*;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL20.GL_COMPILE_STATUS;
-import static org.lwjgl.opengl.GL20.glGetUniformLocation;
-import static org.lwjgl.opengl.GL20.glUniform1f;
+import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -23,7 +22,12 @@ public class HelloWorld {
 
     private long window;
     private int shaderProgram, vertexShader, fragmentShader;
-    private int shaderValue;
+    private int shaderWidth, shaderHeight;
+    private int shaderRCoeffs1, shaderRCoeffs2;
+    private int shaderGCoeffs1, shaderGCoeffs2;
+    private int shaderBCoeffs1, shaderBCoeffs2;
+    private int shaderLightX, shaderLightY;
+    private Utils.Vector3f lightPos;
 
     public void run(){
         init();
@@ -94,8 +98,8 @@ public class HelloWorld {
         vertexShader = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
         fragmentShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
 
-        String vertexShaderSource = Utils.readFromFile("src/defaultVertexShader.glsl");
-        String fragmentShaderSource = Utils.readFromFile("src/defaultFragmentShader.glsl");
+        String vertexShaderSource = ShaderUtils.readFromFile("src/defaultVertexShader.glsl");
+        String fragmentShaderSource = ShaderUtils.readFromFile("src/defaultFragmentShader.glsl");
 
         GL20.glShaderSource(vertexShader, vertexShaderSource);
         GL20.glShaderSource(fragmentShader, fragmentShaderSource);
@@ -112,8 +116,24 @@ public class HelloWorld {
         GL20.glAttachShader(shaderProgram, fragmentShader);
         GL20.glLinkProgram(shaderProgram);
         GL20.glValidateProgram(shaderProgram);
+        glEnable(GL_POINT_SPRITE);
 
-        shaderValue = glGetUniformLocation(shaderProgram, "value");
+        bindShaderUniforms();
+    }
+
+
+    private void bindShaderUniforms(){
+        //shaderValue = glGetUniformLocation(shaderProgram, "value")
+        shaderWidth = glGetUniformLocation(shaderProgram, "shaderWidth");
+        shaderHeight = glGetUniformLocation(shaderProgram, "shaderHeight");
+        shaderLightX = glGetUniformLocation(shaderProgram, "lightX");
+        shaderLightY = glGetUniformLocation(shaderProgram, "lightY");
+        shaderRCoeffs1 = glGetUniformLocation(shaderProgram, "rCoeffs1");
+        shaderRCoeffs2 = glGetUniformLocation(shaderProgram, "rCoeffs2");
+        shaderGCoeffs1 = glGetUniformLocation(shaderProgram, "gCoeffs1");
+        shaderGCoeffs2 = glGetUniformLocation(shaderProgram, "gCoeffs2");
+        shaderBCoeffs1 = glGetUniformLocation(shaderProgram, "bCoeffs1");
+        shaderBCoeffs2 = glGetUniformLocation(shaderProgram, "bCoeffs2");
     }
 
 
@@ -121,7 +141,7 @@ public class HelloWorld {
         GL.createCapabilities();
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        double theta = 0;
+        //double theta = 0;
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -129,7 +149,7 @@ public class HelloWorld {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             GL20.glUseProgram(shaderProgram);
-            glUniform1f(shaderValue, (float)Math.abs(Math.sin(theta)));
+            //glUniform1f(shaderValue, (float)Math.abs(Math.sin(theta)));
 
             glColor3d(1, 0, 0);
             glBegin(GL_QUADS);
@@ -143,7 +163,8 @@ public class HelloWorld {
 
             glfwSwapBuffers(window);
             glfwPollEvents();
-            theta += 0.1;
+
+            //theta += 0.1;
         }
     }
 

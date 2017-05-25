@@ -1,9 +1,11 @@
+package utils;
+
 import java.io.*;
 
 /**
  * Created by jed on 23/05/17.
  */
-public class Utils {
+public class ShaderUtils {
 
     public static String readFromFile(String name)
     {
