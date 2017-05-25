@@ -162,16 +162,22 @@ public class PTMParser {
      * @param startPos              position in file to start reading texel data from
      * @param width                 width of image
      * @param height                height of image
-     * @return                      £D texel data array
+     * @return                      3D texel data array
      * @throws IOException          if there's an error trying to access the file
      * @throws PTMFileException     if there's an error parsing the .ptm file
      */
     private static int[][][] getTexelData(String fileName, String format,
                                           int startPos, int width, int height) throws IOException, PTMFileException{
         //arrays to store coefficients for each colour, all file types will eventually return these
-        int[][] redVals = new int[width * height][6];
-        int[][] greenVals = new int[width * height][6];
-        int[][] blueVals = new int[width * height][6];
+        //int[][] redVals = new int[width * height][6];
+        int[][] redVals1 = new int[width * height][3];
+        int[][] redVals2 = new int[width * height][3];
+        int[][] greenVals1 = new int[width * height][3];
+        int[][] greenVals2 = new int[width * height][3];
+        int[][] blueVals1 = new int[width * height][3];
+        int[][] blueVals2 = new int[width * height][3];
+        //int[][] greenVals = new int[width * height][6];
+        //int[][] blueVals = new int[width * height][6];
 
         //for the PTM_FORMAT_RGB file type
         if(format.equals("PTM_FORMAT_RGB")) {
@@ -198,11 +204,14 @@ public class PTMParser {
                                 nextCharValue = (int) ((nextCharValue - biasCoeffs[i]) * scaleCoeffs[i]);
                                 //store the value in the correct array
                                 if (j == 0) {
-                                    redVals[offset][i] = nextCharValue;
+                                    if(i < 3){redVals1[offset][i] = nextCharValue;}
+                                    else{redVals2[offset][i - 3] = nextCharValue;}
                                 } else if (j == 1) {
-                                    greenVals[offset][i] = nextCharValue;
+                                    if(i < 3){greenVals1[offset][i] = nextCharValue;}
+                                    else{greenVals2[offset][i - 3] = nextCharValue;}
                                 } else {
-                                    blueVals[offset][i] = nextCharValue;
+                                    if(i < 3){blueVals1[offset][i] = nextCharValue;}
+                                    else{blueVals2[offset][i - 3] = nextCharValue;}
                                 }
                             }
                         }
@@ -211,7 +220,8 @@ public class PTMParser {
             }catch(Exception e){
                 throw new PTMFileException("Error reading in texel data from file");
             }
-            return new int[][][]{redVals, greenVals, blueVals};
+            stream.close();
+            return new int[][][]{redVals1, redVals2, greenVals1, greenVals2, blueVals1, blueVals2};
         }
 
         return null;

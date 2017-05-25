@@ -17,14 +17,15 @@ public class PTMObject {
     private int height;
 
     /**Contains the coefficients for PTM polynomial in the red channel*/
-    private int[][] redVals;
+    private int[][] redVals1;
+    private int[][] redVals2;
 
     /**Contains the coefficients for PTM polynomial in the green channel*/
-    private int[][] greenVals;
-
+    private int[][] greenVals1;
+    private int[][] greenVals2;
     /**Contains the coefficients for PTM polynomial in the blue channel*/
-    private int[][] blueVals;
-
+    private int[][] blueVals1;
+    private int[][] blueVals2;
     /**Contains the surface normals calculated from the PTM file*/
     private Utils.Vector3f[] normals;
 
@@ -47,11 +48,20 @@ public class PTMObject {
         this.width = width;
         this.height = height;
 
+        redVals1 = texelData[0];
+        redVals2 = texelData[1];
+        greenVals1 = texelData[2];
+        greenVals2 = texelData[3];
+        blueVals1 = texelData[4];
+        blueVals2 = texelData[5];
+
+        /*
         redVals = texelData[0];
         greenVals = texelData[1];
         blueVals = texelData[2];
+        */
 
-        calculateNormals();
+        //calculateNormals();
     }
 
 
@@ -123,6 +133,7 @@ public class PTMObject {
      * Calculates the normal for each pixel as an average of the normals for
      * the red, green and blue colour channels at each pixel.
      */
+    /*
     private void calculateNormals(){
         //to easilt loop over the colour channels
         int[][][] channels = new int[][][]{redVals, greenVals, blueVals};
@@ -151,6 +162,7 @@ public class PTMObject {
 
         }
     }
+    */
 
 
     public String getFileName() {
@@ -165,16 +177,27 @@ public class PTMObject {
         return height;
     }
 
-    public int[][] getRedVals() {
-        return redVals;
+    public int[][] getRedVals1() {
+        return redVals1;
+    }
+    public int[][] getRedVals2() {
+        return redVals2;
     }
 
-    public int[][] getGreenVals() {
-        return greenVals;
+    public int[][] getGreenVals1() {
+        return greenVals1;
     }
 
-    public int[][] getBlueVals() {
-        return blueVals;
+    public int[][] getBlueVals1() {
+        return blueVals1;
+    }
+
+    public int[][] getGreenVals2() {
+        return greenVals2;
+    }
+
+    public int[][] getBlueVals2() {
+        return blueVals2;
     }
 
     public Utils.Vector3f[] getNormals(){return normals;}

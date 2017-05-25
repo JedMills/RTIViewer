@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="lwjgl">
     <CLASSES>
-      <root url="file://$USER_HOME$/Java/lwjgl-release-3.1.2-custom" />
+      <root url="file://$PROJECT_DIR$/../lwjgl" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="file://$USER_HOME$/Java/lwjgl-release-3.1.2-custom" />
+      <root url="file://$PROJECT_DIR$/../lwjgl" />
     </SOURCES>
-    <jarDirectory url="file://$USER_HOME$/Java/lwjgl-release-3.1.2-custom" recursive="false" />
-    <jarDirectory url="file://$USER_HOME$/Java/lwjgl-release-3.1.2-custom" recursive="false" type="SOURCES" />
+    <jarDirectory url="file://$PROJECT_DIR$/../lwjgl" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/../lwjgl" recursive="false" type="SOURCES" />
   </library>
 </component>

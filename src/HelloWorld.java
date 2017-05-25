@@ -1,6 +1,8 @@
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
+import ptmCreation.PTMObject;
+import ptmCreation.PTMParser;
 import utils.ShaderUtils;
 import utils.Utils;
 
@@ -21,15 +23,23 @@ import static org.lwjgl.system.MemoryUtil.*;
 public class HelloWorld {
 
     private long window;
+
     private int shaderProgram, vertexShader, fragmentShader;
     private int shaderWidth, shaderHeight;
     private int shaderRCoeffs1, shaderRCoeffs2;
     private int shaderGCoeffs1, shaderGCoeffs2;
     private int shaderBCoeffs1, shaderBCoeffs2;
     private int shaderLightX, shaderLightY;
-    private Utils.Vector3f lightPos;
 
-    public void run(){
+    private int imageHeight, imageWidth;
+
+    private Utils.Vector3f lightPos;
+    private int shaderArraySize;
+
+    int[][] rVals1, rVals2, gVals1, gVals2, bVals1, bVals2;
+
+    public void run() throws Exception{
+        setupPTM();
         init();
         createShaders();
         loop();
@@ -45,7 +55,6 @@ public class HelloWorld {
 
     public void init(){
         glfwInit();
-
         GLFWErrorCallback.createPrint(System.err).set();
 
         if(!glfwInit()){
@@ -57,7 +66,7 @@ public class HelloWorld {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-        window = glfwCreateWindow(300, 300, "Hello LWJGL!", NULL, NULL);
+        window = glfwCreateWindow((int)(imageWidth * 0.5), (int)(imageHeight * 0.5), "Hello LWJGL!", NULL, NULL);
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
                 glfwSetWindowShouldClose(window, true);
@@ -93,13 +102,31 @@ public class HelloWorld {
     }
 
 
+    private void setupPTM() throws Exception{
+        PTMObject ptmObject = PTMParser.createPtmFromFile("leafTest.ptm");
+
+
+        imageHeight = ptmObject.getHeight();
+        imageWidth = ptmObject.getWidth();
+        shaderArraySize = (imageWidth * imageHeight * 3);
+
+        rVals1 = ptmObject.getRedVals1();
+        rVals2 = ptmObject.getRedVals2();
+        gVals1 = ptmObject.getGreenVals1();
+        gVals2 = ptmObject.getGreenVals2();
+        bVals1 = ptmObject.getBlueVals1();
+        bVals2 = ptmObject.getBlueVals2();
+    }
+
+
+
     private void createShaders(){
         shaderProgram = GL20.glCreateProgram();
         vertexShader = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
         fragmentShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
 
         String vertexShaderSource = ShaderUtils.readFromFile("src/defaultVertexShader.glsl");
-        String fragmentShaderSource = ShaderUtils.readFromFile("src/defaultFragmentShader.glsl");
+        String fragmentShaderSource = ShaderUtils.readFromFile("src/defaultFragmentShader.glsl", shaderArraySize);
 
         GL20.glShaderSource(vertexShader, vertexShaderSource);
         GL20.glShaderSource(fragmentShader, fragmentShaderSource);
@@ -114,18 +141,22 @@ public class HelloWorld {
         }
         GL20.glAttachShader(shaderProgram, vertexShader);
         GL20.glAttachShader(shaderProgram, fragmentShader);
+
         GL20.glLinkProgram(shaderProgram);
         GL20.glValidateProgram(shaderProgram);
-        glEnable(GL_POINT_SPRITE);
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-        bindShaderUniforms();
+        System.out.println(glGetProgramInfoLog(shaderProgram));
+        System.out.println();
+        System.out.println();
+        System.out.println("max = " + glGetInteger(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS));
+        bindShaderReferences();
     }
 
 
-    private void bindShaderUniforms(){
-        //shaderValue = glGetUniformLocation(shaderProgram, "value")
-        shaderWidth = glGetUniformLocation(shaderProgram, "shaderWidth");
-        shaderHeight = glGetUniformLocation(shaderProgram, "shaderHeight");
+    private void bindShaderReferences(){
+        shaderWidth = glGetUniformLocation(shaderProgram, "imageWidth");
+        shaderHeight = glGetUniformLocation(shaderProgram, "imageHeight");
         shaderLightX = glGetUniformLocation(shaderProgram, "lightX");
         shaderLightY = glGetUniformLocation(shaderProgram, "lightY");
         shaderRCoeffs1 = glGetUniformLocation(shaderProgram, "rCoeffs1");
@@ -134,22 +165,52 @@ public class HelloWorld {
         shaderGCoeffs2 = glGetUniformLocation(shaderProgram, "gCoeffs2");
         shaderBCoeffs1 = glGetUniformLocation(shaderProgram, "bCoeffs1");
         shaderBCoeffs2 = glGetUniformLocation(shaderProgram, "bCoeffs2");
+        System.out.println("Bound shader refs");
     }
 
+
+    private void bindShaderVals(){
+        glUniform1i(shaderWidth, imageWidth);
+        glUniform1i(shaderHeight, imageHeight);
+        /*
+        glUniform3iv(shaderRCoeffs1, flatten(rVals1));
+        glUniform3iv(shaderRCoeffs2, flatten(rVals2));
+        glUniform3iv(shaderGCoeffs1, flatten(gVals1));
+        glUniform3iv(shaderGCoeffs2, flatten(gVals2));
+        glUniform3iv(shaderBCoeffs1, flatten(bVals1));
+        glUniform3iv(shaderBCoeffs2, flatten(bVals2));
+        */
+    }
+
+
+    private int[] flatten(int[][] array){
+        int[] out = new int[array.length * array[0].length];
+        int k = 0;
+        for(int i = 0; i < array.length; i++){
+            for(int j = 0; j < array[0].length; j++){
+                out[k++] = array[i][j];
+            }
+        }
+        return out;
+    }
 
     private void loop(){
         GL.createCapabilities();
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        //double theta = 0;
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
+
+        GL20.glUseProgram(shaderProgram);
+        bindShaderVals();
+
         while (!glfwWindowShouldClose(window)){
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            GL20.glUseProgram(shaderProgram);
-            //glUniform1f(shaderValue, (float)Math.abs(Math.sin(theta)));
+            //GL20.glUseProgram(shaderProgram);
+            glUniform1f(shaderLightX, 0.1f);
+            glUniform1f(shaderLightY, 0.1f);
 
             glColor3d(1, 0, 0);
             glBegin(GL_QUADS);
@@ -159,16 +220,15 @@ public class HelloWorld {
                 glVertex2d(-1, 1);
             glEnd();
 
-            GL20.glUseProgram(0);
+            //GL20.glUseProgram(0);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
 
-            //theta += 0.1;
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         new HelloWorld().run();
     }
 
