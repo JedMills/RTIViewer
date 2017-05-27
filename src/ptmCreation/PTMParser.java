@@ -1,8 +1,11 @@
 package ptmCreation;
 
 import java.io.*;
+import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import org.lwjgl.BufferUtils;
 import utils.Utils;
 
 
@@ -169,15 +172,22 @@ public class PTMParser {
     private static int[][][] getTexelData(String fileName, String format,
                                           int startPos, int width, int height) throws IOException, PTMFileException{
         //arrays to store coefficients for each colour, all file types will eventually return these
-        //int[][] redVals = new int[width * height][6];
+
         int[][] redVals1 = new int[width * height][3];
         int[][] redVals2 = new int[width * height][3];
         int[][] greenVals1 = new int[width * height][3];
         int[][] greenVals2 = new int[width * height][3];
         int[][] blueVals1 = new int[width * height][3];
         int[][] blueVals2 = new int[width * height][3];
-        //int[][] greenVals = new int[width * height][6];
-        //int[][] blueVals = new int[width * height][6];
+
+        /*
+        IntBuffer redVals1 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer redVals2 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer greenVals1 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer greenVals2 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer blueVals1 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer blueVals2 = BufferUtils.createIntBuffer(width * height * 3);
+        */
 
         //for the PTM_FORMAT_RGB file type
         if(format.equals("PTM_FORMAT_RGB")) {
@@ -204,14 +214,32 @@ public class PTMParser {
                                 nextCharValue = (int) ((nextCharValue - biasCoeffs[i]) * scaleCoeffs[i]);
                                 //store the value in the correct array
                                 if (j == 0) {
-                                    if(i < 3){redVals1[offset][i] = nextCharValue;}
-                                    else{redVals2[offset][i - 3] = nextCharValue;}
+                                    if(i < 3){
+                                        redVals1[offset][i] = nextCharValue;
+                                        //redVals1.put(offset + i, nextCharValue);
+                                    }
+                                    else{
+                                        redVals2[offset][i - 3] = nextCharValue;
+                                        //redVals2.put(offset + i, nextCharValue);
+                                    }
                                 } else if (j == 1) {
-                                    if(i < 3){greenVals1[offset][i] = nextCharValue;}
-                                    else{greenVals2[offset][i - 3] = nextCharValue;}
+                                    if(i < 3){
+                                        greenVals1[offset][i] = nextCharValue;
+                                        //greenVals1.put(offset + i, nextCharValue);
+                                    }
+                                    else{
+                                        greenVals2[offset][i - 3] = nextCharValue;
+                                        //greenVals2.put(offset + i, nextCharValue);
+                                    }
                                 } else {
-                                    if(i < 3){blueVals1[offset][i] = nextCharValue;}
-                                    else{blueVals2[offset][i - 3] = nextCharValue;}
+                                    if(i < 3){
+                                        blueVals1[offset][i] = nextCharValue;
+                                        //blueVals1.put(offset + i, nextCharValue);
+                                    }
+                                    else{
+                                        blueVals2[offset][i - 3] = nextCharValue;
+                                        //blueVals2.put(offset + i, nextCharValue);
+                                    }
                                 }
                             }
                         }

@@ -33,18 +33,19 @@ public class HelloWorld {
     private int shaderLightX, shaderLightY;
 
     private int imageHeight, imageWidth;
-    private int imageTextureRef1, imageTextureRef2;
 
     private int rVals1Ref, rVals2Ref;
-    private Utils.Vector3f lightPos;
-    private int shaderArraySize;
+    private int gVals1Ref, gVals2Ref;
+    private int bVals1Ref, bVals2Ref;
 
-    int[][] rVals1, rVals2, gVals1, gVals2, bVals1, bVals2;
+
+    private int[][] rVals1, rVals2, gVals1, gVals2, bVals1, bVals2;
 
     public void run() throws Exception{
         setupPTM();
         init();
         createShaders();
+        glfwShowWindow(window);
         loop();
         cleanUp();
 
@@ -102,17 +103,14 @@ public class HelloWorld {
         GL.createCapabilities();
 
         glfwSwapInterval(1);
-        glfwShowWindow(window);
     }
 
 
     private void setupPTM() throws Exception{
         PTMObject ptmObject = PTMParser.createPtmFromFile("leafTest.ptm");
 
-
         imageHeight = ptmObject.getHeight();
         imageWidth = ptmObject.getWidth();
-        shaderArraySize = (imageWidth * imageHeight * 3);
 
         rVals1 = ptmObject.getRedVals1();
         rVals2 = ptmObject.getRedVals2();
@@ -120,7 +118,6 @@ public class HelloWorld {
         gVals2 = ptmObject.getGreenVals2();
         bVals1 = ptmObject.getBlueVals1();
         bVals2 = ptmObject.getBlueVals2();
-
     }
 
 
@@ -152,6 +149,8 @@ public class HelloWorld {
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
         bindShaderReferences();
+        GL20.glUseProgram(shaderProgram);
+        bindShaderVals();
     }
 
 
@@ -160,8 +159,33 @@ public class HelloWorld {
         shaderHeight = glGetUniformLocation(shaderProgram, "imageHeight");
         shaderLightX = glGetUniformLocation(shaderProgram, "lightX");
         shaderLightY = glGetUniformLocation(shaderProgram, "lightY");
+
         rVals1Ref = glGetUniformLocation(shaderProgram, "rVals1");
         rVals2Ref = glGetUniformLocation(shaderProgram, "rVals2");
+
+        gVals1Ref = glGetUniformLocation(shaderProgram, "gVals1");
+        gVals2Ref = glGetUniformLocation(shaderProgram, "gVals2");
+
+        bVals1Ref = glGetUniformLocation(shaderProgram, "bVals1");
+        bVals2Ref = glGetUniformLocation(shaderProgram, "bVals2");
+    }
+
+
+
+    private void setShaderTexture(int textureNum, int[][] coeffArray){
+        IntBuffer intBuffer = BufferUtils.createIntBuffer(imageWidth * imageHeight * 3);
+        intBuffer.put(flatten(coeffArray));
+        intBuffer.flip();
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
+        int textureRef = glGenTextures();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureRef);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, imageWidth, imageHeight, 0, GL_RGB_INTEGER, GL_INT, intBuffer);
+        glBindTexture(GL_TEXTURE_2D, textureRef);
+
     }
 
 
@@ -170,58 +194,20 @@ public class HelloWorld {
         glUniform1i(shaderHeight, imageHeight);
         glUniform1i(rVals1Ref, 0);
         glUniform1i(rVals2Ref, 1);
+        glUniform1i(gVals1Ref, 2);
+        glUniform1i(gVals2Ref, 3);
+        glUniform1i(bVals1Ref, 4);
+        glUniform1i(bVals2Ref, 5);
 
 
-        IntBuffer intBuffer = BufferUtils.createIntBuffer(imageWidth * imageHeight * 3);
-        for(int i = 0; i < imageWidth * imageHeight; i++){
-            //intBuffer.put(-1);
-            //intBuffer.put(-2);
-            //intBuffer.put(3);
-            intBuffer.put(rVals1[i][0]);
-            intBuffer.put(rVals1[i][1]);
-            intBuffer.put(rVals1[i][2]);
-        }
-        intBuffer.flip();
-
-        //IntBuffer intBuffer = IntBuffer.wrap(flatten(rVals1));
-        //intBuffer.flip();
-
-        glEnable(GL_TEXTURE_2D);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        imageTextureRef1 = glGenTextures();
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, imageTextureRef1);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, imageWidth, imageHeight, 0, GL_RGB_INTEGER, GL_INT, intBuffer);
-        glBindTexture(GL_TEXTURE_2D, imageTextureRef1);
-
-
-
-        IntBuffer intBuffer2 = BufferUtils.createIntBuffer(imageWidth * imageHeight * 3);
-        for(int i = 0; i < imageWidth * imageHeight; i++){
-            //intBuffer2.put(100000);
-            //intBuffer2.put(2);
-            //intBuffer2.put(-3);
-            intBuffer2.put(rVals2[i][0]);
-            intBuffer2.put(rVals2[i][1]);
-            intBuffer2.put(rVals2[i][2]);
-        }
-        intBuffer2.flip();
-
-        //IntBuffer intBuffer2 = IntBuffer.wrap(flatten(rVals2));
-        //intBuffer2.flip();
-
-        GL13.glActiveTexture(GL13.GL_TEXTURE1);
-        imageTextureRef2 = glGenTextures();
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, imageTextureRef2);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, imageWidth, imageHeight, 0, GL_RGB_INTEGER, GL_INT, intBuffer2);
-        glBindTexture(GL_TEXTURE_2D, imageTextureRef2);
-
+        setShaderTexture(0, rVals1);
+        setShaderTexture(1, rVals2);
+        setShaderTexture(2, gVals1);
+        setShaderTexture(3, gVals2);
+        setShaderTexture(4, bVals1);
+        setShaderTexture(5, bVals2);
     }
+
 
 
     private int[] flatten(int[][] array){
@@ -242,15 +228,17 @@ public class HelloWorld {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        GL20.glUseProgram(shaderProgram);
-        bindShaderVals();
+        //GL20.glUseProgram(shaderProgram);
+        //bindShaderVals();
+
+        float theta = 0.0f;
 
         while (!glfwWindowShouldClose(window)){
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glUniform1f(shaderLightX, 0.1f);
-            glUniform1f(shaderLightY, 0.1f);
 
+            glUniform1f(shaderLightX, (float)(Math.cos(theta)));
+            glUniform1f(shaderLightY, (float)(Math.sin(theta)));
 
             glColor3d(1, 0, 0);
             glBegin(GL_QUADS);
@@ -266,6 +254,7 @@ public class HelloWorld {
             glfwSwapBuffers(window);
             glfwPollEvents();
 
+            theta += 0.01;
         }
     }
 
