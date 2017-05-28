@@ -25,7 +25,7 @@ public class HelloWorld {
 
     private long window;
 
-    private int shaderProgram, vertexShader, fragmentShader;
+    private int defaultProgram, normalsProgram, diffGainProgram, specEnhanceProgram;
     private int shaderWidth, shaderHeight;
 
     private int shaderLightX, shaderLightY;
@@ -42,6 +42,8 @@ public class HelloWorld {
 
     private IntBuffer rVals1, rVals2, gVals1, gVals2, bVals1, bVals2;
     private FloatBuffer normals;
+
+    ShaderProgram currentProgram = ShaderProgram.DEFAULT;
 
     public void run() throws Exception{
         setupPTM();
@@ -75,8 +77,17 @@ public class HelloWorld {
         window = glfwCreateWindow((int)(imageWidth * 0.5), (int)(imageHeight * 0.5), "Hello LWJGL!", NULL, NULL);
 
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
+            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE ) {
                 glfwSetWindowShouldClose(window, true);
+            } else if(key == GLFW_KEY_1 && action == GLFW_RELEASE){
+                currentProgram = ShaderProgram.DEFAULT;
+            } else if(key == GLFW_KEY_2 && action == GLFW_RELEASE){
+                currentProgram = ShaderProgram.NORMALS;
+            } else if(key == GLFW_KEY_3 && action == GLFW_RELEASE){
+                currentProgram = ShaderProgram.DIFF_GAIN;
+            } else if(key == GLFW_KEY_4 && action == GLFW_RELEASE){
+                currentProgram = ShaderProgram.SPEC_ENHANCE;
+            }
         });
 
         glfwSetWindowSizeCallback(window, new GLFWWindowSizeCallback() {
@@ -109,7 +120,7 @@ public class HelloWorld {
 
 
     private void setupPTM() throws Exception{
-        PTMObject ptmObject = PTMParser.createPtmFromFile("boneTest.ptm");
+        PTMObject ptmObject = PTMParser.createPtmFromFile("leafTest.ptm");
 
         imageHeight = ptmObject.getHeight();
         imageWidth = ptmObject.getWidth();
@@ -125,62 +136,84 @@ public class HelloWorld {
 
 
 
-    private void createShaders(){
-        shaderProgram = GL20.glCreateProgram();
-        vertexShader = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
-        fragmentShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
+    private void createShaders() throws Exception{
+        createShader(ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl", "src/shaders/defaultFragmentShader.glsl");
+        createShader(ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl", "src/shaders/normalsFragmentShader.glsl");
+        createShader(ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl", "src/shaders/diffuseGainFragmentShader.glsl");
+        createShader(ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl", "src/shaders/specEnhanceFragmentShader.glsl");
+    }
 
-        String vertexShaderSource = ShaderUtils.readFromFile("src/shaders/defaultVertexShader.glsl");
-        String fragmentShaderSource = ShaderUtils.readFromFile("src/shaders/specEnhanceFragmentShader.glsl");
 
-        GL20.glShaderSource(vertexShader, vertexShaderSource);
-        GL20.glShaderSource(fragmentShader, fragmentShaderSource);
-        GL20.glCompileShader(vertexShader);
-        GL20.glCompileShader(fragmentShader);
-
-        if(GL20.glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE){
-            System.err.println("Couldn't compile frag shader " + GL20.glGetShaderInfoLog(fragmentShader));
+    private void createShader(ShaderProgram type, String vertShaderFile, String fragShaderFile) throws Exception{
+        int currentProgram = 0;
+        if(type.equals(ShaderProgram.DEFAULT)){
+            defaultProgram = GL20.glCreateProgram();
+            currentProgram = defaultProgram;
+        }else if(type.equals(ShaderProgram.NORMALS)){
+            normalsProgram = GL20.glCreateProgram();
+            currentProgram = normalsProgram;
+        }else if(type.equals(ShaderProgram.DIFF_GAIN)){
+            diffGainProgram = GL20.glCreateProgram();
+            currentProgram = diffGainProgram;
+        }else if(type.equals(ShaderProgram.SPEC_ENHANCE)){
+            specEnhanceProgram = GL20.glCreateProgram();
+            currentProgram = specEnhanceProgram;
         }
-        if(GL20.glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE){
-            System.err.println("Couldn't compile vert shader " + GL20.glGetShaderInfoLog(vertexShader));
-        }
-        GL20.glAttachShader(shaderProgram, vertexShader);
-        GL20.glAttachShader(shaderProgram, fragmentShader);
 
-        GL20.glLinkProgram(shaderProgram);
-        GL20.glValidateProgram(shaderProgram);
+        int vertShader = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
+        int fragShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
+
+        String vertSource = ShaderUtils.readFromFile(vertShaderFile);
+        String fragSource = ShaderUtils.readFromFile(fragShaderFile);
+
+        GL20.glShaderSource(vertShader, vertSource);
+        GL20.glShaderSource(fragShader, fragSource);
+        GL20.glCompileShader(vertShader);
+        GL20.glCompileShader(fragShader);
+
+        if(GL20.glGetShaderi(fragShader, GL_COMPILE_STATUS) == GL_FALSE){
+            throw new Exception("Couldn't compile frag shader " + GL20.glGetShaderInfoLog(fragShader));
+        }
+        if(GL20.glGetShaderi(vertShader, GL_COMPILE_STATUS) == GL_FALSE){
+            throw new Exception("Couldn't compile vert shader " + GL20.glGetShaderInfoLog(vertShader));
+        }
+
+        GL20.glAttachShader(currentProgram, vertShader);
+        GL20.glAttachShader(currentProgram, fragShader);
+        GL20.glLinkProgram(currentProgram);
+        GL20.glValidateProgram(currentProgram);
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-        bindShaderReferences();
-        GL20.glUseProgram(shaderProgram);
+        bindShaderReferences(currentProgram);
+        GL20.glUseProgram(currentProgram);
         bindShaderVals();
     }
 
 
-    private void bindShaderReferences(){
-        shaderWidth = glGetUniformLocation(shaderProgram, "imageWidth");
-        shaderHeight = glGetUniformLocation(shaderProgram, "imageHeight");
-        shaderLightX = glGetUniformLocation(shaderProgram, "lightX");
-        shaderLightY = glGetUniformLocation(shaderProgram, "lightY");
+    private void bindShaderReferences(int programID){
+        shaderWidth = glGetUniformLocation(programID, "imageWidth");
+        shaderHeight = glGetUniformLocation(programID, "imageHeight");
+        shaderLightX = glGetUniformLocation(programID, "lightX");
+        shaderLightY = glGetUniformLocation(programID, "lightY");
 
-        rVals1Ref = glGetUniformLocation(shaderProgram, "rVals1");
-        rVals2Ref = glGetUniformLocation(shaderProgram, "rVals2");
+        rVals1Ref = glGetUniformLocation(programID, "rVals1");
+        rVals2Ref = glGetUniformLocation(programID, "rVals2");
 
-        gVals1Ref = glGetUniformLocation(shaderProgram, "gVals1");
-        gVals2Ref = glGetUniformLocation(shaderProgram, "gVals2");
+        gVals1Ref = glGetUniformLocation(programID, "gVals1");
+        gVals2Ref = glGetUniformLocation(programID, "gVals2");
 
-        bVals1Ref = glGetUniformLocation(shaderProgram, "bVals1");
-        bVals2Ref = glGetUniformLocation(shaderProgram, "bVals2");
+        bVals1Ref = glGetUniformLocation(programID, "bVals1");
+        bVals2Ref = glGetUniformLocation(programID, "bVals2");
 
-        normalsRef = glGetUniformLocation(shaderProgram, "normals");
+        normalsRef = glGetUniformLocation(programID, "normals");
 
-        gainRef = glGetUniformLocation(shaderProgram, "gain");
-        minGainRef = glGetUniformLocation(shaderProgram, "minGain");
-        maxGainRef = glGetUniformLocation(shaderProgram, "maxGain");
+        gainRef = glGetUniformLocation(programID, "gain");
+        minGainRef = glGetUniformLocation(programID, "minGain");
+        maxGainRef = glGetUniformLocation(programID, "maxGain");
 
-        diffConstRef = glGetUniformLocation(shaderProgram, "diffConst");
-        specConstRef = glGetUniformLocation(shaderProgram, "specConst");
-        specExConstRef = glGetUniformLocation(shaderProgram, "specExConst");
+        diffConstRef = glGetUniformLocation(programID, "diffConst");
+        specConstRef = glGetUniformLocation(programID, "specConst");
+        specExConstRef = glGetUniformLocation(programID, "specExConst");
     }
 
 
@@ -247,8 +280,6 @@ public class HelloWorld {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        //GL20.glUseProgram(shaderProgram);
-        //bindShaderVals();
 
         float theta = 0.0f;
 
@@ -256,8 +287,19 @@ public class HelloWorld {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-            glUniform1f(shaderLightX, (float)(0.5 * Math.cos(theta)));
-            glUniform1f(shaderLightY, (float)(0.5 * Math.sin(theta)));
+            if(currentProgram.equals(ShaderProgram.DEFAULT)) {
+                GL20.glUseProgram(defaultProgram);
+            }else if(currentProgram.equals(ShaderProgram.NORMALS)){
+                GL20.glUseProgram(normalsProgram);
+            }else if(currentProgram.equals(ShaderProgram.DIFF_GAIN)){
+                GL20.glUseProgram(diffGainProgram);
+            }else if(currentProgram.equals(ShaderProgram.SPEC_ENHANCE)){
+                GL20.glUseProgram(specEnhanceProgram);
+            }
+
+
+            glUniform1f(shaderLightX, (float)(0.8 * Math.cos(theta)));
+            glUniform1f(shaderLightY, (float)(0.8 * Math.sin(theta)));
 
             glColor3d(1, 0, 0);
             glBegin(GL_QUADS);
@@ -268,7 +310,7 @@ public class HelloWorld {
                 glVertex2d(-1, 1);
             glEnd();
 
-            //GL20.glUseProgram(0);
+            GL20.glUseProgram(0);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -282,9 +324,15 @@ public class HelloWorld {
     }
 
     private void cleanUp(){
-        GL20.glDeleteShader(vertexShader);
-        GL20.glDeleteShader(fragmentShader);
-        GL20.glDeleteProgram(shaderProgram);
+        GL20.glDeleteProgram(defaultProgram);
+        GL20.glDeleteProgram(normalsProgram);
+        GL20.glDeleteProgram(diffGainProgram);
+        GL20.glDeleteProgram(specEnhanceProgram);
+    }
+
+
+    private enum ShaderProgram{
+        DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE;
     }
 
 }
