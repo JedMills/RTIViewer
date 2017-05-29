@@ -148,6 +148,50 @@ public class Utils {
     }
 
 
+    public static class Vector2f{
+
+        public float x;
+
+        public float y;
+
+        public Vector2f(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public float getX() {
+            return x;
+        }
+
+        public void setX(float x) {
+            this.x = x;
+        }
+
+        public float getY() {
+            return y;
+        }
+
+        public void setY(float y) {
+            this.y = y;
+        }
+
+        public Vector2f normalise(){
+            Vector2f v = new Vector2f(0.0f, 0.0f);
+            float length = (float) Math.sqrt(x*x + y*y);
+            if(length != 0){
+                v.x = x / length;
+                v.y = y / length;
+            }
+            return v;
+        }
+
+        public float length(){
+            return (float) Math.sqrt(x*x + y*y);
+        }
+    }
+
+
+
     public static int computeMaximumOnCircle(float[] a, Vector3f lengths){
         float db0, db1, db2, db3, db4;
         float[] roots = new float[4];
