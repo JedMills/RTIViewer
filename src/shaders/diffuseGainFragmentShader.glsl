@@ -7,8 +7,6 @@ uniform int imageHeight;
 uniform int imageWidth;
 
 uniform float gain;
-uniform float minGain;
-uniform float maxGain;
 
 uniform isampler2D rVals1;
 uniform isampler2D rVals2;

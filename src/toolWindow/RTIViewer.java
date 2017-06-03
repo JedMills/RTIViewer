@@ -17,23 +17,40 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import openGLWindow.HelloWorld;
+import openGLWindow.PTMWindow;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.opengl.GL20;
+import ptmCreation.PTMObject;
+import utils.ShaderUtils;
 import utils.Utils;
+
+import java.util.ArrayList;
+
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
+import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL20.glUniform1f;
+import static org.lwjgl.opengl.GL20.glUniform1i;
 
 /**
  * Created by Jed on 29-May-17.
  */
-public class ToolWindow extends Application {
+public class RTIViewer extends Application {
 
-    private Stage primaryStage;
+    public Stage primaryStage;
     private Light.Point light;
     private Circle circle;
 
-    private Utils.Vector2f globalLightPos = new Utils.Vector2f(0, 0);
-    private double globalDiffGainVal = FilterParamsPane.INITIAL_DIFF_GAIN_VAL;
-    private double globalDiffColourVal = FilterParamsPane.INITIAL_DIFF_COLOUR_VAL;
-    private double globalSpecularityVal = FilterParamsPane.INITIAL_SPEC_VAL;
-    private double globalHighlightSizeVal = FilterParamsPane.INITIAL_HIGHLIGHT_VAL;
+    public static Utils.Vector2f globalLightPos = new Utils.Vector2f(0, 0);
+    public static double globalDiffGainVal = FilterParamsPane.INITIAL_DIFF_GAIN_VAL;
+    public static double globalDiffColourVal = FilterParamsPane.INITIAL_DIFF_COLOUR_VAL;
+    public static double globalSpecularityVal = FilterParamsPane.INITIAL_SPEC_VAL;
+    public static double globalHighlightSizeVal = FilterParamsPane.INITIAL_HIGHLIGHT_VAL;
 
     private Spinner<Double> xPosBox, yPosBox;
     private FilterParamsPane paramsPane;
@@ -42,13 +59,19 @@ public class ToolWindow extends Application {
     public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE;}
 
     public Alert entryAlert;
+    public static Alert fileReadingAlert;
+    public final FileChooser fileChooser = new FileChooser();
+
+    private static ArrayList<PTMWindow> ptmWindows = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage = primaryStage;
         primaryStage.setTitle("RTI Viewer");
 
-        createEntryAlert();
+        createAlerts();
+        //setupLWJGL();
+        MenuBarListener.init(this);
 
         Scene scene = createScene(primaryStage);
         primaryStage.setScene(scene);
@@ -56,9 +79,25 @@ public class ToolWindow extends Application {
         primaryStage.show();
     }
 
-    private void createEntryAlert(){
+    private void setupLWJGL(){
+        glfwInit();
+        GLFWErrorCallback.createPrint(System.err).set();
+
+        if(!glfwInit()){
+            throw new IllegalStateException("Unable to initialise GLFW");
+        }
+
+        glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    }
+
+    private void createAlerts(){
         entryAlert = new Alert(Alert.AlertType.WARNING);
         entryAlert.setTitle("Invalid Entry");
+
+        fileReadingAlert = new Alert(Alert.AlertType.ERROR);
+        entryAlert.setTitle("PTM File Reading Error");
     }
 
     private Scene createScene(Stage primaryStage){
@@ -88,6 +127,10 @@ public class ToolWindow extends Application {
         MenuBar menuBar = new MenuBar();
         Menu menuFile = new Menu("File");
         MenuItem open = new MenuItem("Open");
+
+        open.setOnAction(MenuBarListener.getInstance());
+        open.setId("open");
+
         menuFile.getItems().add(open);
 
         Menu menuEdit = new Menu("Edit");
@@ -273,6 +316,7 @@ public class ToolWindow extends Application {
             @Override
             public void handle(ActionEvent event) {
                 paramsPane.setCurrentFilter(comboBox.getSelectionModel().getSelectedItem());
+                updateWindowFilter(comboBox.getSelectionModel().getSelectedItem());
             }
         });
 
@@ -307,4 +351,35 @@ public class ToolWindow extends Application {
         else if(param.equals(GlobalParam.SPECULARITY)){globalSpecularityVal = value;}
         else if(param.equals(GlobalParam.HIGHTLIGHT_SIZE)){globalHighlightSizeVal = value;}
     }
+
+    public static void createNewPTMWindow(PTMObject ptmObject){
+        try {
+            PTMWindow ptmWindow = new PTMWindow(ptmObject);
+            Thread thread = new Thread(ptmWindow);
+            thread.start();
+            ptmWindows.add(ptmWindow);
+        }catch(Exception e){
+            fileReadingAlert.setContentText("Couldn't compile OpenGL shader: " + e.getMessage());
+            System.out.println(e.getMessage());
+
+            System.out.println();
+            System.out.println();
+            e.printStackTrace();
+        }
+    }
+
+    private void updateWindowFilter(String filterType){
+        ShaderProgram programToSet = ShaderProgram.DEFAULT;
+
+        if(filterType.equals("Default view")){programToSet = ShaderProgram.DEFAULT;}
+        else if(filterType.equals("Normals visualisation")){programToSet = ShaderProgram.NORMALS;}
+        else if(filterType.equals("Diffuse gain")){programToSet = ShaderProgram.DIFF_GAIN;}
+        else if(filterType.equals("Specular enhancement")){programToSet = ShaderProgram.SPEC_ENHANCE;}
+
+        for(PTMWindow ptmWindow : ptmWindows){
+            ptmWindow.setCurrentProgram(programToSet);
+        }
+    }
+
+    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE;}
 }

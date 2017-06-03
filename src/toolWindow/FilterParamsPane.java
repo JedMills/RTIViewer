@@ -16,7 +16,7 @@ import javafx.scene.layout.Pane;
  */
 public class FilterParamsPane extends Pane {
 
-    private ToolWindow toolWindow;
+    private RTIViewer toolWindow;
     private ComboBox<String> filterChoiceBox;
     private Scene parent;
     private int width;
@@ -45,7 +45,7 @@ public class FilterParamsPane extends Pane {
 
     private Control[] allControls;
 
-    public FilterParamsPane(ToolWindow toolWindow, Scene parent, ComboBox<String> filterChoiceBox) {
+    public FilterParamsPane(RTIViewer toolWindow, Scene parent, ComboBox<String> filterChoiceBox) {
         super();
         this.filterChoiceBox = filterChoiceBox;
         this.parent = parent;
@@ -83,7 +83,7 @@ public class FilterParamsPane extends Pane {
         gainSlider = new Slider(0.0, 100.0, INITIAL_DIFF_GAIN_VAL);
         gainSpinner = new Spinner<>(0.0, 100.0, INITIAL_DIFF_GAIN_VAL, 1.0);
         setupSliderSpinnerPair(gainSlider, gainSpinner, "Invalid entry for diffuse gain spinner.",
-                ToolWindow.GlobalParam.DIFF_GAIN);
+                RTIViewer.GlobalParam.DIFF_GAIN);
 
         GridPane.setConstraints(gainLabel, 0, 0);
         GridPane.setConstraints(gainSlider, 1, 0);
@@ -98,19 +98,19 @@ public class FilterParamsPane extends Pane {
         seColourSlider = new Slider(0.0, 100.0, INITIAL_DIFF_COLOUR_VAL);
         seColourSpinner = new Spinner<>(0.0, 100.0, INITIAL_DIFF_COLOUR_VAL, 1.0);
         setupSliderSpinnerPair(seColourSlider, seColourSpinner, "Invalid entry for diffuse colour spinner.",
-                ToolWindow.GlobalParam.DIFF_COLOUR);
+                RTIViewer.GlobalParam.DIFF_COLOUR);
 
         seSpecLabel = new Label("Specularity");
         seSpecSlider = new Slider(0.0, 100.0, INITIAL_SPEC_VAL);
         seSpecSpinner = new Spinner<>(0.0, 100.0, INITIAL_SPEC_VAL, 1.0);
         setupSliderSpinnerPair(seSpecSlider, seSpecSpinner, "Invalid entry for specularity spinner.",
-                ToolWindow.GlobalParam.SPECULARITY);
+                RTIViewer.GlobalParam.SPECULARITY);
 
         seHighlightLabel = new Label("Highlight size");
         seHighlightSlider = new Slider(0.0, 100.0, INITIAL_HIGHLIGHT_VAL);
         seHighlightSpinner = new Spinner<>(0.0, 100.0, INITIAL_HIGHLIGHT_VAL, 1.0);
         setupSliderSpinnerPair(seHighlightSlider, seHighlightSpinner, "Invalid entry for highlight size spinner.",
-                ToolWindow.GlobalParam.HIGHTLIGHT_SIZE);
+                RTIViewer.GlobalParam.HIGHTLIGHT_SIZE);
 
         GridPane.setConstraints(seColourLabel, 0, 0);
         GridPane.setConstraints(seColourSlider, 1, 0);
@@ -131,7 +131,7 @@ public class FilterParamsPane extends Pane {
 
 
     private void setupSliderSpinnerPair(Slider slider, Spinner spinner, String warningText,
-                                        ToolWindow.GlobalParam globalParam){
+                                        RTIViewer.GlobalParam globalParam){
 
         slider.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
