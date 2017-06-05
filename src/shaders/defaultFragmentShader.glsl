@@ -59,6 +59,5 @@ void main() {
     float blue = applyPTM(blueCoeffs1.x, blueCoeffs1.y, blueCoeffs1.z, blueCoeffs2.x, blueCoeffs2.y, blueCoeffs2.z);
 
     colorOut = vec4(red, green, blue, 1);
-
 }
 

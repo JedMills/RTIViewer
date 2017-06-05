@@ -19,23 +19,11 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import openGLWindow.HelloWorld;
 import openGLWindow.PTMWindow;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.opengl.GL20;
 import ptmCreation.PTMObject;
-import utils.ShaderUtils;
 import utils.Utils;
 
 import java.util.ArrayList;
-
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
-import static org.lwjgl.opengl.GL11.GL_FALSE;
-import static org.lwjgl.opengl.GL11.glEnable;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL20.glUniform1f;
-import static org.lwjgl.opengl.GL20.glUniform1i;
 
 /**
  * Created by Jed on 29-May-17.
@@ -57,6 +45,8 @@ public class RTIViewer extends Application {
 
     private enum LightEditor{CIRCLE, XSPINNER, YSPINNER;}
     public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE;}
+    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE;}
+
 
     public Alert entryAlert;
     public static Alert fileReadingAlert;
@@ -70,7 +60,6 @@ public class RTIViewer extends Application {
         primaryStage.setTitle("RTI Viewer");
 
         createAlerts();
-        //setupLWJGL();
         MenuBarListener.init(this);
 
         Scene scene = createScene(primaryStage);
@@ -79,18 +68,6 @@ public class RTIViewer extends Application {
         primaryStage.show();
     }
 
-    private void setupLWJGL(){
-        glfwInit();
-        GLFWErrorCallback.createPrint(System.err).set();
-
-        if(!glfwInit()){
-            throw new IllegalStateException("Unable to initialise GLFW");
-        }
-
-        glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    }
 
     private void createAlerts(){
         entryAlert = new Alert(Alert.AlertType.WARNING);
@@ -285,7 +262,7 @@ public class RTIViewer extends Application {
     private void updateLightControls(LightEditor source){
         if(!source.equals(LightEditor.CIRCLE)) {
             light.setX(globalLightPos.x * circle.getRadius() + circle.getLayoutX());
-            light.setY(globalLightPos.y * circle.getRadius() + circle.getLayoutY());
+            light.setY(-globalLightPos.y * circle.getRadius() + circle.getLayoutY());
         }
         if(!source.equals(LightEditor.XSPINNER)){
             xPosBox.getValueFactory().setValue((double)globalLightPos.x);
@@ -297,7 +274,7 @@ public class RTIViewer extends Application {
 
     private Utils.Vector2f calculateNormalisedLight(Light.Point light, Circle circle){
         double x = (light.getX() - circle.getRadius()) / circle.getRadius();
-        double y = (light.getY() - circle.getRadius()) / circle.getRadius();
+        double y = -(light.getY() - circle.getRadius()) / circle.getRadius();
         return new Utils.Vector2f((float)x, (float)y);
     }
 
@@ -329,21 +306,6 @@ public class RTIViewer extends Application {
         launch(args);
     }
 
-    public double getGlobalDiffGainVal() {
-        return globalDiffGainVal;
-    }
-
-    public void setGlobalDiffGainVal(double globalDiffGainVal) {
-        this.globalDiffGainVal = globalDiffGainVal;
-    }
-
-    public double getGlobalDiffColourVal() {
-        return globalDiffColourVal;
-    }
-
-    public void setGlobalDiffColourVal(double globalDiffColourVal) {
-        this.globalDiffColourVal = globalDiffColourVal;
-    }
 
     public void setGlobalVal(GlobalParam param, double value){
         if(param.equals(GlobalParam.DIFF_GAIN)){globalDiffGainVal = value;}
@@ -360,11 +322,7 @@ public class RTIViewer extends Application {
             ptmWindows.add(ptmWindow);
         }catch(Exception e){
             fileReadingAlert.setContentText("Couldn't compile OpenGL shader: " + e.getMessage());
-            System.out.println(e.getMessage());
 
-            System.out.println();
-            System.out.println();
-            e.printStackTrace();
         }
     }
 
@@ -381,5 +339,4 @@ public class RTIViewer extends Application {
         }
     }
 
-    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE;}
 }

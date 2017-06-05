@@ -47,7 +47,7 @@ public class PTMWindow implements Runnable{
     private int bVals1Ref, bVals2Ref;
     private int normalsRef;
 
-    private int gainRef;
+    private int diffGainRef;
     private int specConstRef, diffConstRef, specExConstRef;
 
     private int shaderWidth, shaderHeight;
@@ -115,10 +115,20 @@ public class PTMWindow implements Runnable{
     }
 
     private void createShaders() throws Exception{
-        createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl", "src/shaders/defaultFragmentShader.glsl");
-        createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl", "src/shaders/normalsFragmentShader.glsl");
-        createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl", "src/shaders/diffuseGainFragmentShader.glsl");
-        createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl", "src/shaders/specEnhanceFragmentShader.glsl");
+        createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/defaultFragmentShader.glsl");
+
+        createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/normalsFragmentShader.glsl");
+
+
+        createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/diffuseGainFragmentShader.glsl");
+        
+
+        createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/specEnhanceFragmentShader.glsl");
+
     }
 
 
@@ -159,17 +169,28 @@ public class PTMWindow implements Runnable{
         GL20.glAttachShader(currentProgram, vertShader);
         GL20.glAttachShader(currentProgram, fragShader);
         GL20.glLinkProgram(currentProgram);
-        GL20.glValidateProgram(currentProgram);
+
+
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-        bindShaderReferences(currentProgram);
         GL20.glUseProgram(currentProgram);
+        bindShaderReferences(currentProgram);
         bindShaderVals();
+
+        GL20.glValidateProgram(currentProgram);
+
+        if(GL20.glGetProgrami(currentProgram, GL_VALIDATE_STATUS) == GL_FALSE){
+            System.err.println(type.toString());
+            throw new Exception("Couldn't validate shader program: "  + GL20.glGetProgramInfoLog(currentProgram));
+
+        }
+        GL20.glUseProgram(0);
     }
 
     private void bindShaderReferences(int programID){
         shaderWidth = glGetUniformLocation(programID, "imageWidth");
         shaderHeight = glGetUniformLocation(programID, "imageHeight");
+
         shaderLightX = glGetUniformLocation(programID, "lightX");
         shaderLightY = glGetUniformLocation(programID, "lightY");
 
@@ -184,7 +205,7 @@ public class PTMWindow implements Runnable{
 
         normalsRef = glGetUniformLocation(programID, "normals");
 
-        gainRef = glGetUniformLocation(programID, "gain");
+        diffGainRef = glGetUniformLocation(programID, "diffGain");
 
         diffConstRef = glGetUniformLocation(programID, "diffConst");
         specConstRef = glGetUniformLocation(programID, "specConst");
@@ -194,12 +215,6 @@ public class PTMWindow implements Runnable{
     private void bindShaderVals(){
         glUniform1i(shaderWidth, imageWidth);
         glUniform1i(shaderHeight, imageHeight);
-
-        glUniform1f(gainRef, 4.0f);
-
-        glUniform1f(diffConstRef, 0.1f);
-        glUniform1f(specConstRef, 0.5f);
-        glUniform1f(specExConstRef, 10.0f);
 
         glUniform1i(rVals1Ref, 0);
         glUniform1i(rVals2Ref, 1);
@@ -225,7 +240,8 @@ public class PTMWindow implements Runnable{
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, imageWidth, imageHeight, 0, GL_RGB_INTEGER, GL_INT, coeffArray);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, imageWidth, imageHeight,
+                0, GL_RGB_INTEGER, GL_INT, coeffArray);
         glBindTexture(GL_TEXTURE_2D, textureRef);
 
     }
@@ -237,7 +253,8 @@ public class PTMWindow implements Runnable{
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, imageWidth, imageHeight, 0, GL_RGB, GL_FLOAT, normals);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, imageWidth, imageHeight,
+                0, GL_RGB, GL_FLOAT, normals);
         glBindTexture(GL_TEXTURE_2D, textureRef);
     }
 
@@ -272,7 +289,7 @@ public class PTMWindow implements Runnable{
                 glVertex2d(-1, 1);
             glEnd();
 
-            //GL20.glUseProgram(0);
+            GL20.glUseProgram(0);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -285,18 +302,26 @@ public class PTMWindow implements Runnable{
     private void setShaderParams(){
         if(currentProgram.equals(RTIViewer.ShaderProgram.DEFAULT)) {
             GL20.glUseProgram(defaultProgram);
+            bindShaderReferences(defaultProgram);
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.NORMALS)){
             GL20.glUseProgram(normalsProgram);
+            bindShaderReferences(normalsProgram);
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
             GL20.glUseProgram(diffGainProgram);
+            bindShaderReferences(diffGainProgram);
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             GL20.glUseProgram(specEnhanceProgram);
+            bindShaderReferences(specEnhanceProgram);
         }
 
         glUniform1f(shaderLightX, RTIViewer.globalLightPos.getX());
         glUniform1f(shaderLightY, RTIViewer.globalLightPos.getY());
 
-        glUniform1f(gainRef, (float) (RTIViewer.globalDiffGainVal / 10.0));
+        glUniform1f(diffGainRef, (float) (RTIViewer.globalDiffGainVal / 10.0));
+
+        glUniform1f(diffConstRef, (float) (RTIViewer.globalDiffColourVal / 10.0));
+        glUniform1f(specConstRef, (float) (RTIViewer.globalSpecularityVal / 10.0));
+        glUniform1f(specExConstRef, (float) (RTIViewer.globalHighlightSizeVal / 10.0));
     }
 
     private void cleanUp(){
