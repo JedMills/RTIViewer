@@ -1,18 +1,15 @@
 package openGLWindow;
 
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.glfw.GLFWWindowSizeCallback;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
 import ptmCreation.PTMObject;
-import toolWindow.FilterParamsPane;
 import toolWindow.RTIViewer;
 import utils.ShaderUtils;
-import utils.Utils;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -45,7 +42,7 @@ public class PTMWindow implements Runnable{
     private int rVals1Ref, rVals2Ref;
     private int gVals1Ref, gVals2Ref;
     private int bVals1Ref, bVals2Ref;
-    private int normalsRef;
+    private int normalsRef, imageScaleRef;
 
     private int diffGainRef;
     private int specConstRef, diffConstRef, specExConstRef;
@@ -55,6 +52,11 @@ public class PTMWindow implements Runnable{
     private int shaderLightX, shaderLightY;
 
     private RTIViewer.ShaderProgram currentProgram = RTIViewer.ShaderProgram.DEFAULT;
+
+    private IntBuffer widthBuffer = BufferUtils.createIntBuffer(1);
+    private IntBuffer heightBuffer = BufferUtils.createIntBuffer(1);
+    private int viewportX, viewportY;
+    private float imageScale = 1.0f;
 
     public PTMWindow(PTMObject ptmObject) throws Exception{
         this.ptmObject = ptmObject;
@@ -92,6 +94,18 @@ public class PTMWindow implements Runnable{
                 glViewport(0, 0, width, height);
             }
         });
+
+
+        glfwSetScrollCallback(window, new GLFWScrollCallback() {
+            @Override
+            public void invoke(long window, double xoffset, double yoffset) {
+                //scroll up positive, scroll down negative
+                imageScale += 0.1 * yoffset;
+                if(imageScale > 10){imageScale = 10f;}
+                else if(imageScale < 1){imageScale = 1f;}
+            }
+        });
+
 
         glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
@@ -190,6 +204,7 @@ public class PTMWindow implements Runnable{
     private void bindShaderReferences(int programID){
         shaderWidth = glGetUniformLocation(programID, "imageWidth");
         shaderHeight = glGetUniformLocation(programID, "imageHeight");
+        imageScaleRef = glGetUniformLocation(programID, "imageScale");
 
         shaderLightX = glGetUniformLocation(programID, "lightX");
         shaderLightY = glGetUniformLocation(programID, "lightY");
@@ -206,7 +221,6 @@ public class PTMWindow implements Runnable{
         normalsRef = glGetUniformLocation(programID, "normals");
 
         diffGainRef = glGetUniformLocation(programID, "diffGain");
-
         diffConstRef = glGetUniformLocation(programID, "diffConst");
         specConstRef = glGetUniformLocation(programID, "specConst");
         specExConstRef = glGetUniformLocation(programID, "specExConst");
@@ -215,6 +229,7 @@ public class PTMWindow implements Runnable{
     private void bindShaderVals(){
         glUniform1i(shaderWidth, imageWidth);
         glUniform1i(shaderHeight, imageHeight);
+        glUniform1f(imageScaleRef, imageScale);
 
         glUniform1i(rVals1Ref, 0);
         glUniform1i(rVals2Ref, 1);
@@ -272,7 +287,7 @@ public class PTMWindow implements Runnable{
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        glMatrixMode(GL_PROJECTION);
+        glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
         while (!glfwWindowShouldClose(window)){
@@ -280,9 +295,7 @@ public class PTMWindow implements Runnable{
 
             setShaderParams();
 
-            glColor3d(1, 0, 0);
             glBegin(GL_QUADS);
-                glTexCoord2f(0, 0);
                 glVertex2d(-1, -1);
                 glVertex2d(1, -1);
                 glVertex2d(1, 1);
@@ -300,22 +313,22 @@ public class PTMWindow implements Runnable{
     }
 
     private void setShaderParams(){
+        int program = 0;
         if(currentProgram.equals(RTIViewer.ShaderProgram.DEFAULT)) {
-            GL20.glUseProgram(defaultProgram);
-            bindShaderReferences(defaultProgram);
+            program = defaultProgram;
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.NORMALS)){
-            GL20.glUseProgram(normalsProgram);
-            bindShaderReferences(normalsProgram);
+            program = normalsProgram;
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
-            GL20.glUseProgram(diffGainProgram);
-            bindShaderReferences(diffGainProgram);
+            program = diffGainProgram;
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
-            GL20.glUseProgram(specEnhanceProgram);
-            bindShaderReferences(specEnhanceProgram);
+            program = specEnhanceProgram;
         }
+        GL20.glUseProgram(program);
+        bindShaderReferences(program);
 
         glUniform1f(shaderLightX, RTIViewer.globalLightPos.getX());
         glUniform1f(shaderLightY, RTIViewer.globalLightPos.getY());
+        glUniform1f(imageScaleRef, imageScale);
 
         glUniform1f(diffGainRef, (float) (RTIViewer.globalDiffGainVal / 10.0));
 
@@ -323,6 +336,7 @@ public class PTMWindow implements Runnable{
         glUniform1f(specConstRef, (float) (RTIViewer.globalSpecularityVal / 10.0));
         glUniform1f(specExConstRef, (float) (RTIViewer.globalHighlightSizeVal / 10.0));
     }
+
 
     private void cleanUp(){
         GL20.glDeleteProgram(defaultProgram);
