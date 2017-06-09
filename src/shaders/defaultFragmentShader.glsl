@@ -3,8 +3,8 @@
 
 uniform float lightX;
 uniform float lightY;
-uniform int imageHeight;
-uniform int imageWidth;
+uniform float imageHeight;
+uniform float imageWidth;
 
 uniform isampler2D rVals1;
 uniform isampler2D rVals2;

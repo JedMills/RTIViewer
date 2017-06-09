@@ -1,6 +1,5 @@
 package openGLWindow;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -27,88 +26,197 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
+ * <p>>
+ * This class represents a window containing the RTI image that has been loaded by the user. The image in the
+ * window is generated using OpenGL via the lightweight java game library (LWJGL). The RTI image can be
+ * filtered and enhanced in several ways by changing the fragment shader that the textured quad on the window uses.
+ * </p>
+ *
+ * <p>
+ * Each instance holds its own shader references, and is responsible for updating them as per the values in the
+ * PTMViewer window. Each instance also cleans up its own OpenGL shader orograms when it the run method finishes.
+ * </p>
+ *
  * Created by Jed on 03-Jun-17.
  */
 public class PTMWindow implements Runnable{
 
+    /**The ptm image that this window will display*/
     private PTMObject ptmObject;
-    private int imageWidth;
-    private int imageHeight;
-    private IntBuffer rVals1, rVals2, gVals1, gVals2, bVals1, bVals2;
+
+    /**Width of the ptmObject attribute that this window displays*/
+    private float imageWidth;
+
+    /**Height of the ptmObject attribute that this window displays*/
+    private float imageHeight;
+
+    /**OpenGL reference for the window created*/
     private long window;
 
-    private int defaultProgram, normalsProgram, diffGainProgram, specEnhanceProgram;
+    /**OpenGL reference for the default fragment shader */
+    private int defaultProgram;
 
-    private int rVals1Ref, rVals2Ref;
-    private int gVals1Ref, gVals2Ref;
-    private int bVals1Ref, bVals2Ref;
-    private int normalsRef, imageScaleRef;
+    /**OpenGL reference for the normals visualisation fragment shader */
+    private int normalsProgram;
 
+    /**OpenGL reference for the diffuse gain fragment shader*/
+    private int diffGainProgram;
+
+    /**OpenGL reference for the specular enhancement fragment shader*/
+    private int specEnhanceProgram;
+
+    /**OpenGL reference for the GLSL isampler2D texture "rVals1", used for passing rVals1 attr to shaders */
+    private int rVals1Ref;
+
+    /**OpenGL reference for the GLSL isampler2D texture "rVals2", used for passing rVals2 attr to shaders */
+    private int rVals2Ref;
+
+    /**OpenGL reference for the GLSL isampler2D texture "gVals1", used for passing gVals1 attr to shaders */
+    private int gVals1Ref;
+
+    /**OpenGL reference for the GLSL isampler2D texture "gVals2", used for passing gVals2 attr to shaders */
+    private int gVals2Ref;
+
+    /**OpenGL reference for the GLSL isampler2D texture "bVals1", used for passing bVals1 attr to shaders */
+    private int bVals1Ref;
+
+    /**OpenGL reference for the GLSL isampler2D texture "gVals2", used for passing gVals2 attr to shaders */
+    private int bVals2Ref;
+
+    /**OpenGL reference for the GLSL sampler2D texture "normals", used for passing normals attr to shaders*/
+    private int normalsRef;
+
+    /**OpenGL reference for the GLSL uniform "imageScale", used for passing zoom level to shaders */
+    private int imageScaleRef;
+
+    /**OpenGL reference for the GLSL uniform "diffGain" in diffuseGainFragmentShader.glsl*/
     private int diffGainRef;
-    private int specConstRef, diffConstRef, specExConstRef;
 
-    private int shaderWidth, shaderHeight;
+    /**OpenGL reference for the GLSL uniform "specConst" in specEnhanceFragmentShader.glsl*/
+    private int specConstRef;
 
-    private int shaderLightX, shaderLightY;
+    /**OpenGL reference for the GLSL uniform "diffConst" in specEnhanceFragmentShader.glsl*/
+    private int diffConstRef;
 
+    /**OpenGL reference for the GLSL uniform "specExConst" in specEnhanceFragmentShader.glsl*/
+    private int specExConstRef;
+
+    /**OpenGL reference for the GLSL uniform "imageWidth" found in shaders*/
+    private int shaderWidth;
+
+    /**OpenGL reference for the GLSL uniform "imageHeight" found in shaders*/
+    private int shaderHeight;
+
+    /**OpenGL reference for the GLSL uniform "viewportX" found in the vertex shader*/
+    private int shaderViewportX;
+
+    /**OpenGL reference for the GLSL uniform "viewportY" found in the vertex shader*/
+    private int shaderViewportY;
+
+    /**OpenGL reference for the GLSL uniform "lightX" found in the fragment shaders */
+    private int shaderLightX;
+
+    /**OpenGL reference for the GLSL uniform "lightY" found in the fragment shaders */
+    private int shaderLightY;
+
+    /**OpenGL reference for the GLSL uniform "viewportX" found in the fragment shader */
+    private float viewportX = 0;
+
+    /**OpenGL reference for the GLSL uniform "viewportY" found in the fragment shader */
+    private float viewportY = 0;
+
+    /**Current shader program this window is set to, is set by the RTIViewer program */
     private RTIViewer.ShaderProgram currentProgram = RTIViewer.ShaderProgram.DEFAULT;
 
-    private IntBuffer widthBuffer = BufferUtils.createIntBuffer(1);
-    private IntBuffer heightBuffer = BufferUtils.createIntBuffer(1);
-    private int viewportX, viewportY;
+    /**The current zoom level of the viewed image, 1.0 = no zoom */
     private float imageScale = 1.0f;
 
-    public PTMWindow(PTMObject ptmObject) throws Exception{
-        this.ptmObject = ptmObject;
+    /**Holds the width of the viewing window, which gets updated each frame by glfw*/
+    private int[] windowWidth = new int[1];
 
-        rVals1 = ptmObject.getRedVals1();
-        rVals2 = ptmObject.getRedVals2();
-        gVals1 = ptmObject.getGreenVals1();
-        gVals2 = ptmObject.getGreenVals2();
-        bVals1 = ptmObject.getBlueVals1();
-        bVals2 = ptmObject.getBlueVals2();
+    /**Holds the height of the viewing window, which gets updated each frame by glfw*/
+    private int[] windowHeight = new int[1];
+
+    /**Current non-normalised x position in the viewing window of the cursor, updated each frame by glfw*/
+    private double[] mouseXPos = new double[1];
+
+    /**Current non-normalised y position in the viewing window of the cursor, updated each frame by glfw*/
+    private double[] mouseYPos = new double[1];
+
+    /**Non-normalised x position of the cursor last frame, updated each frame by glfw*/
+    private double[] lastXPos = new double[1];
+
+    /**Non-normalised y position of the cursor last frame, updated each frame by glfw*/
+    private double[] lastYPos = new double[1];
+
+    /**X offset for the glViewport(...) each frame, used to center image in a non-ratio window size*/
+    private int xOffset = 0;
+
+    /**Y offset for the glViewport(...) each frame, used to center image in a non-ratio window size*/
+    private int yOffset = 0;
+
+    /**Width of the image as displayed on the window, updated each frame*/
+    private int reducedWidth;
+
+    /**Height of the image as displayed on the window, updated each frame*/
+    private int reducedHeight;
+
+
+
+    /**
+     * Creates a new PTMWindow, setting the passed PTMObject as this window's PTMObject, which it will
+     * display using the parameters in the RTIViewer window.
+     *
+     * @param ptmObject
+     */
+    public PTMWindow(PTMObject ptmObject){
+        this.ptmObject = ptmObject;
 
         imageWidth = ptmObject.getWidth();
         imageHeight = ptmObject.getHeight();
 
     }
 
+
+
+    /**
+     * Initialises GLFW so OpenGL can be used to display the image in this window. Creates a new window, which
+     * will be the UI for this PTMWindow, sets callbacks to deal with zooming using the scroll wheel and panning
+     * with the mouse, and places the window to be in the middle of the screen. Does not actually call the window
+     * to be displayed.
+     */
     private void setupGLFW(){
+        //initialise glfw for the calls, and throw a new exception to exit if unsuccessful
         glfwInit();
         GLFWErrorCallback.createPrint(System.err).set();
+        if(!glfwInit()){throw  new IllegalStateException("Unable to initialise GLFW");}
 
-        if(!glfwInit()){
-            throw  new IllegalStateException("Unable to initialise GLFW");
-        }
-
+        //don't make the window visible yet, make it resizable and display at 60Hz
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
-        window = glfwCreateWindow((int)(imageWidth * 0.5), (int)(imageHeight * 0.5), ptmObject.getFileName(), NULL, NULL);
+        //create a new window, of size half image width by half image height, with file location as the title
+        window = glfwCreateWindow((int)(imageWidth * 0.5),
+                                  (int)(imageHeight * 0.5),
+                                   ptmObject.getFileName(), NULL, NULL);
 
-
-        glfwSetWindowSizeCallback(window, new GLFWWindowSizeCallback() {
-            @Override
-            public void invoke(long window, int width, int height) {
-                glViewport(0, 0, width, height);
-            }
-        });
-
-
+        //allows the user to zoom in and out with the scroll wheel
         glfwSetScrollCallback(window, new GLFWScrollCallback() {
             @Override
             public void invoke(long window, double xoffset, double yoffset) {
                 //scroll up positive, scroll down negative
                 imageScale += 0.1 * yoffset;
                 if(imageScale > 10){imageScale = 10f;}
-                else if(imageScale < 1){imageScale = 1f;}
+                else if(imageScale < 1){imageScale = 1;}
+
+                //check the viewport to make sure image is still completely in viewport
+                checkViewport();
             }
         });
 
-
-        glfwWindowHint(GLFW_REFRESH_RATE, 60);
-
+        //translates the window so it appears in the center of the screen
         try(MemoryStack stack = stackPush()){
             IntBuffer pWidth = stack.mallocInt(1);
             IntBuffer pHeight = stack.mallocInt(1);
@@ -122,12 +230,22 @@ public class PTMWindow implements Runnable{
                     (vidMode.height() - pHeight.get(0))/2);
         }
 
+        //make the new window the selected one when it appears
         glfwMakeContextCurrent(window);
-        GL.createCapabilities();
 
+        //create OpenGL capabilities and try to sync with monitor
+        GL.createCapabilities();
         glfwSwapInterval(1);
     }
 
+
+
+    /**
+     * Creates one shader program for all the fragment shaders in the shaders package by calling createShader
+     * for each .glsl file.
+     *
+     * @throws Exception if there is an error when reading the vertex/fragment shader files
+     */
     private void createShaders() throws Exception{
         createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
                 "src/shaders/defaultFragmentShader.glsl");
@@ -146,7 +264,22 @@ public class PTMWindow implements Runnable{
     }
 
 
-    private void createShader(RTIViewer.ShaderProgram type, String vertShaderFile, String fragShaderFile) throws Exception{
+
+    /**
+     * Creates a new OpenGL shader program from the vertex and fragment shader file locations passed. Checks the
+     * validity of both shaders and the validity of th ecompiled program, and throws an Exception if they are
+     * invalid.
+     *
+     * @param type              which viewing filter the program should be represented by
+     * @param vertShaderFile    location of the vertex GLSL shader for this program
+     * @param fragShaderFile    location of the fragment GLSL shader for this program
+     * @throws Exception        if there is an error parsing the shaders or compiling the shader program
+     */
+    private void createShader(RTIViewer.ShaderProgram type, String vertShaderFile,
+                                                                    String fragShaderFile) throws Exception{
+        /* Each filter type in the RTIViewer has its own shader program so we need to create
+           this program and set the current program to it so we can assign it vertex and
+           fragment shaders */
         int currentProgram = 0;
         if(type.equals(RTIViewer.ShaderProgram.DEFAULT)){
             defaultProgram = GL20.glCreateProgram();
@@ -162,17 +295,21 @@ public class PTMWindow implements Runnable{
             currentProgram = specEnhanceProgram;
         }
 
+        //create references for the vertex and fragment shaders, which are compiled in a bit
         int vertShader = GL20.glCreateShader(GL20.GL_VERTEX_SHADER);
         int fragShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
 
+        //parse the source files
         String vertSource = ShaderUtils.readFromFile(vertShaderFile);
         String fragSource = ShaderUtils.readFromFile(fragShaderFile);
 
+        //assign and compile the shaders for this program
         GL20.glShaderSource(vertShader, vertSource);
         GL20.glShaderSource(fragShader, fragSource);
         GL20.glCompileShader(vertShader);
         GL20.glCompileShader(fragShader);
 
+        //check they were compiled and assigned successfully
         if(GL20.glGetShaderi(fragShader, GL_COMPILE_STATUS) == GL_FALSE){
             throw new Exception("Couldn't compile frag shader " + GL20.glGetShaderInfoLog(fragShader));
         }
@@ -180,45 +317,60 @@ public class PTMWindow implements Runnable{
             throw new Exception("Couldn't compile vert shader " + GL20.glGetShaderInfoLog(vertShader));
         }
 
+        //attach the shaders to the current program, link them and set the current program as this newly
+        //created OpenGL program
         GL20.glAttachShader(currentProgram, vertShader);
         GL20.glAttachShader(currentProgram, fragShader);
         GL20.glLinkProgram(currentProgram);
-
-
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-
         GL20.glUseProgram(currentProgram);
-        bindShaderReferences(currentProgram);
+
+        //bind the references in this class to the uniforms/textures in the shaders, and actually set the values
+        bindShaderReferences(currentProgram, true);
         bindShaderVals();
 
+        //validate the program and throw and error if it wasn't made successfully
         GL20.glValidateProgram(currentProgram);
-
         if(GL20.glGetProgrami(currentProgram, GL_VALIDATE_STATUS) == GL_FALSE){
             System.err.println(type.toString());
             throw new Exception("Couldn't validate shader program: "  + GL20.glGetProgramInfoLog(currentProgram));
 
         }
-        GL20.glUseProgram(0);
     }
 
-    private void bindShaderReferences(int programID){
+
+    /**
+     * Gets the integer OpenGL references from the shader program specified by the shaderID and sets them to the
+     * relevant attributes in this class. The textures (rVals1, rVals2 ... etc.) only need to be set first time
+     * the program is compiled as they do not changed, so there is an option to set them or not.
+     *
+     * @param programID         the program for which we want to set the references for
+     * @param setTextures       whether we want to set references for textures or not
+     */
+    private void bindShaderReferences(int programID, boolean setTextures){
+        //get the integer OpenGL reference  from the shader program using its string value
+
         shaderWidth = glGetUniformLocation(programID, "imageWidth");
         shaderHeight = glGetUniformLocation(programID, "imageHeight");
         imageScaleRef = glGetUniformLocation(programID, "imageScale");
+        shaderViewportX = glGetUniformLocation(programID, "viewportX");
+        shaderViewportY = glGetUniformLocation(programID, "viewportY");
 
         shaderLightX = glGetUniformLocation(programID, "lightX");
         shaderLightY = glGetUniformLocation(programID, "lightY");
 
-        rVals1Ref = glGetUniformLocation(programID, "rVals1");
-        rVals2Ref = glGetUniformLocation(programID, "rVals2");
+        //textures only need to be bound first time round
+        if(setTextures) {
+            rVals1Ref = glGetUniformLocation(programID, "rVals1");
+            rVals2Ref = glGetUniformLocation(programID, "rVals2");
 
-        gVals1Ref = glGetUniformLocation(programID, "gVals1");
-        gVals2Ref = glGetUniformLocation(programID, "gVals2");
+            gVals1Ref = glGetUniformLocation(programID, "gVals1");
+            gVals2Ref = glGetUniformLocation(programID, "gVals2");
 
-        bVals1Ref = glGetUniformLocation(programID, "bVals1");
-        bVals2Ref = glGetUniformLocation(programID, "bVals2");
+            bVals1Ref = glGetUniformLocation(programID, "bVals1");
+            bVals2Ref = glGetUniformLocation(programID, "bVals2");
 
-        normalsRef = glGetUniformLocation(programID, "normals");
+            normalsRef = glGetUniformLocation(programID, "normals");
+        }
 
         diffGainRef = glGetUniformLocation(programID, "diffGain");
         diffConstRef = glGetUniformLocation(programID, "diffConst");
@@ -226,10 +378,20 @@ public class PTMWindow implements Runnable{
         specExConstRef = glGetUniformLocation(programID, "specExConst");
     }
 
+
+
+    /**
+     * Assigns the values of all the shader references that we got in bindShaderReferences. Textures for  each
+     * shader do not change during the program, so they only need to be set on initialisation, so there is a boolean
+     * to set them or not.
+     *
+     */
     private void bindShaderVals(){
-        glUniform1i(shaderWidth, imageWidth);
-        glUniform1i(shaderHeight, imageHeight);
+        glUniform1f(shaderWidth, imageWidth);
+        glUniform1f(shaderHeight, imageHeight);
         glUniform1f(imageScaleRef, imageScale);
+        glUniform1f(shaderViewportX, viewportX);
+        glUniform1f(shaderViewportY, viewportY);
 
         glUniform1i(rVals1Ref, 0);
         glUniform1i(rVals2Ref, 1);
@@ -239,28 +401,50 @@ public class PTMWindow implements Runnable{
         glUniform1i(bVals2Ref, 5);
         glUniform1i(normalsRef, 6);
 
-        setShaderTexture(0, rVals1);
-        setShaderTexture(1, rVals2);
-        setShaderTexture(2, gVals1);
-        setShaderTexture(3, gVals2);
-        setShaderTexture(4, bVals1);
-        setShaderTexture(5, bVals2);
+        setShaderTexture(0, ptmObject.getRedVals1());
+        setShaderTexture(1, ptmObject.getRedVals2());
+        setShaderTexture(2, ptmObject.getGreenVals1());
+        setShaderTexture(3, ptmObject.getGreenVals2());
+        setShaderTexture(4, ptmObject.getBlueVals1());
+        setShaderTexture(5, ptmObject.getBlueVals2());
         setNormalsTexture(6, ptmObject.getNormals());
     }
 
+
+
+    /**
+     * Creates a new OpenGL texture for the shader programs to use with the id as the number passed, using
+     * the flattened set of three ptm coefficients (a0-a2 or a3-a5).
+     *
+     * @param textureNum        number of the texture to assign
+     * @param coeffArray        flattened set of 3 ptm coeffs (a0-a2 or a3-a5) toset the texture as
+     */
     private void setShaderTexture(int textureNum, IntBuffer coeffArray){
+        //make the active texture the one passed, create this texture and bind it
         GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
         int textureRef = glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureRef);
+
+        //GL_NEAREST gives best interpolated image quality
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, imageWidth, imageHeight,
+        //actually create and bind the texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, (int)imageWidth, (int)imageHeight,
                 0, GL_RGB_INTEGER, GL_INT, coeffArray);
         glBindTexture(GL_TEXTURE_2D, textureRef);
 
     }
 
+
+
+    /**
+     * Creates a new OpenGL texture for the shader programs to use that contains the values for the normal
+     * vector of each texel.
+     *
+     * @param textureNum        number of the texture to set as the normals texture
+     * @param normals           flattened array of xyz vectors to set as this texture
+     */
     private void setNormalsTexture(int textureNum, FloatBuffer normals){
         GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
         int textureRef = glGenTextures();
@@ -268,13 +452,22 @@ public class PTMWindow implements Runnable{
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, imageWidth, imageHeight,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, (int)imageWidth, (int)imageHeight,
                 0, GL_RGB, GL_FLOAT, normals);
         glBindTexture(GL_TEXTURE_2D, textureRef);
     }
 
+
+
+    /**
+     * Sets up GLFW, creates all the shaders and displays the gl window. While the windowShouldClose glfw attribute
+     * is false for this window, the window will set the parameters for the shaders based on the values on the
+     * components of the RTIViewer, draw a quad, and use the appropriate shader to draw the image for the ptm image
+     * using the relevant filter. The window also accounts for resizing and zooming.
+     */
     @Override
     public void run(){
+        //set everything up ready to show the RTI file in the window
         setupGLFW();
         try{
             createShaders();
@@ -283,18 +476,20 @@ public class PTMWindow implements Runnable{
             return;
         }
 
+        //display the window, and set OpenGL to the default viewing mode
         glfwShowWindow(window);
-
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
+        //update the image on the window while the window is still be open
         while (!glfwWindowShouldClose(window)){
+            //resets OpenGl colour buffers so they don't all just immediately overflow and everything crashes
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            //set the values in the shaders used to draw image as the values from the RTIViewer window
             setShaderParams();
 
+            //draw the quad that will be textured as the RTI image
             glBegin(GL_QUADS);
                 glVertex2d(-1, -1);
                 glVertex2d(1, -1);
@@ -302,17 +497,32 @@ public class PTMWindow implements Runnable{
                 glVertex2d(-1, 1);
             glEnd();
 
+            //back to the default program
             GL20.glUseProgram(0);
 
+            //update the window size buffers, set the viewport depending on the window size
+            glfwGetWindowSize(window, windowWidth, windowHeight);
+            setViewport();
+
+            //check for panning with the mouse
+            grabMouseState();
+
+            //swap the double-buffer for the window
             glfwSwapBuffers(window);
             glfwPollEvents();
-
         }
-
+        //the window needs to close, so clean up shaders etc.
         cleanUp();
     }
 
+
+
+    /**
+     * Sets the uniform values of the current program to those in the RTIViewer window, and those defined in this
+     * window such as the viewportX and viewportY.
+     */
     private void setShaderParams(){
+        //set the current program to the one chosen in the RTIViewer tool window
         int program = 0;
         if(currentProgram.equals(RTIViewer.ShaderProgram.DEFAULT)) {
             program = defaultProgram;
@@ -323,12 +533,16 @@ public class PTMWindow implements Runnable{
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             program = specEnhanceProgram;
         }
+        //use this program and rebind all the references otherwise OpenGL seems to forget about them
         GL20.glUseProgram(program);
-        bindShaderReferences(program);
+        bindShaderReferences(program, false);
 
+        //set all the things that change
         glUniform1f(shaderLightX, RTIViewer.globalLightPos.getX());
         glUniform1f(shaderLightY, RTIViewer.globalLightPos.getY());
         glUniform1f(imageScaleRef, imageScale);
+        glUniform1f(shaderViewportX, viewportX);
+        glUniform1f(shaderViewportY, viewportY);
 
         glUniform1f(diffGainRef, (float) (RTIViewer.globalDiffGainVal / 10.0));
 
@@ -338,20 +552,119 @@ public class PTMWindow implements Runnable{
     }
 
 
+
+    /**
+     * Delete all the shader programs and destroy the window.
+     */
     private void cleanUp(){
         GL20.glDeleteProgram(defaultProgram);
         GL20.glDeleteProgram(normalsProgram);
         GL20.glDeleteProgram(diffGainProgram);
         GL20.glDeleteProgram(specEnhanceProgram);
 
+        //RTIViewer.removeWindow(this);
+
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
     }
 
 
+
+    /**
+     * Limits the viewport to the bounds of the image at the current zoom level so the use can't pan outside the
+     * image.
+     */
+    private void checkViewport(){
+        //the maximum and minium x's and y's are simply the zoom - 1 as the GL space for the viewport is normalised
+        //to 0 - 1
+        float minX = -(imageScale - 1.0f);
+        float maxX = (imageScale - 1.0f);
+        float minY = -(imageScale - 1.0f);
+        float maxY = (imageScale - 1.0f);
+
+        //limit the viewport to the edges of the zoomed-in image
+        if(viewportX < minX){viewportX = minX;}
+        if(viewportX > maxX){viewportX = maxX;}
+        if(viewportY < minY){viewportY = minY;}
+        if(viewportY > maxY){viewportY = maxY;}
+
+    }
+
+
+
+    /**
+     * Sets the location of the RTI image in the window. Centers the image in the frame, with empty space on either
+     * side fo the image if the window is not of the same aspect ratio as the RTI image.
+     */
+    private void setViewport(){
+        if(windowWidth[0] > windowHeight[0]){
+            //there will be space on either sice of the image, so translate in the x and limit the width
+            //of the image to keep the image's aspect ratio
+            reducedWidth = (int)((imageWidth / imageHeight) * windowHeight[0]);
+            xOffset = (windowWidth[0] - reducedWidth) / 2;
+            yOffset = 0;
+            reducedHeight = windowHeight[0];
+        }else{
+            //there will be space on the top and bottom of the image, so translate in the y and limit the height
+            //of the image to keep the image's aspect ratio
+            reducedHeight = (int)((imageHeight / imageWidth) * windowWidth[0]);
+            yOffset = (windowHeight[0] - reducedHeight) / 2;
+            xOffset = 0;
+            reducedWidth = windowWidth[0];
+        }
+        glViewport(xOffset, yOffset, reducedWidth, reducedHeight);
+    }
+
+
+
+    /**
+     * Gets the x,y location of the mouse on the window. Checks if the left mouse button is held down. if it is,
+     * will find the difference between its current position and last position using lastXPos and lastYPos, and will
+     * pan the RTI image depending on the change in the mouse position (the mouse has been dragged).
+     */
+    private void grabMouseState(){
+        //get whether the left mouse button is held down, and the cursor position
+        int i = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1);
+        glfwGetCursorPos(window, mouseXPos, mouseYPos);
+
+        //if the left mouse button is held down, the image is being dragged so pan it
+        if(i == GLFW_TRUE){
+            //distance mouse has been dragged
+            double deltaX = lastXPos[0] - mouseXPos[0];
+            double deltaY = lastYPos[0] - mouseYPos[0];
+
+            //translate the viewport by this distance
+            if(Math.abs(deltaX) > 0.01 && Math.abs(deltaY) > 0.01) {
+                viewportX += 2 * deltaX / ((Math.pow(imageScale, 0.5)) * windowWidth[0]);
+                viewportY -= 2 * deltaY / ((Math.pow(imageScale, 0.5)) * windowHeight[0]);
+            }
+            //make sure the user does't pan outside the image
+            checkViewport();
+        }
+        //update the last position of the cursor
+        lastXPos[0] = mouseXPos[0];
+        lastYPos[0] = mouseYPos[0];
+    }
+
+
+
+    /**
+     * Sets the currentProgram attribute
+     *
+     * @param currentProgram        the filter program for this window's RTI image
+     */
     public void setCurrentProgram(RTIViewer.ShaderProgram currentProgram) {
         this.currentProgram = currentProgram;
     }
 
 
+
+    /**
+     * Sets the glfw attribute windowShouldClose
+     *
+     * @param shouldClose       whether this window should close
+     */
+    public void setShouldClose(boolean shouldClose){
+        glfwSetWindowShouldClose(window, shouldClose);
+    }
 }

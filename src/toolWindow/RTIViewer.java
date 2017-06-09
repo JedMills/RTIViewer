@@ -1,6 +1,7 @@
 package toolWindow;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -19,6 +20,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import openGLWindow.PTMWindow;
 import ptmCreation.PTMObject;
 import utils.Utils;
@@ -56,7 +58,18 @@ public class RTIViewer extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        primaryStage = primaryStage;
+        this.primaryStage = primaryStage;
+
+        this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                //for(PTMWindow ptmWindow : ptmWindows){
+                //    ptmWindow.setShouldClose(true);
+                //}
+                Platform.exit();
+            }
+        });
+
         primaryStage.setTitle("RTI Viewer");
 
         createAlerts();
@@ -339,4 +352,12 @@ public class RTIViewer extends Application {
         }
     }
 
+
+    public static void removeWindow(PTMWindow window){
+        for(PTMWindow ptmWindow : ptmWindows){
+            if (ptmWindow.equals(window)){
+                ptmWindows.remove(window);
+            }
+        }
+    }
 }
