@@ -150,6 +150,7 @@ public class PTMParser {
                 biasCoeffs[i] = Integer.parseInt(items[i + 10]);
             }
             return new int[]{dataStartPos, width, height};
+
         }
         return null;
     }

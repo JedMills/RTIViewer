@@ -206,10 +206,16 @@ public class PTMWindow implements Runnable{
         glfwSetScrollCallback(window, new GLFWScrollCallback() {
             @Override
             public void invoke(long window, double xoffset, double yoffset) {
+                float oldScale = imageScale;
+
                 //scroll up positive, scroll down negative
                 imageScale += 0.1 * yoffset;
                 if(imageScale > 10){imageScale = 10f;}
                 else if(imageScale < 1){imageScale = 1;}
+
+                //translate the image a little bit to keep center of screen
+                viewportX *= imageScale / oldScale;
+                viewportY *= imageScale / oldScale;
 
                 //check the viewport to make sure image is still completely in viewport
                 checkViewport();

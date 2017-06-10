@@ -1,5 +1,4 @@
-#version 420 core
-//#extension GL_EXT_gpu_shader4 : enable
+#version 330
 
 uniform float lightX;
 uniform float lightY;

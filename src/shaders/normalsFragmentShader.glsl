@@ -1,5 +1,4 @@
-#version 420 core
-//#extension GL_EXT_gpu_shader4 : enable
+#version 330
 
 uniform float lightX;
 uniform float lightY;
@@ -30,13 +29,9 @@ vec2 convertToPTMCoords(vec2 coords){
 
 
 vec3 convertNormalToColour(vec3 normal){
-    float red = ((normal.x + 1.0) / 2.0) * 255.0;
-    float green = ((normal.y + 1.0) / 2.0) * 255.0;
-    float blue = ((normal.z + 1.0) / 2.0) * 255.0;
-
-    red = red / 255.0;
-    green = green / 255.0;
-    blue = blue / 255.0;
+    float red = ((normal.x + 1.0) / 2.0);
+    float green = ((normal.y + 1.0) / 2.0);
+    float blue = ((normal.z + 1.0) / 2.0);
 
     return vec3(red, green, blue);
 }
