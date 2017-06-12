@@ -24,7 +24,7 @@ public class PTMParser {
     private static final String[] acceptedVersions = new String[]{"PTM_1.2"};
 
     /**Used for checking the PTM format of the passed file*/
-    private static final String[] acceptedFormats = new String[]{"PTM_FORMAT_RGB"};
+    private static final String[] acceptedFormats = new String[]{"PTM_FORMAT_RGB", "PTM_FORMAT_LRGB"};
 
     /**Scaling coefficients used for RGB format found in file header*/
     private static float[] scaleCoeffs;
@@ -49,11 +49,19 @@ public class PTMParser {
         //get the PTM version, file format, width, height, and coefficients
         int[] headerData = getHeaderData(fileName, format);
 
-        //get the coefficients for the individual texels
-        IntBuffer[] texelData = getTexelData(fileName, format, headerData[0], headerData[1], headerData[2]);
+        if(format.equals("PTM_FORMAT_RGB")) {
+            //get the coefficients for the individual texels
+            IntBuffer[] texelData = getTexelDataRGB(fileName, format, headerData[0], headerData[1], headerData[2]);
 
-        //create the ptmCreation.PTMObject from the data
-        return new PTMObject(fileName, headerData[1], headerData[2], texelData);
+            //create the ptmCreation.PTMObject from the data
+            return new PTMObjectRGB(fileName, headerData[1], headerData[2], texelData);
+        }else if(format.equals("PTM_FORMAT_LRGB")){
+            IntBuffer[] texelData = getTexelDataLRGB(fileName, format, headerData[0], headerData[1], headerData[2]);
+
+            return new PTMObjectLRGB(fileName, headerData[1], headerData[2], texelData);
+        }
+
+        return null;
     }
 
 
@@ -113,31 +121,32 @@ public class PTMParser {
      * @throws PTMFileException     if there's an error parsing the .ptm file
      */
     private static int[] getHeaderData(String fileName, String format) throws IOException, PTMFileException{
-        //for the PTM_FORMAT_RGB file type
-        if(format.equals("PTM_FORMAT_RGB")) {
-            //make a read to read in the header section of the .ptm file
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        //make a read to read in the header section of the .ptm file
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
-            //read the first 6 lines fo the file for the header
-            String header = "";
-            for (int i = 0; i < 6; i++) {
-                header += reader.readLine() + " ";
-            }
-            int dataStartPos = header.length();
-            reader.close();
+        //read the first 6 lines fo the file for the header
+        String header = "";
 
-            //split the header into each item in it
-            String[] items = header.split("(\\s+)|(\\n+)");
+        for (int i = 0; i < 6; i++) {
+            header += reader.readLine() + " ";
+        }
+        int dataStartPos = header.length();
+        reader.close();
 
-            //get RTI type, file type, image width, image height
-            int width, height;
-            try {
-                width = Integer.parseInt(items[2]);
-                height = Integer.parseInt(items[3]);
-            } catch (NumberFormatException e) {
-                throw new PTMFileException("Error parsing the width and height from file");
-            }
+        //split the header into each item in it
+        String[] items = header.split("(\\s+)|(\\n+)");
 
+        //get RTI type, file type, image width, image height
+        int width, height;
+        try {
+            width = Integer.parseInt(items[2]);
+            height = Integer.parseInt(items[3]);
+        } catch (NumberFormatException e) {
+            throw new PTMFileException("Error parsing the width and height from file");
+        }
+
+        //get the width, height, scale and bias coefficients from the header
+        if(format.equals("PTM_FORMAT_RGB") || format.equals("PTM_FORMAT_LRGB")){
             //get the 6 scaling coefficients
             scaleCoeffs = new float[6];
             for (int i = 0; i < 6; i++) {
@@ -149,9 +158,10 @@ public class PTMParser {
             for (int i = 0; i < 6; i++) {
                 biasCoeffs[i] = Integer.parseInt(items[i + 10]);
             }
-            return new int[]{dataStartPos, width, height};
 
+            return new int[]{dataStartPos, width, height};
         }
+
         return null;
     }
 
@@ -170,7 +180,7 @@ public class PTMParser {
      * @throws IOException          if there's an error trying to access the file
      * @throws PTMFileException     if there's an error parsing the .ptm file
      */
-    private static IntBuffer[] getTexelData(String fileName, String format,
+    private static IntBuffer[] getTexelDataRGB(String fileName, String format,
                                           int startPos, int width, int height) throws IOException, PTMFileException{
         //arrays to store coefficients for each colour, all file types will eventually return these
         IntBuffer redVals1 = BufferUtils.createIntBuffer(width * height * 3);
@@ -180,54 +190,102 @@ public class PTMParser {
         IntBuffer blueVals1 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer blueVals2 = BufferUtils.createIntBuffer(width * height * 3);
 
+        //make a scanner to scan in all the data as characters
+        ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
+        stream.skip(startPos);
 
-        //for the PTM_FORMAT_RGB file type
-        if(format.equals("PTM_FORMAT_RGB")) {
-            //make a scanner to scan in all the data as characters
-            ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
-            stream.skip(startPos);
+        //for RGB files, there are 6 basis for each texel
+        int basisTerm = 6;
 
-            //for RGB files, there are 6 basis for each texel
-            int basisTerm = 6;
-
-            try {
-                int offset;
-                int nextCharValue;
-                //loop through the colours
-                for (int j = 0; j < 3; j++) {
-                    //loop through y positions backwards
-                    for (int y = height - 1; y >= 0; y--) {
-                        //loop through x positions
-                        for (int x = 0; x < width; x++) {
-                            offset = ((y * width) + x) * 3;
-                            for (int i = 0; i < basisTerm; i++) {
-                                //read the next character and convert it as per the bias
-                                nextCharValue = stream.read();
-                                nextCharValue = (int) ((nextCharValue - biasCoeffs[i]) * scaleCoeffs[i]);
-                                //store the value in the correct array
-                                if (j == 0) {
-                                    if(i < 3){redVals1.put(offset + i, nextCharValue);}
-                                    else{redVals2.put(offset + i - 3, nextCharValue);}
-                                } else if (j == 1) {
-                                    if(i < 3){greenVals1.put(offset + i, nextCharValue);}
-                                    else{greenVals2.put(offset + i - 3, nextCharValue);}
-                                } else {
-                                    if(i < 3){blueVals1.put(offset + i, nextCharValue);}
-                                    else{blueVals2.put(offset + i - 3, nextCharValue);}
-                                }
+        try {
+            int offset;
+            int nextCharValue;
+            //loop through the colours
+            for (int j = 0; j < 3; j++) {
+                //loop through y positions backwards
+                for (int y = height - 1; y >= 0; y--) {
+                    //loop through x positions
+                    for (int x = 0; x < width; x++) {
+                        offset = ((y * width) + x) * 3;
+                        for (int i = 0; i < basisTerm; i++) {
+                            //read the next character and convert it as per the bias
+                            nextCharValue = stream.read();
+                            nextCharValue = (int) ((nextCharValue - biasCoeffs[i]) * scaleCoeffs[i]);
+                            //store the value in the correct array
+                            if (j == 0) {
+                                if(i < 3){redVals1.put(offset + i, nextCharValue);}
+                                else{redVals2.put(offset + i - 3, nextCharValue);}
+                            } else if (j == 1) {
+                                if(i < 3){greenVals1.put(offset + i, nextCharValue);}
+                                else{greenVals2.put(offset + i - 3, nextCharValue);}
+                            } else {
+                                if(i < 3){blueVals1.put(offset + i, nextCharValue);}
+                                else{blueVals2.put(offset + i - 3, nextCharValue);}
                             }
                         }
                     }
                 }
-            }catch(Exception e){
-                throw new PTMFileException("Error reading in texel data from file");
             }
-            stream.close();
+        }catch(Exception e){
+            throw new PTMFileException("Error reading in texel data from file");
+        }
+        stream.close();
 
-            return new IntBuffer[]{redVals1, redVals2, greenVals1, greenVals2, blueVals1, blueVals2};
+        return new IntBuffer[]{redVals1, redVals2, greenVals1, greenVals2, blueVals1, blueVals2};
+    }
+
+
+
+    private static IntBuffer[] getTexelDataLRGB(String fileName, String format,
+                                         int startPos, int width, int height) throws IOException, PTMFileException{
+
+        IntBuffer ptmCoeffs1 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer ptmCoeffs2 = BufferUtils.createIntBuffer(width * height * 3);
+        IntBuffer rgbCoeffs = BufferUtils.createIntBuffer(width * height * 3);
+
+
+        //make a scanner to scan in all the data as characters
+        ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
+        stream.skip(startPos);
+
+
+        try{
+            int offset;
+            int nextCharValue;
+
+            for(int y = height - 1; y >= 0; y--){
+                for(int x = 0; x < width; x++){
+                    offset = ((y * width) + x) * 3;
+
+                    for(int i = 0; i < 6; i++){
+                        //read the next character and convert it as per the bias
+                        nextCharValue = stream.read();
+                        nextCharValue = (int) ((nextCharValue - biasCoeffs[i]) * scaleCoeffs[i]);
+
+                        if(i < 3){ptmCoeffs1.put(offset + i, nextCharValue);}
+                        else{ptmCoeffs2.put(offset + i - 3, nextCharValue);}
+                    }
+                }
+            }
+
+            for(int y = height - 1; y >= 0; y--){
+                for(int x = 0; x < width; x++){
+                    offset = ((y * width) + x) * 3;
+
+                    for(int i = 0; i < 3; i++){
+                        nextCharValue = stream.read();
+
+                        rgbCoeffs.put(offset + i, nextCharValue);
+                    }
+                }
+            }
+        }catch(Exception e){
+            throw new PTMFileException("Error reading in texel data from file");
         }
 
-        return null;
+
+        stream.close();
+        return new IntBuffer[]{ptmCoeffs1, ptmCoeffs2, rgbCoeffs};
     }
 
 }

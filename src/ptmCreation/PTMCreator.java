@@ -1,5 +1,7 @@
 package ptmCreation;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import toolWindow.RTIViewer;
 
 import java.io.File;
@@ -13,7 +15,6 @@ public class PTMCreator implements Runnable {
     private PTMObject targetObject;
     private File sourceFile;
 
-
     public PTMCreator(File sourceFile){
         this.sourceFile = sourceFile;
     }
@@ -26,12 +27,22 @@ public class PTMCreator implements Runnable {
         }catch(IOException e){
             RTIViewer.fileReadingAlert.setContentText("Error accessing file at: " +
                                                         sourceFile.getPath());
-            RTIViewer.fileReadingAlert.showAndWait();
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    RTIViewer.fileReadingAlert.showAndWait();
+                }
+            });
         }catch(PTMFileException e){
             RTIViewer.fileReadingAlert.setContentText("Error when parsing file at: " +
                                                         sourceFile.getPath() + ": " +
                                                         e.getMessage());
-            RTIViewer.fileReadingAlert.showAndWait();
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    RTIViewer.fileReadingAlert.showAndWait();
+                }
+            });
         }
     }
 }

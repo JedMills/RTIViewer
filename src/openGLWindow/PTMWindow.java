@@ -39,127 +39,109 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  *
  * Created by Jed on 03-Jun-17.
  */
-public class PTMWindow implements Runnable{
+public abstract class PTMWindow implements Runnable{
 
     /**The ptm image that this window will display*/
-    private PTMObject ptmObject;
+    protected PTMObject ptmObject;
 
     /**Width of the ptmObject attribute that this window displays*/
-    private float imageWidth;
+    protected float imageWidth;
 
     /**Height of the ptmObject attribute that this window displays*/
-    private float imageHeight;
+    protected float imageHeight;
 
     /**OpenGL reference for the window created*/
-    private long window;
+    protected long window;
 
     /**OpenGL reference for the default fragment shader */
-    private int defaultProgram;
+    protected int defaultProgram;
 
     /**OpenGL reference for the normals visualisation fragment shader */
-    private int normalsProgram;
+    protected int normalsProgram;
 
     /**OpenGL reference for the diffuse gain fragment shader*/
-    private int diffGainProgram;
+    protected int diffGainProgram;
 
     /**OpenGL reference for the specular enhancement fragment shader*/
-    private int specEnhanceProgram;
-
-    /**OpenGL reference for the GLSL isampler2D texture "rVals1", used for passing rVals1 attr to shaders */
-    private int rVals1Ref;
-
-    /**OpenGL reference for the GLSL isampler2D texture "rVals2", used for passing rVals2 attr to shaders */
-    private int rVals2Ref;
-
-    /**OpenGL reference for the GLSL isampler2D texture "gVals1", used for passing gVals1 attr to shaders */
-    private int gVals1Ref;
-
-    /**OpenGL reference for the GLSL isampler2D texture "gVals2", used for passing gVals2 attr to shaders */
-    private int gVals2Ref;
-
-    /**OpenGL reference for the GLSL isampler2D texture "bVals1", used for passing bVals1 attr to shaders */
-    private int bVals1Ref;
-
-    /**OpenGL reference for the GLSL isampler2D texture "gVals2", used for passing gVals2 attr to shaders */
-    private int bVals2Ref;
-
-    /**OpenGL reference for the GLSL sampler2D texture "normals", used for passing normals attr to shaders*/
-    private int normalsRef;
-
-    /**OpenGL reference for the GLSL uniform "imageScale", used for passing zoom level to shaders */
-    private int imageScaleRef;
-
-    /**OpenGL reference for the GLSL uniform "diffGain" in diffuseGainFragmentShader.glsl*/
-    private int diffGainRef;
-
-    /**OpenGL reference for the GLSL uniform "specConst" in specEnhanceFragmentShader.glsl*/
-    private int specConstRef;
-
-    /**OpenGL reference for the GLSL uniform "diffConst" in specEnhanceFragmentShader.glsl*/
-    private int diffConstRef;
-
-    /**OpenGL reference for the GLSL uniform "specExConst" in specEnhanceFragmentShader.glsl*/
-    private int specExConstRef;
-
-    /**OpenGL reference for the GLSL uniform "imageWidth" found in shaders*/
-    private int shaderWidth;
-
-    /**OpenGL reference for the GLSL uniform "imageHeight" found in shaders*/
-    private int shaderHeight;
-
-    /**OpenGL reference for the GLSL uniform "viewportX" found in the vertex shader*/
-    private int shaderViewportX;
-
-    /**OpenGL reference for the GLSL uniform "viewportY" found in the vertex shader*/
-    private int shaderViewportY;
-
-    /**OpenGL reference for the GLSL uniform "lightX" found in the fragment shaders */
-    private int shaderLightX;
-
-    /**OpenGL reference for the GLSL uniform "lightY" found in the fragment shaders */
-    private int shaderLightY;
+    protected int specEnhanceProgram;
 
     /**OpenGL reference for the GLSL uniform "viewportX" found in the fragment shader */
-    private float viewportX = 0;
+    protected float viewportX = 0;
 
     /**OpenGL reference for the GLSL uniform "viewportY" found in the fragment shader */
-    private float viewportY = 0;
+    protected float viewportY = 0;
+
+    /**OpenGL reference for the GLSL sampler2D texture "normals", used for passing normals attr to shaders*/
+    protected int normalsRef;
+
+    /**OpenGL reference for the GLSL uniform "imageScale", used for passing zoom level to shaders */
+    protected int imageScaleRef;
+
+    /**OpenGL reference for the GLSL uniform "diffGain" in diffuseGainFragmentShader.glsl*/
+    protected int diffGainRef;
+
+    /**OpenGL reference for the GLSL uniform "specConst" in specEnhanceFragmentShader.glsl*/
+    protected int specConstRef;
+
+    /**OpenGL reference for the GLSL uniform "diffConst" in specEnhanceFragmentShader.glsl*/
+    protected int diffConstRef;
+
+    /**OpenGL reference for the GLSL uniform "specExConst" in specEnhanceFragmentShader.glsl*/
+    protected int specExConstRef;
+
+    /**OpenGL reference for the GLSL uniform "imageWidth" found in shaders*/
+    protected int shaderWidth;
+
+    /**OpenGL reference for the GLSL uniform "imageHeight" found in shaders*/
+    protected int shaderHeight;
+
+    /**OpenGL reference for the GLSL uniform "viewportX" found in the vertex shader*/
+    protected int shaderViewportX;
+
+    /**OpenGL reference for the GLSL uniform "viewportY" found in the vertex shader*/
+    protected int shaderViewportY;
+
+    /**OpenGL reference for the GLSL uniform "lightX" found in the fragment shaders */
+    protected int shaderLightX;
+
+    /**OpenGL reference for the GLSL uniform "lightY" found in the fragment shaders */
+    protected int shaderLightY;
 
     /**Current shader program this window is set to, is set by the RTIViewer program */
-    private RTIViewer.ShaderProgram currentProgram = RTIViewer.ShaderProgram.DEFAULT;
+    protected RTIViewer.ShaderProgram currentProgram = RTIViewer.ShaderProgram.DEFAULT;
 
     /**The current zoom level of the viewed image, 1.0 = no zoom */
-    private float imageScale = 1.0f;
+    protected float imageScale = 1.0f;
 
     /**Holds the width of the viewing window, which gets updated each frame by glfw*/
-    private int[] windowWidth = new int[1];
+    protected int[] windowWidth = new int[1];
 
     /**Holds the height of the viewing window, which gets updated each frame by glfw*/
-    private int[] windowHeight = new int[1];
+    protected int[] windowHeight = new int[1];
 
     /**Current non-normalised x position in the viewing window of the cursor, updated each frame by glfw*/
-    private double[] mouseXPos = new double[1];
+    protected double[] mouseXPos = new double[1];
 
     /**Current non-normalised y position in the viewing window of the cursor, updated each frame by glfw*/
-    private double[] mouseYPos = new double[1];
+    protected double[] mouseYPos = new double[1];
 
     /**Non-normalised x position of the cursor last frame, updated each frame by glfw*/
-    private double[] lastXPos = new double[1];
+    protected double[] lastXPos = new double[1];
 
     /**Non-normalised y position of the cursor last frame, updated each frame by glfw*/
-    private double[] lastYPos = new double[1];
+    protected double[] lastYPos = new double[1];
 
     /**X offset for the glViewport(...) each frame, used to center image in a non-ratio window size*/
-    private int xOffset = 0;
+    protected int xOffset = 0;
 
     /**Y offset for the glViewport(...) each frame, used to center image in a non-ratio window size*/
-    private int yOffset = 0;
+    protected int yOffset = 0;
 
     /**Width of the image as displayed on the window, updated each frame*/
-    private int reducedWidth;
+    protected int reducedWidth;
 
     /**Height of the image as displayed on the window, updated each frame*/
-    private int reducedHeight;
+    protected int reducedHeight;
 
 
 
@@ -246,28 +228,7 @@ public class PTMWindow implements Runnable{
 
 
 
-    /**
-     * Creates one shader program for all the fragment shaders in the shaders package by calling createShader
-     * for each .glsl file.
-     *
-     * @throws Exception if there is an error when reading the vertex/fragment shader files
-     */
-    private void createShaders() throws Exception{
-        createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/defaultFragmentShader.glsl");
-
-        createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/normalsFragmentShader.glsl");
-
-
-        createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/diffuseGainFragmentShader.glsl");
-        
-
-        createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/specEnhanceFragmentShader.glsl");
-
-    }
+    protected abstract void createShaders() throws Exception;
 
 
 
@@ -281,7 +242,7 @@ public class PTMWindow implements Runnable{
      * @param fragShaderFile    location of the fragment GLSL shader for this program
      * @throws Exception        if there is an error parsing the shaders or compiling the shader program
      */
-    private void createShader(RTIViewer.ShaderProgram type, String vertShaderFile,
+    protected void createShader(RTIViewer.ShaderProgram type, String vertShaderFile,
                                                                     String fragShaderFile) throws Exception{
         /* Each filter type in the RTIViewer has its own shader program so we need to create
            this program and set the current program to it so we can assign it vertex and
@@ -344,77 +305,9 @@ public class PTMWindow implements Runnable{
     }
 
 
-    /**
-     * Gets the integer OpenGL references from the shader program specified by the shaderID and sets them to the
-     * relevant attributes in this class. The textures (rVals1, rVals2 ... etc.) only need to be set first time
-     * the program is compiled as they do not changed, so there is an option to set them or not.
-     *
-     * @param programID         the program for which we want to set the references for
-     * @param setTextures       whether we want to set references for textures or not
-     */
-    private void bindShaderReferences(int programID, boolean setTextures){
-        //get the integer OpenGL reference  from the shader program using its string value
+    protected abstract void bindShaderReferences(int programID, boolean setTextures);
 
-        shaderWidth = glGetUniformLocation(programID, "imageWidth");
-        shaderHeight = glGetUniformLocation(programID, "imageHeight");
-        imageScaleRef = glGetUniformLocation(programID, "imageScale");
-        shaderViewportX = glGetUniformLocation(programID, "viewportX");
-        shaderViewportY = glGetUniformLocation(programID, "viewportY");
-
-        shaderLightX = glGetUniformLocation(programID, "lightX");
-        shaderLightY = glGetUniformLocation(programID, "lightY");
-
-        //textures only need to be bound first time round
-        if(setTextures) {
-            rVals1Ref = glGetUniformLocation(programID, "rVals1");
-            rVals2Ref = glGetUniformLocation(programID, "rVals2");
-
-            gVals1Ref = glGetUniformLocation(programID, "gVals1");
-            gVals2Ref = glGetUniformLocation(programID, "gVals2");
-
-            bVals1Ref = glGetUniformLocation(programID, "bVals1");
-            bVals2Ref = glGetUniformLocation(programID, "bVals2");
-
-            normalsRef = glGetUniformLocation(programID, "normals");
-        }
-
-        diffGainRef = glGetUniformLocation(programID, "diffGain");
-        diffConstRef = glGetUniformLocation(programID, "diffConst");
-        specConstRef = glGetUniformLocation(programID, "specConst");
-        specExConstRef = glGetUniformLocation(programID, "specExConst");
-    }
-
-
-
-    /**
-     * Assigns the values of all the shader references that we got in bindShaderReferences. Textures for  each
-     * shader do not change during the program, so they only need to be set on initialisation, so there is a boolean
-     * to set them or not.
-     *
-     */
-    private void bindShaderVals(){
-        glUniform1f(shaderWidth, imageWidth);
-        glUniform1f(shaderHeight, imageHeight);
-        glUniform1f(imageScaleRef, imageScale);
-        glUniform1f(shaderViewportX, viewportX);
-        glUniform1f(shaderViewportY, viewportY);
-
-        glUniform1i(rVals1Ref, 0);
-        glUniform1i(rVals2Ref, 1);
-        glUniform1i(gVals1Ref, 2);
-        glUniform1i(gVals2Ref, 3);
-        glUniform1i(bVals1Ref, 4);
-        glUniform1i(bVals2Ref, 5);
-        glUniform1i(normalsRef, 6);
-
-        setShaderTexture(0, ptmObject.getRedVals1());
-        setShaderTexture(1, ptmObject.getRedVals2());
-        setShaderTexture(2, ptmObject.getGreenVals1());
-        setShaderTexture(3, ptmObject.getGreenVals2());
-        setShaderTexture(4, ptmObject.getBlueVals1());
-        setShaderTexture(5, ptmObject.getBlueVals2());
-        setNormalsTexture(6, ptmObject.getNormals());
-    }
+    protected abstract void bindShaderVals();
 
 
 
@@ -425,7 +318,7 @@ public class PTMWindow implements Runnable{
      * @param textureNum        number of the texture to assign
      * @param coeffArray        flattened set of 3 ptm coeffs (a0-a2 or a3-a5) toset the texture as
      */
-    private void setShaderTexture(int textureNum, IntBuffer coeffArray){
+    protected void setShaderTexture(int textureNum, IntBuffer coeffArray){
         //make the active texture the one passed, create this texture and bind it
         GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
         int textureRef = glGenTextures();
@@ -451,7 +344,7 @@ public class PTMWindow implements Runnable{
      * @param textureNum        number of the texture to set as the normals texture
      * @param normals           flattened array of xyz vectors to set as this texture
      */
-    private void setNormalsTexture(int textureNum, FloatBuffer normals){
+    protected void setNormalsTexture(int textureNum, FloatBuffer normals){
         GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
         int textureRef = glGenTextures();
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureRef);
@@ -481,6 +374,8 @@ public class PTMWindow implements Runnable{
             e.printStackTrace();
             return;
         }
+
+        currentProgram = RTIViewer.currentProgram;
 
         //display the window, and set OpenGL to the default viewing mode
         glfwShowWindow(window);
@@ -550,13 +445,17 @@ public class PTMWindow implements Runnable{
         glUniform1f(shaderViewportX, viewportX);
         glUniform1f(shaderViewportY, viewportY);
 
-        glUniform1f(diffGainRef, (float) (RTIViewer.globalDiffGainVal / 10.0));
+        glUniform1f(diffGainRef, normaliseShaderParam(RTIViewer.globalDiffGainVal, 1.0f, 10.0f));
 
-        glUniform1f(diffConstRef, (float) (RTIViewer.globalDiffColourVal / 10.0));
-        glUniform1f(specConstRef, (float) (RTIViewer.globalSpecularityVal / 10.0));
-        glUniform1f(specExConstRef, (float) (RTIViewer.globalHighlightSizeVal / 10.0));
+        glUniform1f(diffConstRef, normaliseShaderParam(RTIViewer.globalDiffColourVal, 0.0f, 1.0f));
+        glUniform1f(specConstRef, normaliseShaderParam(RTIViewer.globalSpecularityVal, 0.0f, 1.0f));
+        glUniform1f(specExConstRef, normaliseShaderParam(RTIViewer.globalHighlightSizeVal, 1.0f, 150.0f));
     }
 
+
+    private float normaliseShaderParam(double value, float min, float max){
+        return (float) (min + value * (max - min) / 100.0);
+    }
 
 
     /**

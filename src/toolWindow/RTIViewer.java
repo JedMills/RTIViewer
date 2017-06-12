@@ -22,7 +22,11 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import openGLWindow.PTMWindow;
+import openGLWindow.PTMWindowLRGB;
+import openGLWindow.PTMWindowRGB;
 import ptmCreation.PTMObject;
+import ptmCreation.PTMObjectLRGB;
+import ptmCreation.PTMObjectRGB;
 import utils.Utils;
 
 import java.util.ArrayList;
@@ -49,6 +53,7 @@ public class RTIViewer extends Application {
     public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE;}
     public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE;}
 
+    public static ShaderProgram currentProgram = ShaderProgram.DEFAULT;
 
     public Alert entryAlert;
     public static Alert fileReadingAlert;
@@ -329,13 +334,20 @@ public class RTIViewer extends Application {
 
     public static void createNewPTMWindow(PTMObject ptmObject){
         try {
-            PTMWindow ptmWindow = new PTMWindow(ptmObject);
-            Thread thread = new Thread(ptmWindow);
-            thread.start();
-            ptmWindows.add(ptmWindow);
+            if(ptmObject instanceof PTMObjectRGB) {
+                PTMWindow ptmWindow = new PTMWindowRGB((PTMObjectRGB) ptmObject);
+                Thread thread = new Thread(ptmWindow);
+                thread.start();
+                ptmWindows.add(ptmWindow);
+            }else if(ptmObject instanceof PTMObjectLRGB){
+                PTMWindow ptmWindow = new PTMWindowLRGB((PTMObjectLRGB) ptmObject);
+                Thread thread = new Thread(ptmWindow);
+                thread.start();
+                ptmWindows.add(ptmWindow);
+            }
         }catch(Exception e){
             fileReadingAlert.setContentText("Couldn't compile OpenGL shader: " + e.getMessage());
-
+            fileReadingAlert.showAndWait();
         }
     }
 
@@ -346,6 +358,8 @@ public class RTIViewer extends Application {
         else if(filterType.equals("Normals visualisation")){programToSet = ShaderProgram.NORMALS;}
         else if(filterType.equals("Diffuse gain")){programToSet = ShaderProgram.DIFF_GAIN;}
         else if(filterType.equals("Specular enhancement")){programToSet = ShaderProgram.SPEC_ENHANCE;}
+
+        currentProgram = programToSet;
 
         for(PTMWindow ptmWindow : ptmWindows){
             ptmWindow.setCurrentProgram(programToSet);

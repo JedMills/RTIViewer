@@ -145,6 +145,8 @@ public class Utils {
         public Vector3f multiply(float a){
             return new Vector3f(this.x * a, this.y * a, this.z * a);
         }
+
+        public float length(){return (float) Math.pow(x*x + y*y + z*z, 0.5);}
     }
 
 

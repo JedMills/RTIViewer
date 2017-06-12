@@ -7,12 +7,9 @@ uniform float imageWidth;
 
 uniform float diffGain;
 
-uniform isampler2D rVals1;
-uniform isampler2D rVals2;
-uniform isampler2D gVals1;
-uniform isampler2D gVals2;
-uniform isampler2D bVals1;
-uniform isampler2D bVals2;
+uniform isampler2D lumCoeffs1;
+uniform isampler2D lumCoeffs2;
+uniform isampler2D rgbCoeffs;
 uniform sampler2D normals;
 
 
@@ -20,6 +17,8 @@ in vec2 texCoordV;
 out vec4 colorOut;
 
 
+float minGain = 1.0;
+float maxGain = 10.0;
 
 vec2 convertCoords(vec2 coords){
     return vec2((coords.x + 1) / 2, (1 - coords.y) / 2);
@@ -43,6 +42,13 @@ float applyPTM(float a0, float a1, float a2, float a3, float a4, float a5){
 
     return i;
 }
+
+
+float calcModifiedGain(){
+    return minGain + (diffGain * ((maxGain - minGain) / 100));
+}
+
+
 
 
 float applyDiffuseGain(ivec4 coeffs1, ivec4 coeffs2, vec4 normal, float modGain){
@@ -69,17 +75,13 @@ void main() {
 
     vec2 ptmCoords = convertToPTMCoords(coords);
 
-    ivec4 redCoeffs1 = texelFetch(rVals1, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 redCoeffs2 = texelFetch(rVals2, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 greenCoeffs1 = texelFetch(gVals1, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 greenCoeffs2 = texelFetch(gVals2, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 blueCoeffs1 = texelFetch(bVals1, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 blueCoeffs2 = texelFetch(bVals2, ivec2(ptmCoords.x, ptmCoords.y), 0);
+    ivec4 lumVals1 = texelFetch(lumCoeffs1, ivec2(ptmCoords.x, ptmCoords.y), 0);
+    ivec4 lumVals2 = texelFetch(lumCoeffs2, ivec2(ptmCoords.x, ptmCoords.y), 0);
+    ivec4 rgbVals = texelFetch(rgbCoeffs, ivec2(ptmCoords.x, ptmCoords.y), 0);
     vec4 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0);
 
-    float red = applyDiffuseGain(redCoeffs1, redCoeffs2, normal, diffGain);
-    float green = applyDiffuseGain(greenCoeffs1, greenCoeffs2, normal, diffGain);
-    float blue = applyDiffuseGain(blueCoeffs1, blueCoeffs2, normal, diffGain);
+    float modGain = calcModifiedGain();
+    float lum = applyDiffuseGain(lumVals1, lumVals2, normal, diffGain) / 256.0;
 
-    colorOut = vec4(red, green, blue, 1);
+    colorOut = vec4(rgbVals.x * lum, rgbVals.y * lum, rgbVals.z * lum, 1);
 }
