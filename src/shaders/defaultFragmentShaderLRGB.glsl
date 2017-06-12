@@ -19,8 +19,7 @@ vec2 convertCoords(vec2 coords){
 
 
 vec2 convertToPTMCoords(vec2 coords){
-    return vec2(coords.x * imageWidth,
-                coords.y * imageHeight);
+    return vec2(coords.x * imageWidth, coords.y * imageHeight);
 }
 
 
@@ -36,9 +35,7 @@ float applyPTM(float a0, float a1, float a2, float a3, float a4, float a5){
     return i;
 }
 
-
-
-void main() {
+void main(){
     vec2 coords = convertCoords(texCoordV);
 
     vec2 ptmCoords = convertToPTMCoords(coords);
