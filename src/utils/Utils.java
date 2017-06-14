@@ -1,5 +1,7 @@
 package utils;
 
+import java.nio.IntBuffer;
+
 /**
  * Contains all the utility functions that are used throughout the viewer.
  *
@@ -33,13 +35,43 @@ public class Utils {
      * @param light     light vector
      * @return
      */
-    public static int calcIntensity(int[] coeffs, Vector3f light){
+    public static int calcIntensity(int[] coeffs, Vector2f light){
         //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
         double intensity =  (coeffs[0] * light.getX() * light.getX()) +
                 (coeffs[1] * light.getY() * light.getY()) +
                 (coeffs[2] * light.getX() * light.getY()) +
                 (coeffs[3] * light.getX()) +
                 (coeffs[4] * light.getY()) + coeffs[5];
+
+        //threshold these to an unsigned byte for RGB
+        if(intensity > 255){intensity = 255;}
+        else if(intensity < 0){intensity = 0;}
+
+        return (int) intensity;
+    }
+
+    public static int calcIntensity(int[] coeffs, float x, float y){
+        //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
+        double intensity =  (coeffs[0] * x * x) +
+                (coeffs[1] * y * y) +
+                (coeffs[2] * x * y) +
+                (coeffs[3] * x) +
+                (coeffs[4] * y) + coeffs[5];
+
+        //threshold these to an unsigned byte for RGB
+        if(intensity > 255){intensity = 255;}
+        else if(intensity < 0){intensity = 0;}
+
+        return (int) intensity;
+    }
+
+    public static int calcIntensity(IntBuffer coeffs1, IntBuffer coeffs2, int position, float x, float y){
+        //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
+        double intensity =  (coeffs1.get(position) * x * x) +
+                (coeffs1.get(position + 1) * y * y) +
+                (coeffs1.get(position + 2) * x * y) +
+                (coeffs2.get(position) * x) +
+                (coeffs2.get(position + 1) * y) + coeffs2.get(position + 2);
 
         //threshold these to an unsigned byte for RGB
         if(intensity > 255){intensity = 255;}

@@ -1,5 +1,6 @@
 package openGLWindow;
 
+import javafx.scene.image.Image;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -42,7 +43,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public abstract class PTMWindow implements Runnable{
 
     /**The ptm image that this window will display*/
-    protected PTMObject ptmObject;
+    public PTMObject ptmObject;
 
     /**Width of the ptmObject attribute that this window displays*/
     protected float imageWidth;
@@ -64,6 +65,15 @@ public abstract class PTMWindow implements Runnable{
 
     /**OpenGL reference for the specular enhancement fragment shader*/
     protected int specEnhanceProgram;
+
+    /**OpenGL reference for the normals unsharp masking fragment shader*/
+    protected int normUnsharpMaskProgram;
+
+    /**OpenGL reference for the image unsharp masking fragment shader*/
+    protected int imgUnsharpMaskProgram;
+
+    /**OpenGL reference for the coefficient unsharp masking fragment shader*/
+    protected int coeffUnsharpMaskProgram;
 
     /**OpenGL reference for the GLSL uniform "viewportX" found in the fragment shader */
     protected float viewportX = 0;
@@ -88,6 +98,18 @@ public abstract class PTMWindow implements Runnable{
 
     /**OpenGL reference for the GLSL uniform "specExConst" in specEnhanceFragmentShader.glsl*/
     protected int specExConstRef;
+
+    /**OpenGL reference for the GLSL uniform "normUnMaskGain" in normUnsharpMaskFragmentShader.glsl*/
+    protected int normUnMaskGainRef;
+
+    /**OpenGL reference for the GLSL uniform "normUnMaskEnv" in normUnsharpMaskFragmentShader.glsl*/
+    protected int normUnMaskEnvRef;
+
+    /**OpenGL reference for the GLSL uniform "imgUnMaskGain" in the image unsharp mask fragment shaders*/
+    protected int imgUnMaskGainRef;
+
+    /**OpenGL reference for the GLSL uniform "coeffUnMaskGain" in the image unsharp mask fragment shaders*/
+    protected int coeffUnMaskGainRef;
 
     /**OpenGL reference for the GLSL uniform "imageWidth" found in shaders*/
     protected int shaderWidth;
@@ -144,7 +166,6 @@ public abstract class PTMWindow implements Runnable{
     protected int reducedHeight;
 
 
-
     /**
      * Creates a new PTMWindow, setting the passed PTMObject as this window's PTMObject, which it will
      * display using the parameters in the RTIViewer window.
@@ -156,7 +177,6 @@ public abstract class PTMWindow implements Runnable{
 
         imageWidth = ptmObject.getWidth();
         imageHeight = ptmObject.getHeight();
-
     }
 
 
@@ -204,6 +224,26 @@ public abstract class PTMWindow implements Runnable{
             }
         });
 
+        //remove itself from the RTIViewer's list of windows upon close
+        glfwSetWindowCloseCallback(window, new GLFWWindowCloseCallbackI() {
+            @Override
+            public void invoke(long window) {
+                RTIViewer.removeWindow(PTMWindow.this);
+                glfwSetWindowShouldClose(window, true);
+            }
+        });
+
+
+        glfwSetWindowFocusCallback(window, new GLFWWindowFocusCallbackI() {
+            @Override
+            public void invoke(long window, boolean focused) {
+                if(focused){
+                    RTIViewer.setFocusedWindow(PTMWindow.this);
+                }
+            }
+        });
+
+
         //translates the window so it appears in the center of the screen
         try(MemoryStack stack = stackPush()){
             IntBuffer pWidth = stack.mallocInt(1);
@@ -234,7 +274,7 @@ public abstract class PTMWindow implements Runnable{
 
     /**
      * Creates a new OpenGL shader program from the vertex and fragment shader file locations passed. Checks the
-     * validity of both shaders and the validity of th ecompiled program, and throws an Exception if they are
+     * validity of both shaders and the validity of the compiled program, and throws an Exception if they are
      * invalid.
      *
      * @param type              which viewing filter the program should be represented by
@@ -260,6 +300,15 @@ public abstract class PTMWindow implements Runnable{
         }else if(type.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             specEnhanceProgram = GL20.glCreateProgram();
             currentProgram = specEnhanceProgram;
+        }else if(type.equals(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK)){
+            normUnsharpMaskProgram = GL20.glCreateProgram();
+            currentProgram = normUnsharpMaskProgram;
+        }else if(type.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
+            imgUnsharpMaskProgram = GL20.glCreateProgram();
+            currentProgram = imgUnsharpMaskProgram;
+        }else if(type.equals(RTIViewer.ShaderProgram.COEFF_UN_MASK)){
+            coeffUnsharpMaskProgram = GL20.glCreateProgram();
+            currentProgram = coeffUnsharpMaskProgram;
         }
 
         //create references for the vertex and fragment shaders, which are compiled in a bit
@@ -433,7 +482,15 @@ public abstract class PTMWindow implements Runnable{
             program = diffGainProgram;
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             program = specEnhanceProgram;
+        }else if(currentProgram.equals(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK)){
+            program = normUnsharpMaskProgram;
+        }else if(currentProgram.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
+            program = imgUnsharpMaskProgram;
+        }else if(currentProgram.equals(RTIViewer.ShaderProgram.COEFF_UN_MASK)){
+            program = coeffUnsharpMaskProgram;
         }
+
+
         //use this program and rebind all the references otherwise OpenGL seems to forget about them
         GL20.glUseProgram(program);
         bindShaderReferences(program, false);
@@ -450,6 +507,13 @@ public abstract class PTMWindow implements Runnable{
         glUniform1f(diffConstRef, normaliseShaderParam(RTIViewer.globalDiffColourVal, 0.0f, 1.0f));
         glUniform1f(specConstRef, normaliseShaderParam(RTIViewer.globalSpecularityVal, 0.0f, 1.0f));
         glUniform1f(specExConstRef, normaliseShaderParam(RTIViewer.globalHighlightSizeVal, 1.0f, 150.0f));
+
+        glUniform1f(normUnMaskGainRef, normaliseShaderParam(RTIViewer.globalNormUnMaskGain, 0.0f, 40.0f));
+        glUniform1f(normUnMaskEnvRef, normaliseShaderParam(RTIViewer.globalNormUnMaskEnv, 0.0f, 0.4f));
+
+        glUniform1f(imgUnMaskGainRef, normaliseShaderParam(RTIViewer.globalImgUnMaskGain, 0.01f, 4.0f));
+
+        glUniform1f(coeffUnMaskGainRef, normaliseShaderParam(RTIViewer.globalCoeffUnMaskGain, 0.01f, 6.0f));
     }
 
 
@@ -466,8 +530,9 @@ public abstract class PTMWindow implements Runnable{
         GL20.glDeleteProgram(normalsProgram);
         GL20.glDeleteProgram(diffGainProgram);
         GL20.glDeleteProgram(specEnhanceProgram);
-
-        //RTIViewer.removeWindow(this);
+        GL20.glDeleteProgram(normUnsharpMaskProgram);
+        GL20.glDeleteProgram(imgUnsharpMaskProgram);
+        GL20.glDeleteProgram(coeffUnsharpMaskProgram);
 
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);

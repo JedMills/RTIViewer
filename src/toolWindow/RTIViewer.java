@@ -9,6 +9,8 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.Light;
@@ -36,26 +38,40 @@ import java.util.ArrayList;
  */
 public class RTIViewer extends Application {
 
-    public Stage primaryStage;
-    private Light.Point light;
-    private Circle circle;
+    public static Stage primaryStage;
+    private static Scene mainScene;
+
+    public static int width = 400 ;
+    public static int height = 700;
+
 
     public static Utils.Vector2f globalLightPos = new Utils.Vector2f(0, 0);
     public static double globalDiffGainVal = FilterParamsPane.INITIAL_DIFF_GAIN_VAL;
     public static double globalDiffColourVal = FilterParamsPane.INITIAL_DIFF_COLOUR_VAL;
     public static double globalSpecularityVal = FilterParamsPane.INITIAL_SPEC_VAL;
     public static double globalHighlightSizeVal = FilterParamsPane.INITIAL_HIGHLIGHT_VAL;
+    public static double globalNormUnMaskGain = FilterParamsPane.INITIAL_NORM_UN_MASK_GAIN_VAL;
+    public static double globalNormUnMaskEnv = FilterParamsPane.INITIAL_NORM_UN_MASK_ENV_VAL;
+    public static double globalImgUnMaskGain = FilterParamsPane.INITIAL_IMG_UN_MASK_GAIN_VAL;
+    public static double globalCoeffUnMaskGain = FilterParamsPane.INITIAL_COEFF_UN_MASK_GAIN_VAL;
 
-    private Spinner<Double> xPosBox, yPosBox;
+    private LightControlGroup lightControlGroup;
+    private ComboBox<String> filterTypeBox;
     private FilterParamsPane paramsPane;
+    private static BottomTabPane bottomTabPane;
 
-    private enum LightEditor{CIRCLE, XSPINNER, YSPINNER;}
-    public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE;}
-    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE;}
+    public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
+                            IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN;}
+
+
+    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
+                                COEFF_UN_MASK;}
 
     public static ShaderProgram currentProgram = ShaderProgram.DEFAULT;
 
-    public Alert entryAlert;
+    public static PTMWindow selectedWindow;
+
+    public static Alert entryAlert;
     public static Alert fileReadingAlert;
     public final FileChooser fileChooser = new FileChooser();
 
@@ -65,13 +81,33 @@ public class RTIViewer extends Application {
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
 
+        this.primaryStage.setMinWidth(300);
+        this.primaryStage.setMinHeight(600);
+        this.primaryStage.setMaxWidth(600);
+        this.primaryStage.setMaxHeight(1000);
+
+
         this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                //for(PTMWindow ptmWindow : ptmWindows){
-                //    ptmWindow.setShouldClose(true);
-                //}
+                for(PTMWindow ptmWindow : ptmWindows){
+                    ptmWindow.setShouldClose(true);
+                }
                 Platform.exit();
+            }
+        });
+
+        this.primaryStage.widthProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                resizeGUI();
+            }
+        });
+
+        this.primaryStage.heightProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                resizeGUI();
             }
         });
 
@@ -80,9 +116,9 @@ public class RTIViewer extends Application {
         createAlerts();
         MenuBarListener.init(this);
 
-        Scene scene = createScene(primaryStage);
-        primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
+        mainScene = createScene(primaryStage);
+        primaryStage.setScene(mainScene);
+        primaryStage.setResizable(true);
         primaryStage.show();
     }
 
@@ -97,38 +133,58 @@ public class RTIViewer extends Application {
 
     private Scene createScene(Stage primaryStage){
         FlowPane flowPane = new FlowPane();
-        Scene scene = new Scene(flowPane, 400, 600);
+        Scene scene = new Scene(flowPane, width, height);
 
         MenuBar menuBar = createMenuBar(primaryStage);
         flowPane.getChildren().add(menuBar);
 
-        Pane lightControlGroup = createLightControl(primaryStage, flowPane);
+        lightControlGroup = new LightControlGroup(this, primaryStage, flowPane);
         flowPane.getChildren().add(lightControlGroup);
 
-        ComboBox<String> comboBox = createFilterChoiceBox();
-        flowPane.getChildren().add(comboBox);
+        filterTypeBox = createFilterChoiceBox();
+        flowPane.getChildren().add(filterTypeBox);
 
-        paramsPane = new FilterParamsPane(this, scene, comboBox);
+        paramsPane = new FilterParamsPane(this, scene, filterTypeBox);
         flowPane.getChildren().add(paramsPane);
 
+        bottomTabPane = new BottomTabPane(this, scene);
+        flowPane.getChildren().add(bottomTabPane);
+
         flowPane.setMargin(lightControlGroup, new Insets(20, 0, 0, 20));
-        flowPane.setMargin(comboBox, new Insets(20, 0, 0, (scene.getWidth() / 2) - (comboBox.getPrefWidth() / 2) ));
-        flowPane.setMargin(paramsPane, new Insets(20, 0, 0, 20));
+        flowPane.setMargin(filterTypeBox, new Insets(20, 0, 0, 0));
+        flowPane.setMargin(paramsPane, new Insets(20, 0, 0, 0));
+        flowPane.setMargin(bottomTabPane, new Insets(20, 0, 0, 0));
+        flowPane.setAlignment(Pos.TOP_CENTER);
         return scene;
     }
 
 
     private MenuBar createMenuBar(Stage primaryStage){
         MenuBar menuBar = new MenuBar();
+
         Menu menuFile = new Menu("File");
         MenuItem open = new MenuItem("Open");
-
         open.setOnAction(MenuBarListener.getInstance());
         open.setId("open");
+        MenuItem save = new MenuItem("Save");
+        save.setOnAction(MenuBarListener.getInstance());
+        save.setId("save");
+        MenuItem close = new MenuItem("Close");
+        close.setOnAction(MenuBarListener.getInstance());
+        close.setId("close");
+        MenuItem closePTMWindow = new MenuItem("Close image");
+        closePTMWindow.setOnAction(MenuBarListener.getInstance());
+        closePTMWindow.setId("closePTMWindow");
 
-        menuFile.getItems().add(open);
+        menuFile.getItems().addAll(open, close, save, closePTMWindow);
 
         Menu menuEdit = new Menu("Edit");
+        MenuItem preferences = new MenuItem("Preferences");
+        preferences.setOnAction(MenuBarListener.getInstance());
+        preferences.setId("preferences");
+
+        menuEdit.getItems().addAll(preferences);
+
         Menu menuView = new Menu("View");
         menuBar.getMenus().addAll(menuFile, menuEdit, menuView);
         menuBar.prefWidthProperty().bind(primaryStage.widthProperty());
@@ -137,174 +193,18 @@ public class RTIViewer extends Application {
     }
 
 
-    private Pane createLightControl(Stage primaryStage, FlowPane parent){
-        Pane pane = new Pane();
-
-        Circle circle = createSpecularBall(primaryStage, pane);
-
-        pane.getChildren().add(circle);
-        circle.setLayoutX(circle.getRadius());
-        circle.setLayoutY(circle.getRadius());
-
-        Label xPosLabel = new Label("Light X:");
-        xPosLabel.setLayoutX(2 * circle.getRadius() + 40);
-        xPosLabel.setLayoutY(40);
-
-        Label yPosLabel = new Label("Light Y:");
-        yPosLabel.setLayoutX(2 * circle.getRadius() + 40);
-        yPosLabel.setLayoutY(70);
-
-        xPosBox = new Spinner<Double>(-1.0, 1.0, 0.0, 0.01);
-        xPosBox.setEditable(true);
-        xPosBox.setPrefWidth(80);
-        xPosBox.setLayoutX(2 * circle.getRadius() + 90);
-        xPosBox.setLayoutY(37);
-        xPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                try {
-                    Float value = Float.parseFloat(xPosBox.getEditor().getText());
-                    updateGlobalLightPos(new Utils.Vector2f(value, globalLightPos.y), LightEditor.XSPINNER);
-                }catch(NumberFormatException e){
-                    entryAlert.setContentText("Invalid entry for light X position.");
-                    entryAlert.showAndWait();
-                }
-            }
-        });
-
-       xPosBox.valueProperty().addListener(new ChangeListener<Double>() {
-           @Override
-           public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
-               Float value = Float.parseFloat(xPosBox.getEditor().getText());
-               updateGlobalLightPos(new Utils.Vector2f(value, globalLightPos.y), LightEditor.XSPINNER);
-           }
-       });
-
-        yPosBox = new Spinner<Double>(-1.0, 1.0, 0.0, 0.01);
-        yPosBox.setEditable(true);
-        yPosBox.setPrefWidth(80);
-        yPosBox.setLayoutX(2 * circle.getRadius() + 90);
-        yPosBox.setLayoutY(67);
-        yPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                try {
-                    Float value = Float.parseFloat(yPosBox.getEditor().getText());
-                    updateGlobalLightPos(new Utils.Vector2f(globalLightPos.x, value), LightEditor.YSPINNER);
-                }catch(NumberFormatException e){
-                    entryAlert.setContentText("Invalid entry for light Y position.");
-                    entryAlert.showAndWait();
-                }
-            }
-        });
-
-        yPosBox.valueProperty().addListener(new ChangeListener<Double>() {
-            @Override
-            public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
-                Float value = Float.parseFloat(yPosBox.getEditor().getText());
-                updateGlobalLightPos(new Utils.Vector2f(globalLightPos.x, value), LightEditor.YSPINNER);
-            }
-        });
-
-        pane.getChildren().addAll(xPosLabel, xPosBox, yPosLabel, yPosBox);
-
-        return pane;
-    }
-
-
-    private Circle createSpecularBall(Stage primaryStage, Pane parentGroup){
-        circle = new Circle();
-        circle.setRadius(100.0);
-        circle.setFill(Paint.valueOf("#d3d3d3"));
-        light = new Light.Point();
-        light.setColor(Color.WHITE);
-
-        light.setX(circle.getRadius());
-        light.setY(circle.getRadius());
-        light.setZ(25);
-
-        Lighting lighting = new Lighting();
-        lighting.setLight(light);
-        circle.setEffect(lighting);
-
-
-        circle.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if(event.getX() > circle.getCenterX() - circle.getRadius()
-                        && event.getX() < circle.getCenterX() + circle.getRadius()
-                        && event.getY() > circle.getCenterY() - circle.getRadius()
-                        && event.getY() < circle.getCenterY() + circle.getRadius()) {
-                    light.setX(event.getX() + 100);
-                    light.setY(event.getY() + 100);
-                    Utils.Vector2f normalised = calculateNormalisedLight(light, circle);
-                    updateGlobalLightPos(normalised, LightEditor.CIRCLE);
-                }
-            }
-        });
-
-        circle.setOnMouseDragged(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if(event.getX() > circle.getCenterX() - circle.getRadius()
-                    && event.getX() < circle.getCenterX() + circle.getRadius()
-                    && event.getY() > circle.getCenterY() - circle.getRadius()
-                    && event.getY() < circle.getCenterY() + circle.getRadius()) {
-                    light.setX(event.getX() + 100);
-                    light.setY(event.getY() + 100);
-                }else{
-                    double theta = Math.atan2(event.getY(), event.getX()) + Math.PI;
-                    double x = circle.getRadius() - (circle.getRadius() * Math.cos(theta));
-                    double y = circle.getRadius() - (circle.getRadius() * Math.sin(theta));
-                    light.setX(x);
-                    light.setY(y);
-                }
-                Utils.Vector2f normalised = calculateNormalisedLight(light, circle);
-                updateGlobalLightPos(normalised, LightEditor.CIRCLE);
-            }
-        });
-
-        return circle;
-    }
-
-
-    private void updateGlobalLightPos(Utils.Vector2f newLight, LightEditor source){
-        if(newLight.length() > 1.0) {
-            globalLightPos = newLight.normalise();
-        }else{
-            globalLightPos = newLight;
-        }
-        updateLightControls(source);
-    }
-
-    private void updateLightControls(LightEditor source){
-        if(!source.equals(LightEditor.CIRCLE)) {
-            light.setX(globalLightPos.x * circle.getRadius() + circle.getLayoutX());
-            light.setY(-globalLightPos.y * circle.getRadius() + circle.getLayoutY());
-        }
-        if(!source.equals(LightEditor.XSPINNER)){
-            xPosBox.getValueFactory().setValue((double)globalLightPos.x);
-        }
-        else if(!source.equals(LightEditor.YSPINNER)){
-            yPosBox.getValueFactory().setValue((double)globalLightPos.y);
-        }
-    }
-
-    private Utils.Vector2f calculateNormalisedLight(Light.Point light, Circle circle){
-        double x = (light.getX() - circle.getRadius()) / circle.getRadius();
-        double y = -(light.getY() - circle.getRadius()) / circle.getRadius();
-        return new Utils.Vector2f((float)x, (float)y);
-    }
-
 
     private ComboBox<String> createFilterChoiceBox(){
         ObservableList<String> options = FXCollections.observableArrayList(
                 "Default view",
                 "Normals visualisation",
                 "Diffuse gain",
-                "Specular enhancement"
+                "Specular enhancement",
+                "Normal unsharp masking",
+                "Image unsharp masking",
+                "Coefficient unsharp masking"
         );
-        ComboBox<String> comboBox = new ComboBox<>(options);
+        final ComboBox<String> comboBox = new ComboBox<>(options);
         comboBox.getSelectionModel().select(0);
         comboBox.setPrefWidth(180);
         comboBox.setOnAction(new EventHandler<ActionEvent>() {
@@ -315,7 +215,6 @@ public class RTIViewer extends Application {
             }
         });
 
-        //return selectorBox;
         return comboBox;
     }
 
@@ -330,6 +229,10 @@ public class RTIViewer extends Application {
         else if(param.equals(GlobalParam.DIFF_COLOUR)){globalDiffColourVal = value;}
         else if(param.equals(GlobalParam.SPECULARITY)){globalSpecularityVal = value;}
         else if(param.equals(GlobalParam.HIGHTLIGHT_SIZE)){globalHighlightSizeVal = value;}
+        else if(param.equals(GlobalParam.NORM_UN_MASK_GAIN)){globalNormUnMaskGain = value;}
+        else if(param.equals(GlobalParam.NORM_UN_MASK_ENV)){globalNormUnMaskEnv = value;}
+        else if(param.equals(GlobalParam.IMG_UN_MASK_GAIN)){globalImgUnMaskGain = value;}
+        else if(param.equals(GlobalParam.COEFF_UN_MASK_GAIN)){globalCoeffUnMaskGain = value;}
     }
 
     public static void createNewPTMWindow(PTMObject ptmObject){
@@ -358,6 +261,9 @@ public class RTIViewer extends Application {
         else if(filterType.equals("Normals visualisation")){programToSet = ShaderProgram.NORMALS;}
         else if(filterType.equals("Diffuse gain")){programToSet = ShaderProgram.DIFF_GAIN;}
         else if(filterType.equals("Specular enhancement")){programToSet = ShaderProgram.SPEC_ENHANCE;}
+        else if(filterType.equals("Normal unsharp masking")){programToSet = ShaderProgram.NORM_UNSHARP_MASK;}
+        else if(filterType.equals("Image unsharp masking")){programToSet = ShaderProgram.IMG_UNSHARP_MASK;}
+        else if(filterType.equals("Coefficient unsharp masking")){programToSet = ShaderProgram.COEFF_UN_MASK;}
 
         currentProgram = programToSet;
 
@@ -371,7 +277,44 @@ public class RTIViewer extends Application {
         for(PTMWindow ptmWindow : ptmWindows){
             if (ptmWindow.equals(window)){
                 ptmWindows.remove(window);
+                setNoFocusedWindow();
+                break;
             }
         }
+    }
+
+    public static void setCursor(Cursor cursor){
+        mainScene.setCursor(cursor);
+    }
+
+
+    public static void setFocusedWindow(PTMWindow ptmWindow){
+        selectedWindow = ptmWindow;
+        bottomTabPane.setFileText(ptmWindow.ptmObject.getFileName());
+        bottomTabPane.setWidthText(String.valueOf(ptmWindow.ptmObject.getWidth()));
+        bottomTabPane.setHeightText(String.valueOf(ptmWindow.ptmObject.getHeight()));
+
+        if(ptmWindow instanceof PTMWindowRGB){
+            bottomTabPane.setFormatText("PTM RGB");
+        }else if(ptmWindow instanceof PTMWindowLRGB){
+            bottomTabPane.setFormatText("PTM LRGB");
+        }
+
+        bottomTabPane.setPreviewImage(ptmWindow.ptmObject.previewImage);
+    }
+
+    private static void setNoFocusedWindow(){
+        selectedWindow = null;
+        bottomTabPane.setFileText("");
+        bottomTabPane.setWidthText("");
+        bottomTabPane.setHeightText("");
+        bottomTabPane.setFormatText("");
+        bottomTabPane.setDefaultImage();
+    }
+
+
+    private void resizeGUI(){
+        lightControlGroup.updateSize(primaryStage.getWidth(), primaryStage.getHeight() / 4);
+        filterTypeBox.setPrefWidth(primaryStage.getWidth() / 1.5);
     }
 }

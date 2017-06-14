@@ -1,5 +1,7 @@
 package ptmCreation;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import org.lwjgl.BufferUtils;
 import utils.Utils;
 
@@ -22,6 +24,8 @@ public abstract class PTMObject {
 
     /**Contains the surface normals calculated from the PTM file*/
     protected FloatBuffer normals;
+
+    public WritableImage previewImage;
 
     /**
      * Creates a new PTMObject. Sets the passed parameters as relevant attributes.

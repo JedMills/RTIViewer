@@ -1,8 +1,16 @@
 package ptmCreation;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import org.lwjgl.BufferUtils;
 import utils.Utils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.nio.IntBuffer;
 
 /**
@@ -33,6 +41,7 @@ public class PTMObjectRGB extends PTMObject {
         blueVals2 = texelData[5];
 
         calculateNormals();
+        createPreviewImage();
     }
 
 
@@ -72,6 +81,26 @@ public class PTMObjectRGB extends PTMObject {
             normals.put(i * 3, temp.getX());
             normals.put(i * 3 + 1, temp.getY());
             normals.put(i * 3 + 2, temp.getZ());
+        }
+    }
+
+    private void createPreviewImage(){
+        previewImage = new WritableImage(width, height);
+
+
+        int position;
+        float red, green, blue;
+        for(int y = 0; y < height; y++){
+            for(int x = 0; x < width; x++){
+                position = ((y * width) + x) * 3;
+
+                red = Utils.calcIntensity(redVals1, redVals2, position, 0, 0) / 255.0f;
+                green = Utils.calcIntensity(greenVals1, greenVals2, position, 0, 0) / 255.0f;
+                blue = Utils.calcIntensity(blueVals1, blueVals2, position, 0, 0) / 255.0f;
+
+
+                previewImage.getPixelWriter().setColor(x, y, Color.color(red, green, blue));
+            }
         }
     }
 

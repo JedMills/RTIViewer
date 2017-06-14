@@ -8,6 +8,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 
@@ -26,6 +27,10 @@ public class FilterParamsPane extends Pane {
     public static final double INITIAL_DIFF_COLOUR_VAL = 0.0;
     public static final double INITIAL_SPEC_VAL = 0.0;
     public static final double INITIAL_HIGHLIGHT_VAL = 0.0;
+    public static final double INITIAL_NORM_UN_MASK_GAIN_VAL = 0.0;
+    public static final double INITIAL_NORM_UN_MASK_ENV_VAL = 0.0;
+    public static final double INITIAL_IMG_UN_MASK_GAIN_VAL = 0.0;
+    public static final double INITIAL_COEFF_UN_MASK_GAIN_VAL = 0.0;
 
     private Label gainLabel;
     private Slider gainSlider;
@@ -43,6 +48,22 @@ public class FilterParamsPane extends Pane {
     private Slider seHighlightSlider;
     private Spinner<Double> seHighlightSpinner;
 
+    private Label normUnMaskGainLabel;
+    private Slider normUnMaskGainSlider;
+    private Spinner<Double> normUnMaskGainSpinner;
+
+    private Label normUnMaskEnvLabel;
+    private Slider normUnMaskEnvSlider;
+    private Spinner<Double> normUnMaskEnvSpinner;
+
+    private Label imgUnMaskGainLabel;
+    private Slider imgUnMaskGainSlider;
+    private Spinner<Double> imgUnMaskGainSpinner;
+
+    private Label coeffUnMaskGainLabel;
+    private Slider coeffUnMaskGainSlider;
+    private Spinner<Double> coeffUnMaskGainSpinner;
+
     private Control[] allControls;
 
     public FilterParamsPane(RTIViewer toolWindow, Scene parent, ComboBox<String> filterChoiceBox) {
@@ -55,9 +76,14 @@ public class FilterParamsPane extends Pane {
         setHeight(200);
         createComponents();
 
-         allControls = new Control[]{gainLabel, gainSlider, gainSpinner, seColourLabel, seColourSlider,
-                seColourSpinner, seSpecLabel, seSpecSlider, seSpecSpinner,
-                seHighlightLabel, seHighlightSlider, seHighlightSpinner};
+         allControls = new Control[]{   gainLabel,              gainSlider,             gainSpinner,
+                                        seColourLabel,          seColourSlider,         seColourSpinner,
+                                        seSpecLabel,            seSpecSlider,           seSpecSpinner,
+                                        seHighlightLabel,       seHighlightSlider,      seHighlightSpinner,
+                                        normUnMaskGainLabel,    normUnMaskGainSlider,   normUnMaskGainSpinner,
+                                        normUnMaskEnvLabel,     normUnMaskEnvSlider,    normUnMaskEnvSpinner,
+                                        imgUnMaskGainLabel,     imgUnMaskGainSlider,    imgUnMaskGainSpinner,
+                                        coeffUnMaskGainLabel,   coeffUnMaskGainSlider,  coeffUnMaskGainSpinner};
 
         hideAllItems();
     }
@@ -70,8 +96,12 @@ public class FilterParamsPane extends Pane {
         GridPane gridPane = new GridPane();
         gridPane.setHgap(20);
         gridPane.setVgap(20);
+
         createDiffGainComponents(gridPane);
         createSpecularEnhanceComponents(gridPane);
+        createNormUnsharpMaskComponents(gridPane);
+        createImgUnsharpMaskComponents(gridPane);
+        createCoeffUnsharpMaskComponents(gridPane);
 
         getChildren().add(gridPane);
     }
@@ -130,6 +160,59 @@ public class FilterParamsPane extends Pane {
     }
 
 
+    private void createNormUnsharpMaskComponents(GridPane gridPane){
+        normUnMaskGainLabel = new Label("Gain");
+        normUnMaskGainSlider = new Slider(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL);
+        normUnMaskGainSpinner = new Spinner<>(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL, 1.0);
+        setupSliderSpinnerPair(normUnMaskGainSlider, normUnMaskGainSpinner, "Invalid entry for normals unsharp masking gain slider",
+                RTIViewer.GlobalParam.NORM_UN_MASK_GAIN);
+
+        normUnMaskEnvLabel = new Label("Environment");
+        normUnMaskEnvSlider = new Slider(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL);
+        normUnMaskEnvSpinner = new Spinner<>(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL, 1.0);
+        setupSliderSpinnerPair(normUnMaskEnvSlider, normUnMaskEnvSpinner, "Invalid entry for normals unsharp masking environment slider",
+                RTIViewer.GlobalParam.NORM_UN_MASK_ENV);
+
+        GridPane.setConstraints(normUnMaskGainLabel, 0, 0);
+        GridPane.setConstraints(normUnMaskGainSlider, 1, 0);
+        GridPane.setConstraints(normUnMaskGainSpinner, 2, 0);
+
+        GridPane.setConstraints(normUnMaskEnvLabel, 0, 1);
+        GridPane.setConstraints(normUnMaskEnvSlider, 1, 1);
+        GridPane.setConstraints(normUnMaskEnvSpinner, 2, 1);
+
+        gridPane.getChildren().addAll(normUnMaskGainLabel,  normUnMaskGainSlider,   normUnMaskGainSpinner,
+                                      normUnMaskEnvLabel,   normUnMaskEnvSlider,    normUnMaskEnvSpinner);
+    }
+
+    private void createImgUnsharpMaskComponents(GridPane gridPane){
+        imgUnMaskGainLabel = new Label("Gain");
+        imgUnMaskGainSlider = new Slider(0.0, 100.0, INITIAL_IMG_UN_MASK_GAIN_VAL);
+        imgUnMaskGainSpinner = new Spinner<>(0.0, 100.0, INITIAL_IMG_UN_MASK_GAIN_VAL, 1.0);
+        setupSliderSpinnerPair(imgUnMaskGainSlider, imgUnMaskGainSpinner, "Invalid entry for image unsharp masking gain slider",
+                RTIViewer.GlobalParam.IMG_UN_MASK_GAIN);
+
+        GridPane.setConstraints(imgUnMaskGainLabel, 0, 0);
+        GridPane.setConstraints(imgUnMaskGainSlider, 1, 0);
+        GridPane.setConstraints(imgUnMaskGainSpinner, 2, 0);
+
+        gridPane.getChildren().addAll(imgUnMaskGainLabel, imgUnMaskGainSlider, imgUnMaskGainSpinner);
+    }
+
+    private void createCoeffUnsharpMaskComponents(GridPane gridPane){
+        coeffUnMaskGainLabel = new Label("Gain");
+        coeffUnMaskGainSlider = new Slider(0.0, 100.0, INITIAL_COEFF_UN_MASK_GAIN_VAL);
+        coeffUnMaskGainSpinner = new Spinner<>(0.0, 100.0, INITIAL_COEFF_UN_MASK_GAIN_VAL, 1.0);
+        setupSliderSpinnerPair(coeffUnMaskGainSlider, coeffUnMaskGainSpinner, "Invalid entry for coefficient unsharp masking gain slider",
+                RTIViewer.GlobalParam.COEFF_UN_MASK_GAIN);
+
+        GridPane.setConstraints(coeffUnMaskGainLabel, 0, 0);
+        GridPane.setConstraints(coeffUnMaskGainSlider, 1, 0);
+        GridPane.setConstraints(coeffUnMaskGainSpinner, 2, 0);
+
+        gridPane.getChildren().addAll(coeffUnMaskGainLabel, coeffUnMaskGainSlider, coeffUnMaskGainSpinner);
+    }
+
     private void setupSliderSpinnerPair(Slider slider, Spinner spinner, String warningText,
                                         RTIViewer.GlobalParam globalParam){
 
@@ -176,6 +259,18 @@ public class FilterParamsPane extends Pane {
         }
         else if(filterType.equals("Specular enhancement")){
             for(int i = 3; i <= 11; i++){
+                allControls[i].setVisible(true);
+            }
+        }else if(filterType.equals("Normal unsharp masking")){
+            for(int i = 12; i <= 17; i++){
+                allControls[i].setVisible(true);
+            }
+        }else if(filterType.equals("Image unsharp masking")){
+            for(int i = 18; i <= 20; i++){
+                allControls[i].setVisible(true);
+            }
+        }else if(filterType.equals("Coefficient unsharp masking")){
+            for(int i = 21; i <= 23; i++){
                 allControls[i].setVisible(true);
             }
         }

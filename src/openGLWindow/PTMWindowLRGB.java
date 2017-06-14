@@ -50,6 +50,12 @@ public class PTMWindowLRGB extends PTMWindow {
         specConstRef = glGetUniformLocation(programID, "specConst");
         specExConstRef = glGetUniformLocation(programID, "specExConst");
 
+        normUnMaskGainRef = glGetUniformLocation(programID, "normUnMaskGain");
+        normUnMaskEnvRef = glGetUniformLocation(programID, "normUnMaskEnv");
+
+        imgUnMaskGainRef = glGetUniformLocation(programID, "imgUnMaskGain");
+
+        coeffUnMaskGainRef = glGetUniformLocation(programID, "coeffUnMaskGain");
     }
 
     @Override
@@ -75,17 +81,27 @@ public class PTMWindowLRGB extends PTMWindow {
     @Override
     protected void createShaders() throws Exception {
         createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/defaultFragmentShaderLRGB.glsl");
+                "src/shaders/lrgbShaders/defaultFragmentShaderLRGB.glsl");
 
         createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/normalsFragmentShaderLRGB.glsl");
+                "src/shaders/lrgbShaders/normalsFragmentShaderLRGB.glsl");
 
 
         createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/diffuseGainFragmentShaderLRGB.glsl");
+                "src/shaders/lrgbShaders/diffuseGainFragmentShaderLRGB.glsl");
 
 
         createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/specEnhanceFragmentShaderLRGB.glsl");
+                "src/shaders/lrgbShaders/specEnhanceFragmentShaderLRGB.glsl");
+
+
+        /*
+        createShader(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/rgbShaders/normUnsharpMaskFragmentShaderLRGB.glsl");
+        */
+
+        createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/lrgbShaders/imgUnsharpMaskFragmentShaderLRGB.glsl");
+
     }
 }

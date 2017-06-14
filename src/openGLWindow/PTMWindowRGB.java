@@ -49,19 +49,27 @@ public class PTMWindowRGB extends PTMWindow {
      */
     protected void createShaders() throws Exception{
         createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/defaultFragmentShader.glsl");
+                "src/shaders/rgbShaders/defaultFragmentShader.glsl");
 
         createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/normalsFragmentShader.glsl");
+                "src/shaders/rgbShaders/normalsFragmentShader.glsl");
 
 
         createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/diffuseGainFragmentShader.glsl");
+                "src/shaders/rgbShaders/diffuseGainFragmentShader.glsl");
 
 
         createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/specEnhanceFragmentShader.glsl");
+                "src/shaders/rgbShaders/specEnhanceFragmentShader.glsl");
 
+        createShader(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/rgbShaders/normUnhsharpMaskFragmentShader.glsl");
+
+        createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/rgbShaders/imgUnhsharpMaskFragmentShader.glsl");
+
+        createShader(RTIViewer.ShaderProgram.COEFF_UN_MASK,"src/shaders/defaultVertexShader.glsl",
+                "src/shaders/rgbShaders/coeffUnhsharpMaskFragmentShader.glsl");
     }
 
 
@@ -103,6 +111,13 @@ public class PTMWindowRGB extends PTMWindow {
         diffConstRef = glGetUniformLocation(programID, "diffConst");
         specConstRef = glGetUniformLocation(programID, "specConst");
         specExConstRef = glGetUniformLocation(programID, "specExConst");
+
+        normUnMaskGainRef = glGetUniformLocation(programID, "normUnMaskGain");
+        normUnMaskEnvRef = glGetUniformLocation(programID, "normUnMaskEnv");
+
+        imgUnMaskGainRef = glGetUniformLocation(programID, "imgUnMaskGain");
+
+        coeffUnMaskGainRef = glGetUniformLocation(programID, "coeffUnMaskGain");
     }
 
     /**
