@@ -27,35 +27,13 @@ public class PTMWindowLRGB extends PTMWindow {
         this.ptmObject = ptmObject;
     }
 
+
     @Override
-    protected void bindShaderReferences(int programID, boolean setTextures) {
-        shaderWidth = glGetUniformLocation(programID, "imageWidth");
-        shaderHeight = glGetUniformLocation(programID, "imageHeight");
-        imageScaleRef = glGetUniformLocation(programID, "imageScale");
-        shaderViewportX = glGetUniformLocation(programID, "viewportX");
-        shaderViewportY = glGetUniformLocation(programID, "viewportY");
-
-        shaderLightX = glGetUniformLocation(programID, "lightX");
-        shaderLightY = glGetUniformLocation(programID, "lightY");
-
-        if(setTextures){
-            lumCoeffs1Ref = glGetUniformLocation(programID, "lumCoeffs1");
-            lumCoeffs2Ref = glGetUniformLocation(programID, "lumCoeffs2");
-            rgbCoeffsRef = glGetUniformLocation(programID, "rgbCoeffs");
-            normalsRef = glGetUniformLocation(programID, "normals");
-        }
-
-        diffGainRef = glGetUniformLocation(programID, "diffGain");
-        diffConstRef = glGetUniformLocation(programID, "diffConst");
-        specConstRef = glGetUniformLocation(programID, "specConst");
-        specExConstRef = glGetUniformLocation(programID, "specExConst");
-
-        normUnMaskGainRef = glGetUniformLocation(programID, "normUnMaskGain");
-        normUnMaskEnvRef = glGetUniformLocation(programID, "normUnMaskEnv");
-
-        imgUnMaskGainRef = glGetUniformLocation(programID, "imgUnMaskGain");
-
-        coeffUnMaskGainRef = glGetUniformLocation(programID, "coeffUnMaskGain");
+    protected void bindSpecificShaderTextures(int programID) {
+        lumCoeffs1Ref = glGetUniformLocation(programID, "lumCoeffs1");
+        lumCoeffs2Ref = glGetUniformLocation(programID, "lumCoeffs2");
+        rgbCoeffsRef = glGetUniformLocation(programID, "rgbCoeffs");
+        normalsRef = glGetUniformLocation(programID, "normals");
     }
 
     @Override

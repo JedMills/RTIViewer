@@ -1,5 +1,6 @@
 package toolWindow;
 
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -9,10 +10,14 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
+import openGLWindow.PTMWindow;
+import openGLWindow.PTMWindowLRGB;
+import openGLWindow.PTMWindowRGB;
 
 
 /**
@@ -22,7 +27,6 @@ public class BottomTabPane extends TabPane {
 
     private RTIViewer rtiViewer;
     private Scene parent;
-    private FlowPane previewFlowPane;
     private GridPane previewGridPane;
     private TextField fileName;
     private TextField imageWidthBox;
@@ -33,6 +37,8 @@ public class BottomTabPane extends TabPane {
     private Image defaultImage;
 
     private VBox vBox;
+    private StackPane imageContainerPane;
+    private Rectangle previewWindowRect;
 
     public BottomTabPane(RTIViewer rtiViewer, Scene parent){
         super();
@@ -82,16 +88,7 @@ public class BottomTabPane extends TabPane {
         imageFormat = new TextField("");
         imageFormat.setEditable(false);
 
-        imageBorderPane = new BorderPane();
-
-        imagePreview = new ImageView();
-        imagePreview.setPreserveRatio(true);
-        imageBorderPane.setCenter(imagePreview);
-
-        imagePreview.fitWidthProperty().bind(imageBorderPane.widthProperty());
-        imagePreview.fitHeightProperty().bind(imageBorderPane.heightProperty());
-
-        imagePreview.setImage(defaultImage);
+        createImagePreview();
 
         GridPane.setConstraints(fileNameLabel, 0, 0, 1, 1);
         GridPane.setConstraints(fileName, 1, 0, 5, 1);
@@ -120,6 +117,40 @@ public class BottomTabPane extends TabPane {
     }
 
 
+    private void createImagePreview(){
+        imageBorderPane = new BorderPane();
+
+        imagePreview = new ImageView();
+        imagePreview.setPreserveRatio(true);
+
+        previewWindowRect = new Rectangle(0, 0, 30 ,30);
+        previewWindowRect.setFill(Color.TRANSPARENT);
+        previewWindowRect.setStrokeWidth(2);
+
+        imageContainerPane = new StackPane(imagePreview, previewWindowRect);
+        imageContainerPane.setMinWidth(0);
+        imageContainerPane.setMinHeight(0);
+
+        imageBorderPane.setCenter(imageContainerPane);
+        imageBorderPane.setMinWidth(0);
+        imageBorderPane.setMinHeight(0);
+
+        imagePreview.fitWidthProperty().bind(imageBorderPane.widthProperty());
+        imagePreview.fitHeightProperty().bind(imageBorderPane.heightProperty());
+
+        imageContainerPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                double normX = (2 * (event.getX() - (imageContainerPane.getWidth() / 2)) / imagePreview.getBoundsInParent().getWidth());
+                double normY = (-2 * (event.getY() - (imageContainerPane.getHeight() / 2)) / imagePreview.getBoundsInParent().getHeight());
+                System.out.println(normX + ", " + normY);
+            }
+        });
+
+        setDefaultImage();
+    }
+
+
     public void setFileText(String text){
         fileName.setText(text);
     }
@@ -140,12 +171,14 @@ public class BottomTabPane extends TabPane {
         imagePreview.setImage(image);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
         imageBorderPane.setStyle("-fx-background-color: #000000;");
+        previewWindowRect.setStroke(Color.RED);
     }
 
     public void setDefaultImage(){
         imagePreview.setImage(defaultImage);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
         imageBorderPane.setStyle("-fx-background-color: #ffffff;");
+        previewWindowRect.setStroke(Color.TRANSPARENT);
     }
 
     public void updateSize(double width, double height){
@@ -160,9 +193,30 @@ public class BottomTabPane extends TabPane {
         imageHeightBox.setPrefWidth(width / 6);
         imageFormat.setPrefWidth(width / 6);
 
-        imageBorderPane.setMinWidth(0);
-        imageBorderPane.setMinHeight(0);
-
         imageBorderPane.setPrefHeight(getPrefHeight() - 45);
+    }
+
+
+    public void updateSelectedWindow(PTMWindow ptmWindow){
+        setFileText(ptmWindow.ptmObject.getFileName());
+        setWidthText(String.valueOf(ptmWindow.ptmObject.getWidth()));
+        setHeightText(String.valueOf(ptmWindow.ptmObject.getHeight()));
+
+        if(ptmWindow instanceof PTMWindowRGB){
+            setFormatText("PTM RGB");
+        }else if(ptmWindow instanceof PTMWindowLRGB){
+            setFormatText("PTM LRGB");
+        }
+
+        setPreviewImage(ptmWindow.ptmObject.previewImage);
+    }
+
+
+    public void updateViewportRect(float x, float y, float imageScale){
+        imagePreview.setImage(imagePreview.getImage());
+        previewWindowRect.setWidth(imagePreview.getBoundsInParent().getWidth() / imageScale);
+        previewWindowRect.setHeight(imagePreview.getBoundsInParent().getHeight() / imageScale);
+        previewWindowRect.setTranslateX((x / imageScale) * imagePreview.getBoundsInParent().getWidth() / 2);
+        previewWindowRect.setTranslateY((-y / imageScale) * imagePreview.getBoundsInParent().getHeight() / 2);
     }
 }

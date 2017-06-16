@@ -125,7 +125,6 @@ public class RTIViewer extends Application {
 
         primaryStage.setResizable(true);
         primaryStage.show();
-        resizeGUI();
     }
 
 
@@ -296,26 +295,18 @@ public class RTIViewer extends Application {
 
     public static void setFocusedWindow(PTMWindow ptmWindow){
         selectedWindow = ptmWindow;
-        bottomTabPane.setFileText(ptmWindow.ptmObject.getFileName());
-        bottomTabPane.setWidthText(String.valueOf(ptmWindow.ptmObject.getWidth()));
-        bottomTabPane.setHeightText(String.valueOf(ptmWindow.ptmObject.getHeight()));
-
-        if(ptmWindow instanceof PTMWindowRGB){
-            bottomTabPane.setFormatText("PTM RGB");
-        }else if(ptmWindow instanceof PTMWindowLRGB){
-            bottomTabPane.setFormatText("PTM LRGB");
-        }
-
-        bottomTabPane.setPreviewImage(ptmWindow.ptmObject.previewImage);
+        bottomTabPane.updateSelectedWindow(ptmWindow);
+        bottomTabPane.updateViewportRect(ptmWindow.getViewportX(), ptmWindow.getViewportY(), ptmWindow.getImageScale());
     }
 
     private static void setNoFocusedWindow(){
-        selectedWindow = null;
         bottomTabPane.setFileText("");
         bottomTabPane.setWidthText("");
         bottomTabPane.setHeightText("");
         bottomTabPane.setFormatText("");
         bottomTabPane.setDefaultImage();
+
+        selectedWindow = null;
     }
 
 
@@ -323,6 +314,10 @@ public class RTIViewer extends Application {
         lightControlGroup.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
         paramsPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
         bottomTabPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
+        if(selectedWindow != null){
+            bottomTabPane.updateViewportRect(   selectedWindow.getViewportX(),
+                                                selectedWindow.getViewportY(),
+                                                selectedWindow.getImageScale());}
         resizeFilterChoiceBox();
     }
 
@@ -336,6 +331,12 @@ public class RTIViewer extends Application {
         }else{
             filterTypeBox.setPrefHeight(30);
         }
+    }
 
+
+    public static void updateViewportPos(PTMWindow ptmWindow, Float x, Float y, float imageScale){
+        if(ptmWindow.equals(selectedWindow)) {
+            bottomTabPane.updateViewportRect(x, y, imageScale);
+        }
     }
 }

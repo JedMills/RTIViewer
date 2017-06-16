@@ -73,51 +73,18 @@ public class PTMWindowRGB extends PTMWindow {
     }
 
 
+    @Override
+    protected void bindSpecificShaderTextures(int programID) {
+        rVals1Ref = glGetUniformLocation(programID, "rVals1");
+        rVals2Ref = glGetUniformLocation(programID, "rVals2");
 
-    /**
-     * Gets the integer OpenGL references from the shader program specified by the shaderID and sets them to the
-     * relevant attributes in this class. The textures (rVals1, rVals2 ... etc.) only need to be set first time
-     * the program is compiled as they do not changed, so there is an option to set them or not.
-     *
-     * @param programID         the program for which we want to set the references for
-     * @param setTextures       whether we want to set references for textures or not
-     */
-    protected void bindShaderReferences(int programID, boolean setTextures){
-        //get the integer OpenGL reference  from the shader program using its string value
-        shaderWidth = glGetUniformLocation(programID, "imageWidth");
-        shaderHeight = glGetUniformLocation(programID, "imageHeight");
-        imageScaleRef = glGetUniformLocation(programID, "imageScale");
-        shaderViewportX = glGetUniformLocation(programID, "viewportX");
-        shaderViewportY = glGetUniformLocation(programID, "viewportY");
+        gVals1Ref = glGetUniformLocation(programID, "gVals1");
+        gVals2Ref = glGetUniformLocation(programID, "gVals2");
 
-        shaderLightX = glGetUniformLocation(programID, "lightX");
-        shaderLightY = glGetUniformLocation(programID, "lightY");
+        bVals1Ref = glGetUniformLocation(programID, "bVals1");
+        bVals2Ref = glGetUniformLocation(programID, "bVals2");
 
-        //textures only need to be bound first time round
-        if(setTextures) {
-            rVals1Ref = glGetUniformLocation(programID, "rVals1");
-            rVals2Ref = glGetUniformLocation(programID, "rVals2");
-
-            gVals1Ref = glGetUniformLocation(programID, "gVals1");
-            gVals2Ref = glGetUniformLocation(programID, "gVals2");
-
-            bVals1Ref = glGetUniformLocation(programID, "bVals1");
-            bVals2Ref = glGetUniformLocation(programID, "bVals2");
-
-            normalsRef = glGetUniformLocation(programID, "normals");
-        }
-
-        diffGainRef = glGetUniformLocation(programID, "diffGain");
-        diffConstRef = glGetUniformLocation(programID, "diffConst");
-        specConstRef = glGetUniformLocation(programID, "specConst");
-        specExConstRef = glGetUniformLocation(programID, "specExConst");
-
-        normUnMaskGainRef = glGetUniformLocation(programID, "normUnMaskGain");
-        normUnMaskEnvRef = glGetUniformLocation(programID, "normUnMaskEnv");
-
-        imgUnMaskGainRef = glGetUniformLocation(programID, "imgUnMaskGain");
-
-        coeffUnMaskGainRef = glGetUniformLocation(programID, "coeffUnMaskGain");
+        normalsRef = glGetUniformLocation(programID, "normals");
     }
 
     /**

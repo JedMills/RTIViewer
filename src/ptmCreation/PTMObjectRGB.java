@@ -84,9 +84,9 @@ public class PTMObjectRGB extends PTMObject {
         }
     }
 
-    private void createPreviewImage(){
+    @Override
+    protected void createPreviewImage(){
         previewImage = new WritableImage(width, height);
-
 
         int position;
         float red, green, blue;

@@ -76,10 +76,10 @@ public abstract class PTMWindow implements Runnable{
     protected int coeffUnsharpMaskProgram;
 
     /**OpenGL reference for the GLSL uniform "viewportX" found in the fragment shader */
-    protected float viewportX = 0;
+    protected float viewportX = 0.0f;
 
     /**OpenGL reference for the GLSL uniform "viewportY" found in the fragment shader */
-    protected float viewportY = 0;
+    protected float viewportY = 0.0f;
 
     /**OpenGL reference for the GLSL sampler2D texture "normals", used for passing normals attr to shaders*/
     protected int normalsRef;
@@ -354,7 +354,43 @@ public abstract class PTMWindow implements Runnable{
     }
 
 
-    protected abstract void bindShaderReferences(int programID, boolean setTextures);
+    /**
+     * Gets the integer OpenGL references from the shader program specified by the shaderID and sets them to the
+     * relevant attributes in this class. The textures (rVals1, rVals2 ... etc.) only need to be set first time
+     * the program is compiled as they do not changed, so there is an option to set them or not.
+     *
+     * @param programID         the program for which we want to set the references for
+     * @param setTextures       whether we want to set references for textures or not
+     */
+    private void bindShaderReferences(int programID, boolean setTextures){
+        //get the integer OpenGL reference  from the shader program using its string value
+        shaderWidth = glGetUniformLocation(programID, "imageWidth");
+        shaderHeight = glGetUniformLocation(programID, "imageHeight");
+        imageScaleRef = glGetUniformLocation(programID, "imageScale");
+        shaderViewportX = glGetUniformLocation(programID, "viewportX");
+        shaderViewportY = glGetUniformLocation(programID, "viewportY");
+
+        shaderLightX = glGetUniformLocation(programID, "lightX");
+        shaderLightY = glGetUniformLocation(programID, "lightY");
+
+        diffGainRef = glGetUniformLocation(programID, "diffGain");
+        diffConstRef = glGetUniformLocation(programID, "diffConst");
+        specConstRef = glGetUniformLocation(programID, "specConst");
+        specExConstRef = glGetUniformLocation(programID, "specExConst");
+
+        normUnMaskGainRef = glGetUniformLocation(programID, "normUnMaskGain");
+        normUnMaskEnvRef = glGetUniformLocation(programID, "normUnMaskEnv");
+
+        imgUnMaskGainRef = glGetUniformLocation(programID, "imgUnMaskGain");
+
+        coeffUnMaskGainRef = glGetUniformLocation(programID, "coeffUnMaskGain");
+
+        if(setTextures){bindSpecificShaderTextures(programID);}
+    }
+
+
+
+    protected abstract void bindSpecificShaderTextures(int programID);
 
     protected abstract void bindShaderVals();
 
@@ -425,6 +461,7 @@ public abstract class PTMWindow implements Runnable{
         }
 
         currentProgram = RTIViewer.currentProgram;
+        RTIViewer.updateViewportPos(this, viewportX, viewportY, imageScale);
 
         //display the window, and set OpenGL to the default viewing mode
         glfwShowWindow(window);
@@ -558,6 +595,7 @@ public abstract class PTMWindow implements Runnable{
         if(viewportY < minY){viewportY = minY;}
         if(viewportY > maxY){viewportY = maxY;}
 
+        RTIViewer.updateViewportPos(this, viewportX, viewportY, imageScale);
     }
 
 
@@ -636,5 +674,19 @@ public abstract class PTMWindow implements Runnable{
      */
     public void setShouldClose(boolean shouldClose){
         glfwSetWindowShouldClose(window, shouldClose);
+    }
+
+
+    public Float getViewportX() {
+        return viewportX;
+    }
+
+
+    public Float getViewportY() {
+        return viewportY;
+    }
+
+    public float getImageScale() {
+        return imageScale;
     }
 }

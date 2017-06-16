@@ -110,6 +110,7 @@ public abstract class PTMObject {
 
     protected abstract void calculateNormals();
 
+    protected abstract void createPreviewImage();
 
     public String getFileName() {
         return fileName;

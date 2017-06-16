@@ -213,19 +213,14 @@ public class LightControlGroup extends Pane {
             circle.setRadius(75);
         }else{
             light.setZ(30);
-            circle.setRadius(100);
+            circle.setRadius(90);
         }
 
         if(width < 335){
-            if(height < 700){
-                setSpinnerSizes(10, 10, 20, 80);
-            }else if(height < 800){
-                setSpinnerSizes(12, 12, 25, 80);
-            }else{
-                setSpinnerSizes(14, 14, 30, 80);
-            }
+            setSpinnerSizesForVertical(width);
             if(!wasVertical) {
                 setVerticalAlignment();
+                setSpinnerSizesForVertical(width);
                 wasVertical = true;
             }
         }else if(width >= 335){
@@ -236,6 +231,19 @@ public class LightControlGroup extends Pane {
             }
         }
     }
+
+
+    private void setSpinnerSizesForVertical(double height){
+        if(height < 700){
+            setSpinnerSizes(10, 10, 20, 60);
+        }else if(height < 800){
+            setSpinnerSizes(12, 12, 25, 60);
+        }else{
+            setSpinnerSizes(14, 14, 30, 60);
+        }
+    }
+
+
 
     private void setSpinnerSizes(int labelFontSize, int spinnerFontSize, int spinnerHeight, int spinnerWidth){
         xPosBox.setPrefWidth(spinnerWidth);

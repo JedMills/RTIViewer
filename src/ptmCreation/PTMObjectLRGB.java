@@ -1,8 +1,11 @@
 package ptmCreation;
 
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import org.lwjgl.BufferUtils;
 import utils.Utils;
 
+import javax.rmi.CORBA.Util;
 import java.nio.IntBuffer;
 
 /**
@@ -25,6 +28,7 @@ public class PTMObjectLRGB extends PTMObject {
         rgbCoeffs = texelData[2];
 
         calculateNormals();
+        createPreviewImage();
     }
 
     @Override
@@ -46,6 +50,26 @@ public class PTMObjectLRGB extends PTMObject {
             normals.put((i * 3), temp.x);
             normals.put((i * 3) + 1, temp.y);
             normals.put((i * 3) + 2, temp.z);
+        }
+    }
+
+    @Override
+    protected void createPreviewImage() {
+        previewImage = new WritableImage(width, height);
+
+        int position;
+        float lum, red, green, blue;
+        for(int y = 0; y < height; y++){
+            for(int x = 0; x < width; x++){
+                position = ((y * width) + x) * 3;
+
+                lum = Utils.calcIntensity(lumCoeffs1, lumCoeffs2, position, 0, 0) / 255.0f;
+                red = rgbCoeffs.get(position) * lum / 255.0f;
+                green = rgbCoeffs.get(position + 1) * lum / 255.0f;
+                blue = rgbCoeffs.get(position + 2) * lum / 255.0f;
+
+                previewImage.getPixelWriter().setColor(x, y, Color.color(red, green, blue));
+            }
         }
     }
 
