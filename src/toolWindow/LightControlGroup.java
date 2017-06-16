@@ -4,17 +4,18 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import utils.Utils;
 
@@ -32,6 +33,15 @@ public class LightControlGroup extends Pane {
     private Spinner<Double> xPosBox, yPosBox;
     public enum LightEditor{CIRCLE, XSPINNER, YSPINNER, RESIZE;}
 
+    private StackPane stackPane;
+    private HBox hBox;
+    private GridPane gridPane;
+    private VBox vBox;
+
+    private Label xPosLabel;
+    private Label yPosLabel;
+
+    private boolean wasVertical = true;
 
     public LightControlGroup(RTIViewer rtiViewer, Stage primaryStage, Pane parent) {
         this.rtiViewer = rtiViewer;
@@ -48,7 +58,10 @@ public class LightControlGroup extends Pane {
         light = new Light.Point();
         light.setColor(Color.WHITE);
 
+        light.setX(0);
+        light.setY(0);
         light.setZ(25);
+
 
         Lighting lighting = new Lighting();
         lighting.setLight(light);
@@ -57,35 +70,32 @@ public class LightControlGroup extends Pane {
         circle.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                if(event.getX() > circle.getCenterX() - circle.getRadius()
-                        && event.getX() < circle.getCenterX() + circle.getRadius()
-                        && event.getY() > circle.getCenterY() - circle.getRadius()
-                        && event.getY() < circle.getCenterY() + circle.getRadius()) {
-                    light.setX(event.getX() + circle.getLayoutX());
-                    light.setY(event.getY() + circle.getLayoutY());
-                    Utils.Vector2f normalised = calculateNormalisedLight(light, circle);
-                    updateGlobalLightPos(normalised, LightEditor.CIRCLE);
-                }
+                light.setX(event.getX() + circle.getRadius());
+                light.setY(event.getY() + circle.getRadius());
+                Utils.Vector2f normalised = new Utils.Vector2f((float)(event.getX() / circle.getRadius()),
+                        (float)(-event.getY() / circle.getRadius()));
+                updateGlobalLightPos(normalised, LightEditor.CIRCLE);
             }
         });
 
         circle.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                if(event.getX() > circle.getCenterX() - circle.getRadius()
-                        && event.getX() < circle.getCenterX() + circle.getRadius()
-                        && event.getY() > circle.getCenterY() - circle.getRadius()
-                        && event.getY() < circle.getCenterY() + circle.getRadius()) {
-                    light.setX(event.getX() + circle.getLayoutX());
-                    light.setY(event.getY() + circle.getLayoutY());
+                if(event.getX() >  - circle.getRadius()
+                        && event.getX() <  circle.getRadius()
+                        && event.getY() >  - circle.getRadius()
+                        && event.getY() <  circle.getRadius()) {
+                    light.setX(event.getX() + circle.getRadius());
+                    light.setY(event.getY() + circle.getRadius());
                 }else{
-                    double theta = Math.atan2(event.getY(), event.getX()) + Math.PI;
-                    double x = circle.getLayoutX() - (circle.getRadius() * Math.cos(theta));
-                    double y = circle.getLayoutY() - (circle.getRadius() * Math.sin(theta));
+                    double theta = Math.atan2(event.getY(), event.getX());
+                    double x = circle.getRadius() + (circle.getRadius() * Math.cos(theta));
+                    double y = circle.getRadius() + (circle.getRadius() * Math.sin(theta));
                     light.setX(x);
                     light.setY(y);
                 }
-                Utils.Vector2f normalised = calculateNormalisedLight(light, circle);
+                Utils.Vector2f normalised = new Utils.Vector2f((float)(event.getX() / circle.getRadius()),
+                        (float)(-event.getY() / circle.getRadius()));
                 updateGlobalLightPos(normalised, LightEditor.CIRCLE);
             }
         });
@@ -95,25 +105,24 @@ public class LightControlGroup extends Pane {
 
 
     private void createLightControl(){
+        hBox = new HBox();
+        vBox = new VBox();
+        stackPane = new StackPane();
+
+        stackPane.setAlignment(Pos.TOP_CENTER);
+        gridPane = new GridPane();
+
         Circle circle = createSpecularBall();
 
-        getChildren().add(circle);
-        circle.setLayoutX(circle.getRadius());
-        circle.setLayoutY(circle.getRadius());
+        stackPane.getChildren().add(circle);
 
-        Label xPosLabel = new Label("Light X:");
-        xPosLabel.setLayoutX(2 * circle.getRadius() + 40);
-        xPosLabel.setLayoutY(40);
-
-        Label yPosLabel = new Label("Light Y:");
-        yPosLabel.setLayoutX(2 * circle.getRadius() + 40);
-        yPosLabel.setLayoutY(70);
+        xPosLabel = new Label("Light X:");
+        yPosLabel = new Label("Light Y:");
 
         xPosBox = new Spinner<Double>(-1.0, 1.0, 0.0, 0.01);
         xPosBox.setEditable(true);
-        xPosBox.setPrefWidth(80);
-        xPosBox.setLayoutX(2 * circle.getRadius() + 90);
-        xPosBox.setLayoutY(37);
+        xPosBox.setMinHeight(0);
+
         xPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -128,7 +137,6 @@ public class LightControlGroup extends Pane {
         });
 
         xPosBox.valueProperty().addListener(new ChangeListener<Double>() {
-            @Override
             public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
                 Float value = Float.parseFloat(xPosBox.getEditor().getText());
                 updateGlobalLightPos(new Utils.Vector2f(value, RTIViewer.globalLightPos.y), LightEditor.XSPINNER);
@@ -137,11 +145,9 @@ public class LightControlGroup extends Pane {
 
         yPosBox = new Spinner<Double>(-1.0, 1.0, 0.0, 0.01);
         yPosBox.setEditable(true);
-        yPosBox.setPrefWidth(80);
-        yPosBox.setLayoutX(2 * circle.getRadius() + 90);
-        yPosBox.setLayoutY(67);
+        yPosBox.setMinHeight(0);
+
         yPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
-            @Override
             public void handle(ActionEvent event) {
                 try {
                     Float value = Float.parseFloat(yPosBox.getEditor().getText());
@@ -154,14 +160,14 @@ public class LightControlGroup extends Pane {
         });
 
         yPosBox.valueProperty().addListener(new ChangeListener<Double>() {
-            @Override
             public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
                 Float value = Float.parseFloat(yPosBox.getEditor().getText());
                 updateGlobalLightPos(new Utils.Vector2f(RTIViewer.globalLightPos.x, value), LightEditor.YSPINNER);
             }
         });
 
-        getChildren().addAll(xPosLabel, xPosBox, yPosLabel, yPosBox);
+        gridPane.setAlignment(Pos.CENTER);
+        gridPane.getChildren().addAll(xPosLabel, xPosBox, yPosLabel, yPosBox);
     }
 
 
@@ -174,21 +180,16 @@ public class LightControlGroup extends Pane {
         updateLightControls(source);
     }
 
-    private Utils.Vector2f calculateNormalisedLight(Light.Point light, Circle circle){
-        double x = (light.getX() - circle.getRadius()) / circle.getRadius();
-        double y = -(light.getY() - circle.getRadius()) / circle.getRadius();
-        return new Utils.Vector2f((float)x, (float)y);
-    }
 
     private void updateLightControls(LightEditor source){
-        if(!source.equals(LightEditor.CIRCLE)) {
-            light.setX(RTIViewer.globalLightPos.x * circle.getRadius() + circle.getLayoutX());
-            light.setY(-RTIViewer.globalLightPos.y * circle.getRadius() + circle.getLayoutY());
+        if(!source.equals(LightEditor.CIRCLE)){
+            light.setX(circle.getRadius() + (circle.getRadius() * RTIViewer.globalLightPos.x));
+            light.setY(circle.getRadius() -(circle.getRadius() * RTIViewer.globalLightPos.y));
         }
         if(!source.equals(LightEditor.XSPINNER)){
             xPosBox.getValueFactory().setValue((double)RTIViewer.globalLightPos.x);
         }
-        else if(!source.equals(LightEditor.YSPINNER)){
+        if(!source.equals(LightEditor.YSPINNER)){
             yPosBox.getValueFactory().setValue((double)RTIViewer.globalLightPos.y);
         }
     }
@@ -198,14 +199,93 @@ public class LightControlGroup extends Pane {
         setWidth(width);
         setHeight(height);
 
-        if(width < 516){
-            circle.setRadius(width / 4.5);
-        }else{
-            circle.setRadius(height / 2);
-        }
-        circle.setLayoutX(circle.getRadius() / 2);
-        circle.setLayoutY(circle.getRadius());
+        updateGlobalLightPos(new Utils.Vector2f(0, 0), LightEditor.RESIZE);
 
-        updateGlobalLightPos(new Utils.Vector2f(0,0), LightEditor.RESIZE);
+        updateComponentSizes(width, height);
+    }
+
+    private void updateComponentSizes(double width, double height){
+        if(height < 700){
+            light.setZ(20);
+            circle.setRadius(50);
+        }else if(height < 800){
+            light.setZ(25);
+            circle.setRadius(75);
+        }else{
+            light.setZ(30);
+            circle.setRadius(100);
+        }
+
+        if(width < 335){
+            if(height < 700){
+                setSpinnerSizes(10, 10, 20, 80);
+            }else if(height < 800){
+                setSpinnerSizes(12, 12, 25, 80);
+            }else{
+                setSpinnerSizes(14, 14, 30, 80);
+            }
+            if(!wasVertical) {
+                setVerticalAlignment();
+                wasVertical = true;
+            }
+        }else if(width >= 335){
+            setSpinnerSizes(16, 16, 30,(int) width / 5);
+            if(wasVertical) {
+                setHorizontalAlignment();
+                wasVertical = false;
+            }
+        }
+    }
+
+    private void setSpinnerSizes(int labelFontSize, int spinnerFontSize, int spinnerHeight, int spinnerWidth){
+        xPosBox.setPrefWidth(spinnerWidth);
+        xPosBox.setPrefHeight(spinnerHeight);
+        yPosBox.setPrefWidth(spinnerWidth);
+        yPosBox.setPrefHeight(spinnerHeight);
+
+        xPosBox.getEditor().setFont(Font.font(spinnerFontSize));
+        yPosBox.getEditor().setFont(Font.font(spinnerFontSize));
+
+        xPosLabel.setFont(Font.font(labelFontSize));
+        yPosLabel.setFont(Font.font(labelFontSize));
+    }
+
+    private void setVerticalAlignment(){
+        hBox.getChildren().removeAll(stackPane, gridPane);
+        vBox.getChildren().removeAll(stackPane, gridPane);
+        getChildren().removeAll(hBox, vBox);
+        GridPane.setConstraints(xPosLabel, 0, 0, 1, 1);
+        GridPane.setConstraints(xPosBox, 1, 0, 1, 1);
+        GridPane.setConstraints(yPosLabel, 2, 0, 1, 1);
+        GridPane.setConstraints(yPosBox, 3, 0, 1, 1);
+        vBox.setMargin(gridPane, new Insets(5, 0, 0, 0));
+
+        gridPane.setVgap(0);
+        gridPane.setHgap(5);
+        gridPane.setAlignment(Pos.CENTER);
+
+        vBox.getChildren().addAll(stackPane, gridPane);
+        getChildren().add(vBox);
+    }
+
+
+    private void setHorizontalAlignment(){
+        hBox.getChildren().removeAll(stackPane, gridPane);
+        vBox.getChildren().removeAll(stackPane, gridPane);
+        getChildren().removeAll(hBox, vBox);
+        GridPane.setConstraints(xPosLabel, 0, 0, 1, 1);
+        GridPane.setConstraints(xPosBox, 1, 0, 1, 1);
+        GridPane.setConstraints(yPosLabel, 0, 1, 1, 1);
+        GridPane.setConstraints(yPosBox, 1, 1, 1, 1);
+
+
+        hBox.setMargin(gridPane, new Insets(0, 0, 0, 10));
+        gridPane.setAlignment(Pos.CENTER_LEFT);
+
+        gridPane.setVgap(10);
+        gridPane.setHgap(5);
+
+        hBox.getChildren().addAll(stackPane, gridPane);
+        getChildren().add(hBox);
     }
 }

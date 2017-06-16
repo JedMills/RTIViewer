@@ -20,12 +20,14 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import openGLWindow.PTMWindow;
 import openGLWindow.PTMWindowLRGB;
 import openGLWindow.PTMWindowRGB;
+import org.lwjgl.system.CallbackI;
 import ptmCreation.PTMObject;
 import ptmCreation.PTMObjectLRGB;
 import ptmCreation.PTMObjectRGB;
@@ -59,6 +61,7 @@ public class RTIViewer extends Application {
     private ComboBox<String> filterTypeBox;
     private FilterParamsPane paramsPane;
     private static BottomTabPane bottomTabPane;
+    public FlowPane flowPane;
 
     public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
                             IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN;}
@@ -117,9 +120,12 @@ public class RTIViewer extends Application {
         MenuBarListener.init(this);
 
         mainScene = createScene(primaryStage);
+
         primaryStage.setScene(mainScene);
+
         primaryStage.setResizable(true);
         primaryStage.show();
+        resizeGUI();
     }
 
 
@@ -132,8 +138,8 @@ public class RTIViewer extends Application {
     }
 
     private Scene createScene(Stage primaryStage){
-        FlowPane flowPane = new FlowPane();
-        Scene scene = new Scene(flowPane, width, height);
+        flowPane = new FlowPane();
+        Scene scene = new Scene(flowPane);
 
         MenuBar menuBar = createMenuBar(primaryStage);
         flowPane.getChildren().add(menuBar);
@@ -150,8 +156,8 @@ public class RTIViewer extends Application {
         bottomTabPane = new BottomTabPane(this, scene);
         flowPane.getChildren().add(bottomTabPane);
 
-        flowPane.setMargin(lightControlGroup, new Insets(20, 0, 0, 20));
-        flowPane.setMargin(filterTypeBox, new Insets(20, 0, 0, 0));
+        flowPane.setMargin(lightControlGroup, new Insets(10, 0, 0, 0));
+        flowPane.setMargin(filterTypeBox, new Insets(10, 0, 0, 0));
         flowPane.setMargin(paramsPane, new Insets(20, 0, 0, 0));
         flowPane.setMargin(bottomTabPane, new Insets(20, 0, 0, 0));
         flowPane.setAlignment(Pos.TOP_CENTER);
@@ -204,9 +210,9 @@ public class RTIViewer extends Application {
                 "Image unsharp masking",
                 "Coefficient unsharp masking"
         );
-        final ComboBox<String> comboBox = new ComboBox<>(options);
+        ComboBox<String> comboBox = new ComboBox<>(options);
         comboBox.getSelectionModel().select(0);
-        comboBox.setPrefWidth(180);
+
         comboBox.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -314,7 +320,22 @@ public class RTIViewer extends Application {
 
 
     private void resizeGUI(){
-        lightControlGroup.updateSize(primaryStage.getWidth(), primaryStage.getHeight() / 4);
+        lightControlGroup.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
+        paramsPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
+        bottomTabPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
+        resizeFilterChoiceBox();
+    }
+
+    private void resizeFilterChoiceBox(){
         filterTypeBox.setPrefWidth(primaryStage.getWidth() / 1.5);
+
+        if(height < 700){
+            filterTypeBox.setPrefHeight(10);
+        }else if(height < 800){
+            filterTypeBox.setPrefHeight(20);
+        }else{
+            filterTypeBox.setPrefHeight(30);
+        }
+
     }
 }

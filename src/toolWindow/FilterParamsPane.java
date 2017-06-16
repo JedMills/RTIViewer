@@ -4,6 +4,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -22,6 +23,7 @@ public class FilterParamsPane extends Pane {
     private Scene parent;
     private int width;
     private int height;
+    private GridPane gridPane;
 
     public static final double INITIAL_DIFF_GAIN_VAL = 0.0;
     public static final double INITIAL_DIFF_COLOUR_VAL = 0.0;
@@ -93,9 +95,10 @@ public class FilterParamsPane extends Pane {
     }
 
     private void createComponents(){
-        GridPane gridPane = new GridPane();
+        gridPane = new GridPane();
         gridPane.setHgap(20);
         gridPane.setVgap(20);
+        gridPane.setAlignment(Pos.TOP_CENTER);
 
         createDiffGainComponents(gridPane);
         createSpecularEnhanceComponents(gridPane);
@@ -281,5 +284,10 @@ public class FilterParamsPane extends Pane {
         for(Control control : allControls){
             control.setVisible(false);
         }
+    }
+
+    public void updateSize(double width, double height){
+        gridPane.setPrefWidth(width - 40);
+        gridPane.setVgap(height / 40);
     }
 }
