@@ -22,7 +22,7 @@ import utils.Utils;
 /**
  * Created by Jed on 14-Jun-17.
  */
-public class LightControlGroup extends Pane {
+public class LightControlGroup extends StackPane {
 
 
     private RTIViewer rtiViewer;
@@ -43,12 +43,18 @@ public class LightControlGroup extends Pane {
 
     private boolean wasVertical = true;
 
+
+
     public LightControlGroup(RTIViewer rtiViewer, Stage primaryStage, Pane parent) {
         this.rtiViewer = rtiViewer;
         this.parent = parent;
         this.primaryStgae = primaryStage;
 
         createLightControl();
+        setStyle(  "-fx-border-color: #dddddd;" +
+                "-fx-border-radius: 5;");
+        setAlignment(Pos.CENTER);
+        setPadding(new Insets(5, 0, 5, 0));
     }
 
 
@@ -196,8 +202,7 @@ public class LightControlGroup extends Pane {
 
 
     public void updateSize(double width, double height){
-        setWidth(width);
-        setHeight(height);
+        setPrefWidth(width - 20);
 
         updateGlobalLightPos(new Utils.Vector2f(0, 0), LightEditor.RESIZE);
 
@@ -288,7 +293,8 @@ public class LightControlGroup extends Pane {
 
 
         hBox.setMargin(gridPane, new Insets(0, 0, 0, 10));
-        gridPane.setAlignment(Pos.CENTER_LEFT);
+        gridPane.setAlignment(Pos.CENTER);
+        hBox.setAlignment(Pos.CENTER);
 
         gridPane.setVgap(10);
         gridPane.setHgap(5);

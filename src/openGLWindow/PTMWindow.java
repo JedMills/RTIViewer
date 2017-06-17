@@ -27,7 +27,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
- * <p>>
+ * <p>
  * This class represents a window containing the RTI image that has been loaded by the user. The image in the
  * window is generated using OpenGL via the lightweight java game library (LWJGL). The RTI image can be
  * filtered and enhanced in several ways by changing the fragment shader that the textured quad on the window uses.
@@ -208,19 +208,7 @@ public abstract class PTMWindow implements Runnable{
         glfwSetScrollCallback(window, new GLFWScrollCallback() {
             @Override
             public void invoke(long window, double xoffset, double yoffset) {
-                float oldScale = imageScale;
-
-                //scroll up positive, scroll down negative
-                imageScale += 0.1 * yoffset;
-                if(imageScale > 10){imageScale = 10f;}
-                else if(imageScale < 1){imageScale = 1;}
-
-                //translate the image a little bit to keep center of screen
-                viewportX *= imageScale / oldScale;
-                viewportY *= imageScale / oldScale;
-
-                //check the viewport to make sure image is still completely in viewport
-                checkViewport();
+                updateImageScale(yoffset);
             }
         });
 
@@ -242,7 +230,6 @@ public abstract class PTMWindow implements Runnable{
                 }
             }
         });
-
 
         //translates the window so it appears in the center of the screen
         try(MemoryStack stack = stackPush()){
@@ -266,7 +253,21 @@ public abstract class PTMWindow implements Runnable{
         glfwSwapInterval(1);
     }
 
+    private void updateImageScale(double yoffset){
+        float oldScale = imageScale;
 
+        //scroll up positive, scroll down negative
+        imageScale += 0.1 * yoffset;
+        if(imageScale > 10){imageScale = 10f;}
+        else if(imageScale < 1){imageScale = 1;}
+
+        //translate the image a little bit to keep center of screen
+        viewportX *= imageScale / oldScale;
+        viewportY *= imageScale / oldScale;
+
+        //check the viewport to make sure image is still completely in viewport
+        checkViewport();
+    }
 
     protected abstract void createShaders() throws Exception;
 
@@ -582,7 +583,7 @@ public abstract class PTMWindow implements Runnable{
      * image.
      */
     private void checkViewport(){
-        //the maximum and minium x's and y's are simply the zoom - 1 as the GL space for the viewport is normalised
+        //the maximum and minimum x's and y's are simply the zoom - 1 as the GL space for the viewport is normalised
         //to 0 - 1
         float minX = -(imageScale - 1.0f);
         float maxX = (imageScale - 1.0f);
@@ -606,7 +607,7 @@ public abstract class PTMWindow implements Runnable{
      */
     private void setViewport(){
         if(windowWidth[0] > windowHeight[0]){
-            //there will be space on either sice of the image, so translate in the x and limit the width
+            //there will be space on either side of the image, so translate in the x and limit the width
             //of the image to keep the image's aspect ratio
             reducedWidth = (int)((imageWidth / imageHeight) * windowHeight[0]);
             xOffset = (windowWidth[0] - reducedWidth) / 2;
@@ -643,8 +644,14 @@ public abstract class PTMWindow implements Runnable{
 
             //translate the viewport by this distance
             if(Math.abs(deltaX) > 0.01 && Math.abs(deltaY) > 0.01) {
-                viewportX += 2 * deltaX / ((Math.pow(imageScale, 0.5)) * windowWidth[0]);
-                viewportY -= 2 * deltaY / ((Math.pow(imageScale, 0.5)) * windowHeight[0]);
+                viewportX += 2 * deltaX / ((Math.pow(imageScale, 0.2)) * windowWidth[0]);
+                viewportY -= 2 * deltaY / ((Math.pow(imageScale, 0.2)) * windowHeight[0]);
+                /*
+                double r = Math.pow((deltaX * deltaX) + (deltaY * deltaY), 0.5) / (imageScale * windowHeight[0]);
+                double theta = Math.atan2(deltaY, deltaX);
+                viewportX += r * Math.cos(theta);
+                viewportY += r * Math.sin(theta);
+                */
             }
             //make sure the user does't pan outside the image
             checkViewport();
@@ -688,5 +695,23 @@ public abstract class PTMWindow implements Runnable{
 
     public float getImageScale() {
         return imageScale;
+    }
+
+    public void updateViewportFromPreview(float x, float y, float previewScale){
+        viewportX = x * previewScale * 2;
+        viewportY = y * previewScale * 2;
+    }
+
+    public void updateViewportFromPreview(float previewScale){
+        float oldScale = imageScale;
+
+        imageScale = previewScale;
+
+        //translate the image a little bit to keep center of screen
+        viewportX *= imageScale / oldScale;
+        viewportY *= imageScale / oldScale;
+
+        //check the viewport to make sure image is still completely in viewport
+        checkViewport();
     }
 }

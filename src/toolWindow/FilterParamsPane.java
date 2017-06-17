@@ -2,14 +2,18 @@ package toolWindow;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 
@@ -68,9 +72,8 @@ public class FilterParamsPane extends Pane {
 
     private Control[] allControls;
 
-    public FilterParamsPane(RTIViewer toolWindow, Scene parent, ComboBox<String> filterChoiceBox) {
+    public FilterParamsPane(RTIViewer toolWindow, Scene parent) {
         super();
-        this.filterChoiceBox = filterChoiceBox;
         this.parent = parent;
         this.toolWindow = toolWindow;
 
@@ -78,7 +81,7 @@ public class FilterParamsPane extends Pane {
         setHeight(200);
         createComponents();
 
-         allControls = new Control[]{   gainLabel,              gainSlider,             gainSpinner,
+        allControls = new Control[]{    gainLabel,              gainSlider,             gainSpinner,
                                         seColourLabel,          seColourSlider,         seColourSpinner,
                                         seSpecLabel,            seSpecSlider,           seSpecSpinner,
                                         seHighlightLabel,       seHighlightSlider,      seHighlightSpinner,
@@ -90,16 +93,13 @@ public class FilterParamsPane extends Pane {
         hideAllItems();
     }
 
-    public FilterParamsPane(Node... children) {
-        super(children);
-    }
-
     private void createComponents(){
         gridPane = new GridPane();
         gridPane.setHgap(20);
         gridPane.setVgap(20);
         gridPane.setAlignment(Pos.TOP_CENTER);
 
+        createComboBox(gridPane);
         createDiffGainComponents(gridPane);
         createSpecularEnhanceComponents(gridPane);
         createNormUnsharpMaskComponents(gridPane);
@@ -107,6 +107,37 @@ public class FilterParamsPane extends Pane {
         createCoeffUnsharpMaskComponents(gridPane);
 
         getChildren().add(gridPane);
+
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setStyle(  "-fx-border-color: #dddddd;" +
+                            "-fx-border-radius: 5;");
+    }
+
+
+    private void createComboBox(GridPane gridPane){
+        ObservableList<String> options = FXCollections.observableArrayList(
+                "Default view",
+                "Normals visualisation",
+                "Diffuse gain",
+                "Specular enhancement",
+                "Normal unsharp masking",
+                "Image unsharp masking",
+                "Coefficient unsharp masking"
+        );
+        ComboBox<String> comboBox = new ComboBox<>(options);
+        comboBox.getSelectionModel().select(0);
+
+        comboBox.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                setCurrentFilter(comboBox.getSelectionModel().getSelectedItem());
+                RTIViewer.updateWindowFilter(comboBox.getSelectionModel().getSelectedItem());
+            }
+        });
+
+        GridPane.setConstraints(comboBox, 1, 0, 1,1);
+
+        gridPane.getChildren().add(comboBox);
     }
 
 
@@ -118,9 +149,9 @@ public class FilterParamsPane extends Pane {
         setupSliderSpinnerPair(gainSlider, gainSpinner, "Invalid entry for diffuse gain spinner.",
                 RTIViewer.GlobalParam.DIFF_GAIN);
 
-        GridPane.setConstraints(gainLabel, 0, 0);
-        GridPane.setConstraints(gainSlider, 1, 0);
-        GridPane.setConstraints(gainSpinner, 2, 0);
+        GridPane.setConstraints(gainLabel, 0, 1);
+        GridPane.setConstraints(gainSlider, 1, 1);
+        GridPane.setConstraints(gainSpinner, 2, 1);
 
         gridPane.getChildren().addAll(gainLabel, gainSlider, gainSpinner);
     }
@@ -145,17 +176,17 @@ public class FilterParamsPane extends Pane {
         setupSliderSpinnerPair(seHighlightSlider, seHighlightSpinner, "Invalid entry for highlight size spinner.",
                 RTIViewer.GlobalParam.HIGHTLIGHT_SIZE);
 
-        GridPane.setConstraints(seColourLabel, 0, 0);
-        GridPane.setConstraints(seColourSlider, 1, 0);
-        GridPane.setConstraints(seColourSpinner, 2, 0);
+        GridPane.setConstraints(seColourLabel, 0, 1);
+        GridPane.setConstraints(seColourSlider, 1, 1);
+        GridPane.setConstraints(seColourSpinner, 2, 1);
 
-        GridPane.setConstraints(seSpecLabel, 0, 1);
-        GridPane.setConstraints(seSpecSlider, 1, 1);
-        GridPane.setConstraints(seSpecSpinner, 2, 1);
+        GridPane.setConstraints(seSpecLabel, 0, 2);
+        GridPane.setConstraints(seSpecSlider, 1, 2);
+        GridPane.setConstraints(seSpecSpinner, 2, 2);
 
-        GridPane.setConstraints(seHighlightLabel, 0, 2);
-        GridPane.setConstraints(seHighlightSlider, 1, 2);
-        GridPane.setConstraints(seHighlightSpinner, 2, 2);
+        GridPane.setConstraints(seHighlightLabel, 0, 3);
+        GridPane.setConstraints(seHighlightSlider, 1, 3);
+        GridPane.setConstraints(seHighlightSpinner, 2, 3);
 
         gridPane.getChildren().addAll(seColourLabel,    seColourSlider,     seColourSpinner,
                                       seSpecLabel,      seSpecSlider,       seSpecSpinner,
@@ -176,13 +207,13 @@ public class FilterParamsPane extends Pane {
         setupSliderSpinnerPair(normUnMaskEnvSlider, normUnMaskEnvSpinner, "Invalid entry for normals unsharp masking environment slider",
                 RTIViewer.GlobalParam.NORM_UN_MASK_ENV);
 
-        GridPane.setConstraints(normUnMaskGainLabel, 0, 0);
-        GridPane.setConstraints(normUnMaskGainSlider, 1, 0);
-        GridPane.setConstraints(normUnMaskGainSpinner, 2, 0);
+        GridPane.setConstraints(normUnMaskGainLabel, 0, 1);
+        GridPane.setConstraints(normUnMaskGainSlider, 1, 1);
+        GridPane.setConstraints(normUnMaskGainSpinner, 2, 1);
 
-        GridPane.setConstraints(normUnMaskEnvLabel, 0, 1);
-        GridPane.setConstraints(normUnMaskEnvSlider, 1, 1);
-        GridPane.setConstraints(normUnMaskEnvSpinner, 2, 1);
+        GridPane.setConstraints(normUnMaskEnvLabel, 0, 2);
+        GridPane.setConstraints(normUnMaskEnvSlider, 1, 2);
+        GridPane.setConstraints(normUnMaskEnvSpinner, 2, 2);
 
         gridPane.getChildren().addAll(normUnMaskGainLabel,  normUnMaskGainSlider,   normUnMaskGainSpinner,
                                       normUnMaskEnvLabel,   normUnMaskEnvSlider,    normUnMaskEnvSpinner);
@@ -195,9 +226,9 @@ public class FilterParamsPane extends Pane {
         setupSliderSpinnerPair(imgUnMaskGainSlider, imgUnMaskGainSpinner, "Invalid entry for image unsharp masking gain slider",
                 RTIViewer.GlobalParam.IMG_UN_MASK_GAIN);
 
-        GridPane.setConstraints(imgUnMaskGainLabel, 0, 0);
-        GridPane.setConstraints(imgUnMaskGainSlider, 1, 0);
-        GridPane.setConstraints(imgUnMaskGainSpinner, 2, 0);
+        GridPane.setConstraints(imgUnMaskGainLabel, 0, 1);
+        GridPane.setConstraints(imgUnMaskGainSlider, 1, 1);
+        GridPane.setConstraints(imgUnMaskGainSpinner, 2, 1);
 
         gridPane.getChildren().addAll(imgUnMaskGainLabel, imgUnMaskGainSlider, imgUnMaskGainSpinner);
     }
@@ -209,9 +240,9 @@ public class FilterParamsPane extends Pane {
         setupSliderSpinnerPair(coeffUnMaskGainSlider, coeffUnMaskGainSpinner, "Invalid entry for coefficient unsharp masking gain slider",
                 RTIViewer.GlobalParam.COEFF_UN_MASK_GAIN);
 
-        GridPane.setConstraints(coeffUnMaskGainLabel, 0, 0);
-        GridPane.setConstraints(coeffUnMaskGainSlider, 1, 0);
-        GridPane.setConstraints(coeffUnMaskGainSpinner, 2, 0);
+        GridPane.setConstraints(coeffUnMaskGainLabel, 0, 1);
+        GridPane.setConstraints(coeffUnMaskGainSlider, 1, 1);
+        GridPane.setConstraints(coeffUnMaskGainSpinner, 2, 1);
 
         gridPane.getChildren().addAll(coeffUnMaskGainLabel, coeffUnMaskGainSlider, coeffUnMaskGainSpinner);
     }
@@ -287,7 +318,7 @@ public class FilterParamsPane extends Pane {
     }
 
     public void updateSize(double width, double height){
-        gridPane.setPrefWidth(width - 40);
+        gridPane.setPrefWidth(width - 20);
         gridPane.setVgap(height / 40);
     }
 }

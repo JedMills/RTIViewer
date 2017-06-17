@@ -43,9 +43,8 @@ public class RTIViewer extends Application {
     public static Stage primaryStage;
     private static Scene mainScene;
 
-    public static int width = 400 ;
+    public static int width = 350 ;
     public static int height = 700;
-
 
     public static Utils.Vector2f globalLightPos = new Utils.Vector2f(0, 0);
     public static double globalDiffGainVal = FilterParamsPane.INITIAL_DIFF_GAIN_VAL;
@@ -58,7 +57,7 @@ public class RTIViewer extends Application {
     public static double globalCoeffUnMaskGain = FilterParamsPane.INITIAL_COEFF_UN_MASK_GAIN_VAL;
 
     private LightControlGroup lightControlGroup;
-    private ComboBox<String> filterTypeBox;
+   // private ComboBox<String> filterTypeBox;
     private FilterParamsPane paramsPane;
     private static BottomTabPane bottomTabPane;
     public FlowPane flowPane;
@@ -82,16 +81,16 @@ public class RTIViewer extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        this.primaryStage = primaryStage;
+        RTIViewer.primaryStage = primaryStage;
+        primaryStage.setResizable(true);
 
-        this.primaryStage.setMinWidth(300);
-        this.primaryStage.setMinHeight(600);
-        this.primaryStage.setMaxWidth(600);
-        this.primaryStage.setMaxHeight(1000);
+        RTIViewer.primaryStage.setMinWidth(300);
+        RTIViewer.primaryStage.setMinHeight(600);
+        RTIViewer.primaryStage.setMaxWidth(600);
+        RTIViewer.primaryStage.setMaxHeight(1000);
 
 
         this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
             public void handle(WindowEvent event) {
                 for(PTMWindow ptmWindow : ptmWindows){
                     ptmWindow.setShouldClose(true);
@@ -123,8 +122,8 @@ public class RTIViewer extends Application {
 
         primaryStage.setScene(mainScene);
 
-        primaryStage.setResizable(true);
         primaryStage.show();
+        primaryStage.sizeToScene();
     }
 
 
@@ -138,7 +137,7 @@ public class RTIViewer extends Application {
 
     private Scene createScene(Stage primaryStage){
         flowPane = new FlowPane();
-        Scene scene = new Scene(flowPane);
+        Scene scene = new Scene(flowPane, width, height);
 
         MenuBar menuBar = createMenuBar(primaryStage);
         flowPane.getChildren().add(menuBar);
@@ -146,19 +145,15 @@ public class RTIViewer extends Application {
         lightControlGroup = new LightControlGroup(this, primaryStage, flowPane);
         flowPane.getChildren().add(lightControlGroup);
 
-        filterTypeBox = createFilterChoiceBox();
-        flowPane.getChildren().add(filterTypeBox);
-
-        paramsPane = new FilterParamsPane(this, scene, filterTypeBox);
+        paramsPane = new FilterParamsPane(this, scene);
         flowPane.getChildren().add(paramsPane);
 
         bottomTabPane = new BottomTabPane(this, scene);
         flowPane.getChildren().add(bottomTabPane);
 
-        flowPane.setMargin(lightControlGroup, new Insets(10, 0, 0, 0));
-        flowPane.setMargin(filterTypeBox, new Insets(10, 0, 0, 0));
-        flowPane.setMargin(paramsPane, new Insets(20, 0, 0, 0));
-        flowPane.setMargin(bottomTabPane, new Insets(20, 0, 0, 0));
+        flowPane.setMargin(lightControlGroup, new Insets(10, 0, 5, 0));
+        flowPane.setMargin(paramsPane, new Insets(5, 0, 5, 0));
+        flowPane.setMargin(bottomTabPane, new Insets(5, 0, 0, 0));
         flowPane.setAlignment(Pos.TOP_CENTER);
         return scene;
     }
@@ -198,32 +193,6 @@ public class RTIViewer extends Application {
     }
 
 
-
-    private ComboBox<String> createFilterChoiceBox(){
-        ObservableList<String> options = FXCollections.observableArrayList(
-                "Default view",
-                "Normals visualisation",
-                "Diffuse gain",
-                "Specular enhancement",
-                "Normal unsharp masking",
-                "Image unsharp masking",
-                "Coefficient unsharp masking"
-        );
-        ComboBox<String> comboBox = new ComboBox<>(options);
-        comboBox.getSelectionModel().select(0);
-
-        comboBox.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                paramsPane.setCurrentFilter(comboBox.getSelectionModel().getSelectedItem());
-                updateWindowFilter(comboBox.getSelectionModel().getSelectedItem());
-            }
-        });
-
-        return comboBox;
-    }
-
-
     public static void main(String[] args) {
         launch(args);
     }
@@ -259,7 +228,7 @@ public class RTIViewer extends Application {
         }
     }
 
-    private void updateWindowFilter(String filterType){
+    public static void updateWindowFilter(String filterType){
         ShaderProgram programToSet = ShaderProgram.DEFAULT;
 
         if(filterType.equals("Default view")){programToSet = ShaderProgram.DEFAULT;}
@@ -318,19 +287,6 @@ public class RTIViewer extends Application {
             bottomTabPane.updateViewportRect(   selectedWindow.getViewportX(),
                                                 selectedWindow.getViewportY(),
                                                 selectedWindow.getImageScale());}
-        resizeFilterChoiceBox();
-    }
-
-    private void resizeFilterChoiceBox(){
-        filterTypeBox.setPrefWidth(primaryStage.getWidth() / 1.5);
-
-        if(height < 700){
-            filterTypeBox.setPrefHeight(10);
-        }else if(height < 800){
-            filterTypeBox.setPrefHeight(20);
-        }else{
-            filterTypeBox.setPrefHeight(30);
-        }
     }
 
 
@@ -338,5 +294,10 @@ public class RTIViewer extends Application {
         if(ptmWindow.equals(selectedWindow)) {
             bottomTabPane.updateViewportRect(x, y, imageScale);
         }
+    }
+
+
+    public static int getHeight() {
+        return height;
     }
 }

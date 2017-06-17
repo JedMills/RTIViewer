@@ -10,7 +10,9 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -39,19 +41,20 @@ public class BottomTabPane extends TabPane {
     private VBox vBox;
     private StackPane imageContainerPane;
     private Rectangle previewWindowRect;
+    private float previewRectScale = 1.0f;
 
     public BottomTabPane(RTIViewer rtiViewer, Scene parent){
         super();
         this.rtiViewer = rtiViewer;
         this.parent = parent;
 
-        defaultImage = new Image("file:rsc/images/exeterUniLogo.jpg");
+        defaultImage = new Image("file:rsc/images/exeterUniLogoMedium.jpg");
 
-        createComponenets();
-        updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
+        createComponents();
+        setStyle("-fx-border-color: #dddddd;");
     }
 
-    private void createComponenets(){
+    private void createComponents(){
         Tab previewTab = createPreviewTab();
 
         Tab bookmarksTab = new Tab("Bookmarks");
@@ -111,6 +114,7 @@ public class BottomTabPane extends TabPane {
 
         vBox.getChildren().addAll(previewGridPane, imageBorderPane);
         vBox.setMargin(previewGridPane, new Insets(5, 0, 5, 0));
+        setStyle("-fx-background-color: #dddddd;");
         previewTab.setContent(vBox);
 
         return previewTab;
@@ -120,12 +124,13 @@ public class BottomTabPane extends TabPane {
     private void createImagePreview(){
         imageBorderPane = new BorderPane();
 
+        previewWindowRect = new Rectangle(0, 0, 0 ,0);
+        previewWindowRect.setFill(Color.TRANSPARENT);
+        previewWindowRect.setStrokeWidth(2);
+
         imagePreview = new ImageView();
         imagePreview.setPreserveRatio(true);
 
-        previewWindowRect = new Rectangle(0, 0, 30 ,30);
-        previewWindowRect.setFill(Color.TRANSPARENT);
-        previewWindowRect.setStrokeWidth(2);
 
         imageContainerPane = new StackPane(imagePreview, previewWindowRect);
         imageContainerPane.setMinWidth(0);
@@ -135,19 +140,61 @@ public class BottomTabPane extends TabPane {
         imageBorderPane.setMinWidth(0);
         imageBorderPane.setMinHeight(0);
 
-        imagePreview.fitWidthProperty().bind(imageBorderPane.widthProperty());
         imagePreview.fitHeightProperty().bind(imageBorderPane.heightProperty());
+        imagePreview.fitWidthProperty().bind(imageBorderPane.widthProperty());
+        imagePreview.setSmooth(true);
+        setDefaultImage();
 
-        imageContainerPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+        imageContainerPane.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                double normX = (2 * (event.getX() - (imageContainerPane.getWidth() / 2)) / imagePreview.getBoundsInParent().getWidth());
-                double normY = (-2 * (event.getY() - (imageContainerPane.getHeight() / 2)) / imagePreview.getBoundsInParent().getHeight());
-                System.out.println(normX + ", " + normY);
+                previewImageClicked(event.getX(), event.getY());
             }
         });
 
-        setDefaultImage();
+        imageContainerPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent event) {
+                previewImageClicked(event.getX(), event.getY());
+            }
+        });
+
+        imageContainerPane.setOnScroll(new EventHandler<ScrollEvent>() {
+            @Override
+            public void handle(ScrollEvent event) {
+                //scroll up positive, scroll down negative
+                previewRectScale += 0.01 * event.getDeltaY();
+                if(previewRectScale > 10){previewRectScale = 10f;}
+                else if(previewRectScale < 1){previewRectScale = 1;}
+
+                RTIViewer.selectedWindow.updateViewportFromPreview(previewRectScale);
+            }
+        });
+    }
+
+    private void previewImageClicked(double x, double y){
+        double normX = (2 * (x - (imageContainerPane.getWidth() / 2))
+                / imagePreview.getBoundsInParent().getWidth()) / Math.pow(previewRectScale, 0.1);
+        double normY = (-2 * (y - (imageContainerPane.getHeight() / 2))
+                / imagePreview.getBoundsInParent().getHeight()) / Math.pow(previewRectScale, 0.1);
+
+        float minX = (-1.0f + (1 / (previewRectScale))) / 2.0f;
+        float maxX = (1.0f - (1 / (previewRectScale))) / 2.0f;
+        float maxY = (1.0f - (1 / (previewRectScale))) / 2.0f;
+        float minY = (-1.0f + (1 / (previewRectScale))) / 2.0f;
+
+        if(normX > maxX){normX = maxX;}
+        else if(normX < minX){normX = minX;}
+        if(normY > maxY){normY = maxY;}
+        else if(normY < minY){normY = minY;}
+
+        previewPositionChanged(normX, normY);
+    }
+
+    private void previewPositionChanged(double x, double y){
+        previewWindowRect.setTranslateX((x) * imagePreview.getBoundsInParent().getWidth());
+        previewWindowRect.setTranslateY((-y) * imagePreview.getBoundsInParent().getHeight());
+
+        RTIViewer.selectedWindow.updateViewportFromPreview((float)x, (float)y, previewRectScale);
     }
 
 
@@ -170,24 +217,28 @@ public class BottomTabPane extends TabPane {
     public void setPreviewImage(Image image){
         imagePreview.setImage(image);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
-        imageBorderPane.setStyle("-fx-background-color: #000000;");
+        //imageBorderPane.setStyle("-fx-background-color: #000000;");
         previewWindowRect.setStroke(Color.RED);
     }
 
     public void setDefaultImage(){
         imagePreview.setImage(defaultImage);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
-        imageBorderPane.setStyle("-fx-background-color: #ffffff;");
+        //imageBorderPane.setStyle("-fx-background-color: #ffffff;");
         previewWindowRect.setStroke(Color.TRANSPARENT);
     }
 
     public void updateSize(double width, double height){
         setPrefWidth(width - 20);
 
+        if(getLayoutY() < 300){
+            setLayoutY(371);
+        }
+
         setPrefHeight(height - (getLayoutY() + 45));
 
         vBox.setPrefWidth(width - 20);
-        previewGridPane.setPrefWidth(width - 20);
+        previewGridPane.setPrefWidth(width - 40);
 
         imageWidthBox.setPrefWidth(width / 6);
         imageHeightBox.setPrefWidth(width / 6);
@@ -213,7 +264,7 @@ public class BottomTabPane extends TabPane {
 
 
     public void updateViewportRect(float x, float y, float imageScale){
-        imagePreview.setImage(imagePreview.getImage());
+        previewRectScale = imageScale;
         previewWindowRect.setWidth(imagePreview.getBoundsInParent().getWidth() / imageScale);
         previewWindowRect.setHeight(imagePreview.getBoundsInParent().getHeight() / imageScale);
         previewWindowRect.setTranslateX((x / imageScale) * imagePreview.getBoundsInParent().getWidth() / 2);
