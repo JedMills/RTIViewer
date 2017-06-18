@@ -4,31 +4,22 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.effect.Light;
-import javafx.scene.effect.Lighting;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
-import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import openGLWindow.PTMWindow;
-import openGLWindow.PTMWindowLRGB;
-import openGLWindow.PTMWindowRGB;
-import org.lwjgl.system.CallbackI;
+import openGLWindow.RTIWindowHSH;
+import openGLWindow.RTIWindowLRGB;
+import openGLWindow.RTIWindow;
+import openGLWindow.RTIWindowRGB;
 import ptmCreation.PTMObject;
+import ptmCreation.PTMObjectHSH;
 import ptmCreation.PTMObjectLRGB;
 import ptmCreation.PTMObjectRGB;
 import utils.Utils;
@@ -71,13 +62,13 @@ public class RTIViewer extends Application {
 
     public static ShaderProgram currentProgram = ShaderProgram.DEFAULT;
 
-    public static PTMWindow selectedWindow;
+    public static RTIWindow selectedWindow;
 
     public static Alert entryAlert;
     public static Alert fileReadingAlert;
     public final FileChooser fileChooser = new FileChooser();
 
-    private static ArrayList<PTMWindow> ptmWindows = new ArrayList<>();
+    private static ArrayList<RTIWindow> RTIWindows = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -92,8 +83,8 @@ public class RTIViewer extends Application {
 
         this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent event) {
-                for(PTMWindow ptmWindow : ptmWindows){
-                    ptmWindow.setShouldClose(true);
+                for(RTIWindow RTIWindow : RTIWindows){
+                    RTIWindow.setShouldClose(true);
                 }
                 Platform.exit();
             }
@@ -212,15 +203,20 @@ public class RTIViewer extends Application {
     public static void createNewPTMWindow(PTMObject ptmObject){
         try {
             if(ptmObject instanceof PTMObjectRGB) {
-                PTMWindow ptmWindow = new PTMWindowRGB((PTMObjectRGB) ptmObject);
-                Thread thread = new Thread(ptmWindow);
+                RTIWindow rtiWindow = new RTIWindowRGB((PTMObjectRGB) ptmObject);
+                Thread thread = new Thread(rtiWindow);
                 thread.start();
-                ptmWindows.add(ptmWindow);
+                RTIWindows.add(rtiWindow);
             }else if(ptmObject instanceof PTMObjectLRGB){
-                PTMWindow ptmWindow = new PTMWindowLRGB((PTMObjectLRGB) ptmObject);
-                Thread thread = new Thread(ptmWindow);
+                RTIWindow rtiWindow = new RTIWindowLRGB((PTMObjectLRGB) ptmObject);
+                Thread thread = new Thread(rtiWindow);
                 thread.start();
-                ptmWindows.add(ptmWindow);
+                RTIWindows.add(rtiWindow);
+            }else if(ptmObject instanceof PTMObjectHSH){
+                RTIWindow rtiWindow = new RTIWindowHSH((PTMObjectHSH) ptmObject);
+                Thread thread = new Thread(rtiWindow);
+                thread.start();
+                RTIWindows.add(rtiWindow);
             }
         }catch(Exception e){
             fileReadingAlert.setContentText("Couldn't compile OpenGL shader: " + e.getMessage());
@@ -241,16 +237,16 @@ public class RTIViewer extends Application {
 
         currentProgram = programToSet;
 
-        for(PTMWindow ptmWindow : ptmWindows){
-            ptmWindow.setCurrentProgram(programToSet);
+        for(RTIWindow RTIWindow : RTIWindows){
+            RTIWindow.setCurrentProgram(programToSet);
         }
     }
 
 
-    public static void removeWindow(PTMWindow window){
-        for(PTMWindow ptmWindow : ptmWindows){
-            if (ptmWindow.equals(window)){
-                ptmWindows.remove(window);
+    public static void removeWindow(RTIWindow window){
+        for(RTIWindow RTIWindow : RTIWindows){
+            if (RTIWindow.equals(window)){
+                RTIWindows.remove(window);
                 setNoFocusedWindow();
                 break;
             }
@@ -262,10 +258,10 @@ public class RTIViewer extends Application {
     }
 
 
-    public static void setFocusedWindow(PTMWindow ptmWindow){
-        selectedWindow = ptmWindow;
-        bottomTabPane.updateSelectedWindow(ptmWindow);
-        bottomTabPane.updateViewportRect(ptmWindow.getViewportX(), ptmWindow.getViewportY(), ptmWindow.getImageScale());
+    public static void setFocusedWindow(RTIWindow RTIWindow){
+        selectedWindow = RTIWindow;
+        bottomTabPane.updateSelectedWindow(RTIWindow);
+        bottomTabPane.updateViewportRect(RTIWindow.getViewportX(), RTIWindow.getViewportY(), RTIWindow.getImageScale());
     }
 
     private static void setNoFocusedWindow(){
@@ -290,8 +286,8 @@ public class RTIViewer extends Application {
     }
 
 
-    public static void updateViewportPos(PTMWindow ptmWindow, Float x, Float y, float imageScale){
-        if(ptmWindow.equals(selectedWindow)) {
+    public static void updateViewportPos(RTIWindow RTIWindow, Float x, Float y, float imageScale){
+        if(RTIWindow.equals(selectedWindow)) {
             bottomTabPane.updateViewportRect(x, y, imageScale);
         }
     }

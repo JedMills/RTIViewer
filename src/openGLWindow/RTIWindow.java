@@ -1,6 +1,5 @@
 package openGLWindow;
 
-import javafx.scene.image.Image;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -40,7 +39,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  *
  * Created by Jed on 03-Jun-17.
  */
-public abstract class PTMWindow implements Runnable{
+public abstract class RTIWindow implements Runnable{
 
     /**The ptm image that this window will display*/
     public PTMObject ptmObject;
@@ -167,12 +166,12 @@ public abstract class PTMWindow implements Runnable{
 
 
     /**
-     * Creates a new PTMWindow, setting the passed PTMObject as this window's PTMObject, which it will
+     * Creates a new RTIWindow, setting the passed PTMObject as this window's PTMObject, which it will
      * display using the parameters in the RTIViewer window.
      *
      * @param ptmObject
      */
-    public PTMWindow(PTMObject ptmObject){
+    public RTIWindow(PTMObject ptmObject){
         this.ptmObject = ptmObject;
 
         imageWidth = ptmObject.getWidth();
@@ -183,7 +182,7 @@ public abstract class PTMWindow implements Runnable{
 
     /**
      * Initialises GLFW so OpenGL can be used to display the image in this window. Creates a new window, which
-     * will be the UI for this PTMWindow, sets callbacks to deal with zooming using the scroll wheel and panning
+     * will be the UI for this RTIWindow, sets callbacks to deal with zooming using the scroll wheel and panning
      * with the mouse, and places the window to be in the middle of the screen. Does not actually call the window
      * to be displayed.
      */
@@ -216,7 +215,7 @@ public abstract class PTMWindow implements Runnable{
         glfwSetWindowCloseCallback(window, new GLFWWindowCloseCallbackI() {
             @Override
             public void invoke(long window) {
-                RTIViewer.removeWindow(PTMWindow.this);
+                RTIViewer.removeWindow(RTIWindow.this);
                 glfwSetWindowShouldClose(window, true);
             }
         });
@@ -226,7 +225,7 @@ public abstract class PTMWindow implements Runnable{
             @Override
             public void invoke(long window, boolean focused) {
                 if(focused){
-                    RTIViewer.setFocusedWindow(PTMWindow.this);
+                    RTIViewer.setFocusedWindow(RTIWindow.this);
                 }
             }
         });
@@ -646,12 +645,6 @@ public abstract class PTMWindow implements Runnable{
             if(Math.abs(deltaX) > 0.01 && Math.abs(deltaY) > 0.01) {
                 viewportX += 2 * deltaX / ((Math.pow(imageScale, 0.2)) * windowWidth[0]);
                 viewportY -= 2 * deltaY / ((Math.pow(imageScale, 0.2)) * windowHeight[0]);
-                /*
-                double r = Math.pow((deltaX * deltaX) + (deltaY * deltaY), 0.5) / (imageScale * windowHeight[0]);
-                double theta = Math.atan2(deltaY, deltaX);
-                viewportX += r * Math.cos(theta);
-                viewportY += r * Math.sin(theta);
-                */
             }
             //make sure the user does't pan outside the image
             checkViewport();

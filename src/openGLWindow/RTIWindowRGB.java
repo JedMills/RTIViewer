@@ -10,7 +10,7 @@ import static org.lwjgl.opengl.GL20.glUniform1i;
 /**
  * Created by Jed on 12-Jun-17.
  */
-public class PTMWindowRGB extends PTMWindow {
+public class RTIWindowRGB extends RTIWindow {
 
     private PTMObjectRGB ptmObjectRGB;
 
@@ -34,7 +34,7 @@ public class PTMWindowRGB extends PTMWindow {
 
 
 
-    public PTMWindowRGB(PTMObjectRGB ptmObject) {
+    public RTIWindowRGB(PTMObjectRGB ptmObject) {
         super(ptmObject);
 
         ptmObjectRGB = ptmObject;

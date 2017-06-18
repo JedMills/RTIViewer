@@ -1,6 +1,8 @@
 package ptmCreation;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -13,18 +15,18 @@ import utils.Utils;
  * This class is responsible for parsing pm files and creating PTMObjects from the data. The parser accepts
  * PTM version 1.2, and the following file formats:
  *      PTM_FORMAT_RGB
- *
- *
+ *      PTM_FORMAT_LRGB
+ *      #HSH1.2
  *
  * Created by jed on 14/05/17.
  */
 public class PTMParser {
 
     /**Used for checking the PTM version fo the file used*/
-    private static final String[] acceptedVersions = new String[]{"PTM_1.2"};
+    private static final String[] acceptedVersions = new String[]{"PTM_1.2", "#HSH1.2"};
 
     /**Used for checking the PTM format of the passed file*/
-    private static final String[] acceptedFormats = new String[]{"PTM_FORMAT_RGB", "PTM_FORMAT_LRGB"};
+    private static final String[] acceptedFormats = new String[]{"PTM_FORMAT_RGB", "PTM_FORMAT_LRGB", "#HSH1.2"};
 
     /**Scaling coefficients used for RGB format found in file header*/
     private static float[] scaleCoeffs;
@@ -55,10 +57,18 @@ public class PTMParser {
 
             //create the ptmCreation.PTMObject from the data
             return new PTMObjectRGB(fileName, headerData[1], headerData[2], texelData);
+
         }else if(format.equals("PTM_FORMAT_LRGB")){
             IntBuffer[] texelData = getTexelDataLRGB(fileName, format, headerData[0], headerData[1], headerData[2]);
 
             return new PTMObjectLRGB(fileName, headerData[1], headerData[2], texelData);
+
+        }else if(format.equals("#HSH1.2")){
+            FloatBuffer[] texelData = getTexelDataHSH(fileName, headerData[0], headerData[1], headerData[2],
+                                                    headerData[3], headerData[4], headerData[5], headerData[6]);
+
+            return new PTMObjectHSH(fileName, headerData[0], headerData[1], headerData[2],
+                                    headerData[3], headerData[4], texelData);
         }
 
         return null;
@@ -91,21 +101,29 @@ public class PTMParser {
     private static String getFileFormat(String fileName) throws IOException, PTMFileException{
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
+        String version = reader.readLine();
+
         //there should be a PTM version declaration on line 1, check it's 1.2
-        if(!Utils.checkIn(reader.readLine(), acceptedVersions)){
+        if(!Utils.checkIn(version, acceptedVersions)){
             throw new PTMFileException("File does not contain accepted version on line 1");
         }
 
-        //the next line has the file format
-        String fileFormat = reader.readLine();
+        if(version.equals("PTM_1.2")) {
+            //the next line has the file format
+            String fileFormat = reader.readLine();
+
+            //check the format's an accepted version
+            if (!Utils.checkIn(fileFormat, acceptedFormats)) {
+                throw new PTMFileException("File does nor contain accepted format on line 2");
+            }
+
+            return fileFormat;
+        }else if(version.equals("#HSH1.2")){
+            return "#HSH1.2";
+        }
         reader.close();
 
-        //check the format's an accepted version
-        if(!Utils.checkIn(fileFormat, acceptedFormats)){
-            throw new PTMFileException("File does nor contain accepted format on line 2");
-        }
-
-        return fileFormat;
+        return null;
     }
 
 
@@ -127,7 +145,14 @@ public class PTMParser {
         //read the first 6 lines fo the file for the header
         String header = "";
 
-        for (int i = 0; i < 6; i++) {
+        int numHeaderLines = 0;
+        if(format.equals("PTM_FORMAT_RGB") || format.equals("PTM_FORMAT_LRGB")){
+            numHeaderLines = 6;
+        }else if(format.equals("#HSH1.2")){
+            numHeaderLines = 4;
+        }
+
+        for (int i = 0; i < numHeaderLines; i++) {
             header += reader.readLine() + " ";
         }
         int dataStartPos = header.length();
@@ -136,30 +161,43 @@ public class PTMParser {
         //split the header into each item in it
         String[] items = header.split("(\\s+)|(\\n+)");
 
-        //get RTI type, file type, image width, image height
-        int width, height;
-        try {
-            width = Integer.parseInt(items[2]);
-            height = Integer.parseInt(items[3]);
-        } catch (NumberFormatException e) {
-            throw new PTMFileException("Error parsing the width and height from file");
-        }
-
-        //get the width, height, scale and bias coefficients from the header
         if(format.equals("PTM_FORMAT_RGB") || format.equals("PTM_FORMAT_LRGB")){
-            //get the 6 scaling coefficients
+            //get RTI type, file type, image width, image height
+            int width, height;
             scaleCoeffs = new float[6];
-            for (int i = 0; i < 6; i++) {
-                scaleCoeffs[i] = Float.parseFloat(items[i + 4]);
-            }
-
-            //get the six bias coefficients
             biasCoeffs = new int[6];
-            for (int i = 0; i < 6; i++) {
-                biasCoeffs[i] = Integer.parseInt(items[i + 10]);
+            try {
+                width = Integer.parseInt(items[2]);
+                height = Integer.parseInt(items[3]);
+
+                //get the 6 scaling coefficients
+                for (int i = 0; i < 6; i++) {
+                    scaleCoeffs[i] = Float.parseFloat(items[i + 4]);
+                }
+                //get the six bias coefficients
+                for (int i = 0; i < 6; i++) {
+                    biasCoeffs[i] = Integer.parseInt(items[i + 10]);
+                }
+            } catch (NumberFormatException e) {
+                throw new PTMFileException("Error parsing the header data from file");
             }
 
             return new int[]{dataStartPos, width, height};
+
+        }else if(format.equals("#HSH1.2")){
+            int width, height, colsPerPixel, basisTerm, basisType, elemSize;
+            try{
+                width = Integer.parseInt(items[2]);
+                height = Integer.parseInt(items[3]);
+                colsPerPixel = Integer.parseInt(items[4]);
+                basisTerm = Integer.parseInt(items[5]);
+                basisType = Integer.parseInt(items[6]);
+                elemSize = Integer.parseInt(items[7]);
+            }catch(NumberFormatException e){
+                throw new PTMFileException("Error parsing the header data from file");
+            }
+
+            return new int[]{width, height, colsPerPixel,  basisTerm, basisType, elemSize, dataStartPos};
         }
 
         return null;
@@ -238,7 +276,6 @@ public class PTMParser {
 
     private static IntBuffer[] getTexelDataLRGB(String fileName, String format,
                                          int startPos, int width, int height) throws IOException, PTMFileException{
-
         IntBuffer ptmCoeffs1 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer ptmCoeffs2 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer rgbCoeffs = BufferUtils.createIntBuffer(width * height * 3);
@@ -283,9 +320,83 @@ public class PTMParser {
             throw new PTMFileException("Error reading in texel data from file");
         }
 
-
         stream.close();
         return new IntBuffer[]{ptmCoeffs1, ptmCoeffs2, rgbCoeffs};
+    }
+
+
+
+    private static FloatBuffer[] getTexelDataHSH(String fileName, int width, int height, int colsPerPixel,
+                                     int basisTerm, int basisType, int elemSize, int dataStartPos) throws IOException{
+        FloatBuffer gMin = BufferUtils.createFloatBuffer(16);
+        FloatBuffer gMax = BufferUtils.createFloatBuffer(16);
+
+        int capacity = width * height * basisTerm;
+
+        FloatBuffer redCoeffs1 = BufferUtils.createFloatBuffer(capacity);
+        FloatBuffer greenCoeffs1 = BufferUtils.createFloatBuffer(capacity);
+        FloatBuffer blueCoeffs1 = BufferUtils.createFloatBuffer(capacity);
+
+        if(basisTerm <= 3){capacity = 0;}
+
+        FloatBuffer redCoeffs2 = BufferUtils.createFloatBuffer(capacity);
+        FloatBuffer greenCoeffs2 = BufferUtils.createFloatBuffer(capacity);
+        FloatBuffer blueCoeffs2 = BufferUtils.createFloatBuffer(capacity);
+
+        if(basisTerm <= 6){capacity = 0;}
+
+        FloatBuffer redCoeffs3 = BufferUtils.createFloatBuffer(capacity);
+        FloatBuffer greenCoeffs3 = BufferUtils.createFloatBuffer(capacity);
+        FloatBuffer blueCoeffs3 = BufferUtils.createFloatBuffer(capacity);
+
+
+        //make a scanner to scan in all the data as characters
+        ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
+        stream.skip(dataStartPos + 4);
+
+        for(int i = 0; i < basisTerm * basisTerm; i++){
+            gMin.put(i, stream.read());
+        }
+        for(int i = 0; i < basisTerm * basisTerm; i++){
+            gMax.put(i, stream.read());
+        }
+
+        int offset;
+        float nextCharValue;
+        for(int j = 0; j < height; j++){
+            for(int i = 0; i < width; i++){
+                offset = (j * width + i) * basisTerm;
+
+                for(int k = 0; k < basisTerm; k++){
+                    nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
+                    if(k < 3){redCoeffs1.put(offset + k, nextCharValue);}
+                    else if(k < 6){redCoeffs2.put(offset + (k - 3), nextCharValue);}
+                    else{redCoeffs3.put(offset + (k - 6), nextCharValue);}
+                }
+
+                for(int k = 0; k < basisTerm; k++){
+                    nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
+                    if(k < 3){greenCoeffs1.put(offset + k, nextCharValue);}
+                    else if(k < 6){greenCoeffs2.put(offset + (k - 3), nextCharValue);}
+                    else{greenCoeffs3.put(offset + (k - 6), nextCharValue);}
+                }
+
+                for(int k = 0; k < basisTerm; k++){
+                    nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
+                    if(k < 3){blueCoeffs1.put(offset + k, nextCharValue);}
+                    else if(k < 6){blueCoeffs2.put(offset + (k - 3), nextCharValue);}
+                    else{blueCoeffs3.put(offset + (k - 6), nextCharValue);}
+                }
+            }
+        }
+
+        stream.close();
+
+
+        return new FloatBuffer[]{redCoeffs1, redCoeffs2, redCoeffs3,
+                                 greenCoeffs1, greenCoeffs2, greenCoeffs3,
+                                 blueCoeffs1, blueCoeffs2, blueCoeffs3};
+
     }
 
 }

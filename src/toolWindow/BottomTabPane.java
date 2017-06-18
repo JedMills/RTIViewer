@@ -10,16 +10,14 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
-import openGLWindow.PTMWindow;
-import openGLWindow.PTMWindowLRGB;
-import openGLWindow.PTMWindowRGB;
+import openGLWindow.RTIWindow;
+import openGLWindow.RTIWindowLRGB;
+import openGLWindow.RTIWindowRGB;
 
 
 /**
@@ -248,18 +246,18 @@ public class BottomTabPane extends TabPane {
     }
 
 
-    public void updateSelectedWindow(PTMWindow ptmWindow){
-        setFileText(ptmWindow.ptmObject.getFileName());
-        setWidthText(String.valueOf(ptmWindow.ptmObject.getWidth()));
-        setHeightText(String.valueOf(ptmWindow.ptmObject.getHeight()));
+    public void updateSelectedWindow(RTIWindow RTIWindow){
+        setFileText(RTIWindow.ptmObject.getFileName());
+        setWidthText(String.valueOf(RTIWindow.ptmObject.getWidth()));
+        setHeightText(String.valueOf(RTIWindow.ptmObject.getHeight()));
 
-        if(ptmWindow instanceof PTMWindowRGB){
+        if(RTIWindow instanceof RTIWindowRGB){
             setFormatText("PTM RGB");
-        }else if(ptmWindow instanceof PTMWindowLRGB){
+        }else if(RTIWindow instanceof RTIWindowLRGB){
             setFormatText("PTM LRGB");
         }
 
-        setPreviewImage(ptmWindow.ptmObject.previewImage);
+        setPreviewImage(RTIWindow.ptmObject.previewImage);
     }
 
 

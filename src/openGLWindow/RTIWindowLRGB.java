@@ -1,6 +1,5 @@
 package openGLWindow;
 
-import ptmCreation.PTMObject;
 import ptmCreation.PTMObjectLRGB;
 import toolWindow.RTIViewer;
 
@@ -11,7 +10,7 @@ import static org.lwjgl.opengl.GL20.glUniform1i;
 /**
  * Created by Jed on 12-Jun-17.
  */
-public class PTMWindowLRGB extends PTMWindow {
+public class RTIWindowLRGB extends RTIWindow {
 
     private PTMObjectLRGB ptmObject;
 
@@ -21,7 +20,7 @@ public class PTMWindowLRGB extends PTMWindow {
 
     private int rgbCoeffsRef;
 
-    public PTMWindowLRGB(PTMObjectLRGB ptmObject) {
+    public RTIWindowLRGB(PTMObjectLRGB ptmObject) {
         super(ptmObject);
 
         this.ptmObject = ptmObject;

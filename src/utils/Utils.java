@@ -485,8 +485,13 @@ public class Utils {
         int blue = (int) Math.floor((normal.z + 1) * 128.0);
 
         if(red > 255){red = 255;}
+        else if(red < 0){red = 0;}
+
         if(green > 255){green = 255;}
+        else if(green < 0){green = 0;}
+
         if(blue > 255){blue = 255;}
+        else if(blue < 0){blue = 0;}
 
         return new int[]{red, green, blue};
     }
@@ -495,5 +500,17 @@ public class Utils {
         if(value < 0.0){return 0;}
         else if(value > 255.0){return 255;}
         else{return (int) value;}
+    }
+
+
+
+    public static Vector3f mat3x3_mul_vec3(float[][] mat, Vector3f vec){
+        Vector3f returnVec = new Vector3f(0, 0, 0);
+
+        returnVec.x = (mat[0][0] * vec.x) + (mat[0][1] * vec.y) + (mat[0][2] * vec.z);
+        returnVec.y = (mat[1][0] * vec.x) + (mat[1][1] * vec.y) + (mat[1][2] * vec.z);
+        returnVec.z = (mat[2][0] * vec.x) + (mat[2][1] * vec.y) + (mat[2][2] * vec.z);
+
+        return returnVec;
     }
 }
