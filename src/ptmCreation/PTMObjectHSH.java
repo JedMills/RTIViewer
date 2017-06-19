@@ -87,34 +87,43 @@ public class PTMObjectHSH extends PTMObject {
                 temp.setZ(0.0f);
 
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){temp.x += redVals1.get(offset * basisTerms + k) * hWeights1[k];}
-                    else if(k < 6){temp.x += redVals2.get(offset * basisTerms + k - 3) * hWeights1[k];}
+                    if(k < 3){temp.x += redVals1.get(offset * 3 + k) * hWeights1[k];}
+                    else if(k < 6){temp.x += redVals2.get(offset * 3 + k - 3) * hWeights1[k];}
+                    else if(k < 9){temp.x += redVals3.get(offset * 3 + k - 6) * hWeights1[k];}
 
-                    if(k < 3){temp.y += redVals1.get(offset * basisTerms + k) * hWeights2[k];}
-                    else if(k < 6){temp.y += redVals2.get(offset * basisTerms + k - 3) * hWeights2[k];}
+                    if(k < 3){temp.y += redVals1.get(offset * 3 + k) * hWeights2[k];}
+                    else if(k < 6){temp.y += redVals2.get(offset * 3 + k - 3) * hWeights2[k];}
+                    else if(k < 9){temp.y += redVals3.get(offset * 3 + k - 6) * hWeights2[k];}
 
-                    if(k < 3){temp.z += redVals1.get(offset * basisTerms + k) * hWeights3[k];}
-                    else if(k < 6){temp.z += redVals2.get(offset * basisTerms + k - 3) * hWeights3[k];}
+                    if(k < 3){temp.z += redVals1.get(offset * 3 + k) * hWeights3[k];}
+                    else if(k < 6){temp.z += redVals2.get(offset * 3 + k - 3) * hWeights3[k];}
+                    else if(k < 9){temp.z += redVals3.get(offset * 3 + k - 6) * hWeights3[k];}
                 }
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){temp.x += greenVals1.get(offset * basisTerms + k) * hWeights1[k];}
-                    else if(k < 6){temp.x += greenVals2.get(offset * basisTerms + k - 3) * hWeights1[k];}
+                    if(k < 3){temp.x += greenVals1.get(offset * 3 + k) * hWeights1[k];}
+                    else if(k < 6){temp.x += greenVals2.get(offset * 3 + k - 3) * hWeights1[k];}
+                    else if(k < 9){temp.x += greenVals3.get(offset * 3 + k - 6) * hWeights1[k];}
 
-                    if(k < 3){temp.y += greenVals1.get(offset * basisTerms + k) * hWeights2[k];}
-                    else if(k < 6){temp.y += greenVals2.get(offset * basisTerms + k - 3) * hWeights2[k];}
+                    if(k < 3){temp.y += greenVals1.get(offset * 3 + k) * hWeights2[k];}
+                    else if(k < 6){temp.y += greenVals2.get(offset * 3 + k - 3) * hWeights2[k];}
+                    else if(k < 9){temp.y += greenVals3.get(offset * 3 + k - 6) * hWeights2[k];}
 
-                    if(k < 3){temp.z += greenVals1.get(offset * basisTerms + k) * hWeights3[k];}
-                    else if(k < 6){temp.z += greenVals2.get(offset * basisTerms + k - 3) * hWeights3[k];}
+                    if(k < 3){temp.z += greenVals1.get(offset * 3 + k) * hWeights3[k];}
+                    else if(k < 6){temp.z += greenVals2.get(offset * 3 + k - 3) * hWeights3[k];}
+                    else if(k < 9){temp.z += greenVals3.get(offset * 3 + k - 6) * hWeights3[k];}
                 }
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){temp.x += blueVals1.get(offset * basisTerms + k) * hWeights1[k];}
-                    else if(k < 6){temp.x += blueVals2.get(offset * basisTerms + k - 3) * hWeights1[k];}
+                    if(k < 3){temp.x += blueVals1.get(offset * 3 + k) * hWeights1[k];}
+                    else if(k < 6){temp.x += blueVals2.get(offset * 3 + k - 3) * hWeights1[k];}
+                    else if(k < 9){temp.x += blueVals3.get(offset * 3 + k - 6) * hWeights1[k];}
 
-                    if(k < 3){temp.y += blueVals1.get(offset * basisTerms + k) * hWeights2[k];}
-                    else if(k < 6){temp.y += blueVals2.get(offset * basisTerms + k - 3) * hWeights2[k];}
+                    if(k < 3){temp.y += blueVals1.get(offset * 3 + k) * hWeights2[k];}
+                    else if(k < 6){temp.y += blueVals2.get(offset * 3 + k - 3) * hWeights2[k];}
+                    else if(k < 9){temp.y += blueVals3.get(offset * 3 + k - 6) * hWeights2[k];}
 
-                    if(k < 3){temp.z += blueVals1.get(offset * basisTerms + k) * hWeights3[k];}
-                    else if(k < 6){temp.z += blueVals2.get(offset * basisTerms + k - 3) * hWeights3[k];}
+                    if(k < 3){temp.z += blueVals1.get(offset * 3 + k) * hWeights3[k];}
+                    else if(k < 6){temp.z += blueVals2.get(offset * 3 + k - 3) * hWeights3[k];}
+                    else if(k < 9){temp.z += blueVals3.get(offset * 3 + k - 6) * hWeights3[k];}
                 }
 
                 temp.multiply(0.33333333f);
@@ -141,7 +150,7 @@ public class PTMObjectHSH extends PTMObject {
         float r, g, b;
         for(int y = 0; y < height; y++){
             for(int x = 0; x < width; x++){
-                offset = (y * width + x) * basisTerms;
+                offset = (y * width + x) * 3;
 
                 r = 0.0f;
                 g = 0.0f;
@@ -164,18 +173,33 @@ public class PTMObjectHSH extends PTMObject {
                 g /= 255.0f;
                 b /= 255.0f;
 
-                if(r > 255.0){r = 255.0f;}
+                if(r > 1.0){r = 1.0f;}
                 else if(r < 0){r = 0;}
 
-                if(g > 255.0){g = 255.0f;}
+                if(g > 1.0){g = 1.0f;}
                 else if(g < 0){g = 0;}
 
-                if(b > 255.0){b = 255.0f;}
+                if(b > 1.0){b = 1.0f;}
                 else if(b < 0){b = 0;}
 
                 previewImage.getPixelWriter().setColor(x, y, Color.color(r, g, b) );
             }
         }
+    }
+
+    public WritableImage createNormalsMap(){
+        WritableImage writableImage = new WritableImage(width, height);
+        int offset;
+        float r, g, b;
+        for(int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                offset = (y * width + x) * 3;
+
+
+            }
+        }
+
+        return writableImage;
     }
 
 
@@ -212,26 +236,6 @@ public class PTMObjectHSH extends PTMObject {
             hWeightsOut[i] = (float) hweights[i];
         }
         return hWeightsOut;
-    }
-
-
-    public WritableImage createNormalMap(){
-        WritableImage writableImage = new WritableImage(width, height);
-
-        Utils.Vector3f temp;
-        int position;
-        int[] colour;
-        for(int y = 0; y < height; y++){
-            for(int x = 0; x < width; x++){
-                position = (y * width) + x;
-                temp = new Utils.Vector3f(normals.get(position), normals.get(position + 1), normals.get(position + 2));
-                colour = Utils.convertNormalToColour(temp);
-
-                writableImage.getPixelWriter().setColor(x, y, Color.rgb(colour[0], colour[1], colour[2]));
-            }
-        }
-
-        return writableImage;
     }
 
 

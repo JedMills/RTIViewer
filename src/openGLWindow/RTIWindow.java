@@ -34,7 +34,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  *
  * <p>
  * Each instance holds its own shader references, and is responsible for updating them as per the values in the
- * PTMViewer window. Each instance also cleans up its own OpenGL shader orograms when it the run method finishes.
+ * PTMViewer window. Each instance also cleans up its own OpenGL shader programs when it the run method finishes.
  * </p>
  *
  * Created by Jed on 03-Jun-17.
@@ -252,6 +252,8 @@ public abstract class RTIWindow implements Runnable{
         glfwSwapInterval(1);
     }
 
+
+
     private void updateImageScale(double yoffset){
         float oldScale = imageScale;
 
@@ -415,6 +417,23 @@ public abstract class RTIWindow implements Runnable{
 
         //actually create and bind the texture
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, (int)imageWidth, (int)imageHeight,
+                0, GL_RGB_INTEGER, GL_INT, coeffArray);
+        glBindTexture(GL_TEXTURE_2D, textureRef);
+
+    }
+
+    protected void setShaderTexture(int textureNum, IntBuffer coeffArray, int width, int height){
+        //make the active texture the one passed, create this texture and bind it
+        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
+        int textureRef = glGenTextures();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureRef);
+
+        //GL_NEAREST gives best interpolated image quality
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        //actually create and bind the texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, width, height,
                 0, GL_RGB_INTEGER, GL_INT, coeffArray);
         glBindTexture(GL_TEXTURE_2D, textureRef);
 

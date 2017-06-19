@@ -331,19 +331,19 @@ public class PTMParser {
         FloatBuffer gMin = BufferUtils.createFloatBuffer(16);
         FloatBuffer gMax = BufferUtils.createFloatBuffer(16);
 
-        int capacity = width * height * basisTerm;
+        int capacity = width * height * 3;
 
         FloatBuffer redCoeffs1 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer greenCoeffs1 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer blueCoeffs1 = BufferUtils.createFloatBuffer(capacity);
 
-        if(basisTerm <= 3){capacity = 0;}
+        if(basisTerm < 4){capacity = 3;}
 
         FloatBuffer redCoeffs2 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer greenCoeffs2 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer blueCoeffs2 = BufferUtils.createFloatBuffer(capacity);
 
-        if(basisTerm <= 6){capacity = 0;}
+        if(basisTerm < 7){capacity = 3;}
 
         FloatBuffer redCoeffs3 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer greenCoeffs3 = BufferUtils.createFloatBuffer(capacity);
@@ -352,7 +352,8 @@ public class PTMParser {
 
         //make a scanner to scan in all the data as characters
         ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
-        stream.skip(dataStartPos + 4);
+        stream.skip(dataStartPos);
+        //stream.skip(dataStartPos + 4);
 
         for(int i = 0; i < basisTerm * basisTerm; i++){
             gMin.put(i, stream.read());
@@ -365,27 +366,30 @@ public class PTMParser {
         float nextCharValue;
         for(int j = 0; j < height; j++){
             for(int i = 0; i < width; i++){
-                offset = (j * width + i) * basisTerm;
+                offset = (j * width + i) * 3;
 
                 for(int k = 0; k < basisTerm; k++){
+                    //nextCharValue = (stream.read() / 255.0f) * (gMax.get(k) - gMin.get(k)) + gMax.get(k);
                     nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
                     if(k < 3){redCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){redCoeffs2.put(offset + (k - 3), nextCharValue);}
-                    else{redCoeffs3.put(offset + (k - 6), nextCharValue);}
+                    else if(k < 9){redCoeffs3.put(offset + (k - 6), nextCharValue);}
                 }
 
                 for(int k = 0; k < basisTerm; k++){
+                    //nextCharValue = (stream.read() / 255.0f) * (gMax.get(k) - gMin.get(k)) + gMax.get(k);
                     nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
                     if(k < 3){greenCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){greenCoeffs2.put(offset + (k - 3), nextCharValue);}
-                    else{greenCoeffs3.put(offset + (k - 6), nextCharValue);}
+                    else if(k < 9){greenCoeffs3.put(offset + (k - 6), nextCharValue);}
                 }
 
                 for(int k = 0; k < basisTerm; k++){
+                    //nextCharValue = (stream.read() / 255.0f) * (gMax.get(k) - gMin.get(k)) + gMax.get(k);
                     nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
                     if(k < 3){blueCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){blueCoeffs2.put(offset + (k - 3), nextCharValue);}
-                    else{blueCoeffs3.put(offset + (k - 6), nextCharValue);}
+                    else if(k < 9){blueCoeffs3.put(offset + (k - 6), nextCharValue);}
                 }
             }
         }
