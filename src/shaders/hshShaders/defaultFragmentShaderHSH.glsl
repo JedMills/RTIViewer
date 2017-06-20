@@ -127,38 +127,37 @@ void main() {
 
 
     for(int k = 0; k < basisTerms; k++){
-        if(k == 0){r += redVals1.x * hWeights[0][0];}
-        else if(k == 1){r += redVals1.y * hWeights[1][0];}
-        else if(k == 2){r += redVals1.z * hWeights[2][0];}
-        else if(k == 3){r += redVals2.x * hWeights[3][0];}
-        else if(k == 4){r += redVals2.y * hWeights[0][1];}
-        else if(k == 5){r += redVals2.z * hWeights[1][1];}
-        else if(k == 6){r += redVals3.x * hWeights[2][1];}
-        else if(k == 7){r += redVals3.y * hWeights[3][1];}
-        else if(k == 8){r += redVals3.z * hWeights[0][2];}
+        if      (k == 0){r += redVals1.x   * hWeights[0][0];}
+        else if (k == 1){r += redVals1.y   * hWeights[1][0];}
+        else if (k == 2){r += redVals1.z   * hWeights[2][0];}
+        else if (k == 3){r += redVals2.x   * hWeights[3][0];}
+        else if (k == 4){r += redVals2.y   * hWeights[0][1];}
+        else if (k == 5){r += redVals2.z   * hWeights[1][1];}
+        else if (k == 6){r += redVals3.x   * hWeights[2][1];}
+        else if (k == 7){r += redVals3.y   * hWeights[3][1];}
+        else if (k == 8){r += redVals3.z   * hWeights[0][2];}
 
+        if      (k == 0){g += greenVals1.x * hWeights[0][0];}
+        else if (k == 1){g += greenVals1.y * hWeights[1][0];}
+        else if (k == 2){g += greenVals1.z * hWeights[2][0];}
+        else if (k == 3){g += greenVals2.x * hWeights[3][0];}
+        else if (k == 4){g += greenVals2.y * hWeights[0][1];}
+        else if (k == 5){g += greenVals2.z * hWeights[1][1];}
+        else if (k == 6){g += greenVals3.x * hWeights[2][1];}
+        else if (k == 7){g += greenVals3.y * hWeights[3][1];}
+        else if (k == 8){g += greenVals3.z * hWeights[0][2];}
 
-        if(k == 0){g += greenVals1.x * hWeights[0][0];}
-        else if(k == 1){g += greenVals1.y * hWeights[1][0];}
-        else if(k == 2){g += greenVals1.z * hWeights[2][0];}
-        else if(k == 3){g += greenVals2.x * hWeights[3][0];}
-        else if(k == 4){g += greenVals2.y * hWeights[0][1];}
-        else if(k == 5){g += greenVals2.z * hWeights[1][1];}
-        else if(k == 6){g += greenVals3.x * hWeights[2][1];}
-        else if(k == 7){g += greenVals3.y * hWeights[3][1];}
-        else if(k == 8){g += greenVals3.z * hWeights[0][2];}
+        if      (k == 0){b += blueVals1.x  * hWeights[0][0];}
+        else if (k == 1){b += blueVals1.y  * hWeights[1][0];}
+        else if (k == 2){b += blueVals1.z  * hWeights[2][0];}
+        else if (k == 3){b += blueVals2.x  * hWeights[3][0];}
+        else if (k == 4){b += blueVals2.y  * hWeights[0][1];}
+        else if (k == 5){b += blueVals2.z  * hWeights[1][1];}
+        else if (k == 6){b += blueVals3.x  * hWeights[2][1];}
+        else if (k == 7){b += blueVals3.y  * hWeights[3][1];}
+        else if (k == 8){b += blueVals3.z  * hWeights[0][2];}
 
-        if(k == 0){b += blueVals1.x * hWeights[0][0];}
-        else if(k == 1){b += blueVals1.y * hWeights[1][0];}
-        else if(k == 2){b += blueVals1.z * hWeights[2][0];}
-        else if(k == 3){b += blueVals2.x * hWeights[3][0];}
-        else if(k == 4){b += blueVals2.y * hWeights[0][1];}
-        else if(k == 5){b += blueVals2.z * hWeights[1][1];}
-        else if(k == 6){b += blueVals3.x * hWeights[2][1];}
-        else if(k == 7){b += blueVals3.y * hWeights[3][1];}
-        else if(k == 8){b += blueVals3.z * hWeights[0][2];}
     }
-
 
     r /= 255.0;
     g /= 255.0;

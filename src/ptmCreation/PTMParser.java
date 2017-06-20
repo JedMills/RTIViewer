@@ -2,6 +2,7 @@ package ptmCreation;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
@@ -63,7 +64,7 @@ public class PTMParser {
 
             return new PTMObjectLRGB(fileName, headerData[1], headerData[2], texelData);
 
-        }else if(format.equals("#HSH1.2")){
+        }else if(format.equals("HSH")){
             FloatBuffer[] texelData = getTexelDataHSH(fileName, headerData[0], headerData[1], headerData[2],
                                                     headerData[3], headerData[4], headerData[5], headerData[6]);
 
@@ -118,8 +119,15 @@ public class PTMParser {
             }
 
             return fileFormat;
-        }else if(version.equals("#HSH1.2")){
-            return "#HSH1.2";
+        }else if(fileName.endsWith(".rti")){
+            while(version.startsWith("#")){
+                version = reader.readLine();
+            }
+            if(version.equals("3")){
+                return "HSH";
+            }else{
+                throw new PTMFileException("File contain unaccepted RTI type: " + version);
+            }
         }
         reader.close();
 
@@ -146,22 +154,20 @@ public class PTMParser {
         String header = "";
 
         int numHeaderLines = 0;
+        int dataStartPos = 0;
+
+
         if(format.equals("PTM_FORMAT_RGB") || format.equals("PTM_FORMAT_LRGB")){
             numHeaderLines = 6;
-        }else if(format.equals("#HSH1.2")){
-            numHeaderLines = 4;
-        }
+            for (int i = 0; i < numHeaderLines; i++) {
+                header += reader.readLine() + " ";
+            }
+            dataStartPos = header.length();
+            reader.close();
 
-        for (int i = 0; i < numHeaderLines; i++) {
-            header += reader.readLine() + " ";
-        }
-        int dataStartPos = header.length();
-        reader.close();
+            //split the header into each item in it
+            String[] items = header.split("(\\s+)|(\\n+)");
 
-        //split the header into each item in it
-        String[] items = header.split("(\\s+)|(\\n+)");
-
-        if(format.equals("PTM_FORMAT_RGB") || format.equals("PTM_FORMAT_LRGB")){
             //get RTI type, file type, image width, image height
             int width, height;
             scaleCoeffs = new float[6];
@@ -184,17 +190,32 @@ public class PTMParser {
 
             return new int[]{dataStartPos, width, height};
 
-        }else if(format.equals("#HSH1.2")){
+        }else if(format.equals("HSH")){
+            String line = reader.readLine();
+            dataStartPos += line.length() + 1;
+            while(line.startsWith("#")){
+                line = reader.readLine();
+                dataStartPos += line.length() + 1;
+            }
+            header += line + " ";
+            for(int i = 0; i < 2; i++){
+                line = reader.readLine() + " ";
+                dataStartPos += line.length();
+                header += line;
+            }
+
+            String[] items = header.split("(\\s+)|(\\n+)");
+
             int width, height, colsPerPixel, basisTerm, basisType, elemSize;
             try{
-                width = Integer.parseInt(items[2]);
-                height = Integer.parseInt(items[3]);
-                colsPerPixel = Integer.parseInt(items[4]);
-                basisTerm = Integer.parseInt(items[5]);
-                basisType = Integer.parseInt(items[6]);
-                elemSize = Integer.parseInt(items[7]);
+                width = Integer.parseInt(items[1]);
+                height = Integer.parseInt(items[2]);
+                colsPerPixel = Integer.parseInt(items[3]);
+                basisTerm = Integer.parseInt(items[4]);
+                basisType = Integer.parseInt(items[5]);
+                elemSize = Integer.parseInt(items[6]);
             }catch(NumberFormatException e){
-                throw new PTMFileException("Error parsing the header data from file");
+                throw new PTMFileException("Error parsing header data from file");
             }
 
             return new int[]{width, height, colsPerPixel,  basisTerm, basisType, elemSize, dataStartPos};
@@ -328,8 +349,8 @@ public class PTMParser {
 
     private static FloatBuffer[] getTexelDataHSH(String fileName, int width, int height, int colsPerPixel,
                                      int basisTerm, int basisType, int elemSize, int dataStartPos) throws IOException{
-        FloatBuffer gMin = BufferUtils.createFloatBuffer(16);
-        FloatBuffer gMax = BufferUtils.createFloatBuffer(16);
+        FloatBuffer scale = BufferUtils.createFloatBuffer(basisTerm * basisTerm);
+        FloatBuffer bias = BufferUtils.createFloatBuffer(basisTerm * basisTerm);
 
         int capacity = width * height * 3;
 
@@ -349,17 +370,20 @@ public class PTMParser {
         FloatBuffer greenCoeffs3 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer blueCoeffs3 = BufferUtils.createFloatBuffer(capacity);
 
-
         //make a scanner to scan in all the data as characters
         ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
-        stream.skip(dataStartPos);
-        //stream.skip(dataStartPos + 4);
+
+        if(basisTerm == 4) {
+            stream.skip(dataStartPos + 4);
+        }else {
+            stream.skip(dataStartPos);
+        }
 
         for(int i = 0; i < basisTerm * basisTerm; i++){
-            gMin.put(i, stream.read());
+            scale.put(i, stream.read());
         }
         for(int i = 0; i < basisTerm * basisTerm; i++){
-            gMax.put(i, stream.read());
+            bias.put(i, stream.read());
         }
 
         int offset;
@@ -369,38 +393,33 @@ public class PTMParser {
                 offset = (j * width + i) * 3;
 
                 for(int k = 0; k < basisTerm; k++){
-                    //nextCharValue = (stream.read() / 255.0f) * (gMax.get(k) - gMin.get(k)) + gMax.get(k);
-                    nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
+                    nextCharValue = (stream.read() / 255.0f) * (scale.get(k) - bias.get(k)) + bias.get(k);
                     if(k < 3){redCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){redCoeffs2.put(offset + (k - 3), nextCharValue);}
                     else if(k < 9){redCoeffs3.put(offset + (k - 6), nextCharValue);}
                 }
 
                 for(int k = 0; k < basisTerm; k++){
-                    //nextCharValue = (stream.read() / 255.0f) * (gMax.get(k) - gMin.get(k)) + gMax.get(k);
-                    nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
+                    nextCharValue = (stream.read() / 255.0f) * (scale.get(k) - bias.get(k)) + bias.get(k);
                     if(k < 3){greenCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){greenCoeffs2.put(offset + (k - 3), nextCharValue);}
                     else if(k < 9){greenCoeffs3.put(offset + (k - 6), nextCharValue);}
                 }
 
                 for(int k = 0; k < basisTerm; k++){
-                    //nextCharValue = (stream.read() / 255.0f) * (gMax.get(k) - gMin.get(k)) + gMax.get(k);
-                    nextCharValue = (stream.read() / 255.0f) * gMin.get(k) + gMax.get(k);
+                    nextCharValue = (stream.read() / 255.0f) * (scale.get(k) - bias.get(k)) + bias.get(k);
                     if(k < 3){blueCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){blueCoeffs2.put(offset + (k - 3), nextCharValue);}
                     else if(k < 9){blueCoeffs3.put(offset + (k - 6), nextCharValue);}
                 }
             }
         }
-
+        System.out.println("basis: " + basisTerm + ", left over: " + stream.available());
         stream.close();
 
-
-        return new FloatBuffer[]{redCoeffs1, redCoeffs2, redCoeffs3,
-                                 greenCoeffs1, greenCoeffs2, greenCoeffs3,
-                                 blueCoeffs1, blueCoeffs2, blueCoeffs3};
-
+        return new FloatBuffer[]{redCoeffs1,    redCoeffs2,     redCoeffs3,
+                                 greenCoeffs1,  greenCoeffs2,   greenCoeffs3,
+                                 blueCoeffs1,   blueCoeffs2,    blueCoeffs3};
     }
 
 }

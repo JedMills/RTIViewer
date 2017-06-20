@@ -5,7 +5,6 @@ import ptmCreation.PTMObject;
 import ptmCreation.PTMObjectHSH;
 import toolWindow.RTIViewer;
 
-import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
@@ -79,10 +78,8 @@ public class RTIWindowHSH extends RTIWindow {
         glUniform1i(dataTextureRef, 0);
         setShaderTexture(0, dataTexture, 1, 1);
 
-
         glUniform1i(normalsRef, 1);
         setNormalsTexture(1, ptmObjectHSH.getNormals());
-
 
         glUniform1i(redCoeffs1Ref, 2);
         glUniform1i(greenCoeffs1Ref, 3);
@@ -91,7 +88,6 @@ public class RTIWindowHSH extends RTIWindow {
         setNormalsTexture(2, ptmObjectHSH.getRedVals1());
         setNormalsTexture(3, ptmObjectHSH.getGreenVals1());
         setNormalsTexture(4, ptmObjectHSH.getBlueVals1());
-
 
         glUniform1i(redCoeffs2Ref, 5);
         glUniform1i(greenCoeffs2Ref, 6);

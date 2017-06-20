@@ -5,6 +5,7 @@ import javafx.scene.image.WritableImage;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -19,14 +20,13 @@ public class TestPTMParser {
     @Test
     public void testCreateHSHObject(){
         try{
-            PTMObjectHSH ptmObject = (PTMObjectHSH) PTMParser.createPtmFromFile("fishFossil.rti");
-            assertEquals(ptmObject.getWidth(), 1574);
-            assertEquals(ptmObject.getHeight(), 1220);
+            PTMObjectHSH ptmObject1 = (PTMObjectHSH) PTMParser.createPtmFromFile("fishFossil.rti");
+            BufferedImage renderedImage1 = SwingFXUtils.fromFXImage(ptmObject1.previewImage, null);
+            ImageIO.write(renderedImage1, "png", new File("testHSHb4.png"));
 
-            //RenderedImage renderedImage = SwingFXUtils.fromFXImage(ptmObject.createNormalMap(), null);
-            //ImageIO.write(renderedImage, "png", new File("testHSH.png"));
-            RenderedImage renderedImage = SwingFXUtils.fromFXImage(ptmObject.previewImage, null);
-            ImageIO.write(renderedImage, "png", new File("testHSH.png"));
+            PTMObjectHSH ptmObject = (PTMObjectHSH) PTMParser.createPtmFromFile("fishyHSH.rti");
+            BufferedImage renderedImage = SwingFXUtils.fromFXImage(ptmObject.previewImage, null);
+            ImageIO.write(renderedImage, "png", new File("testHSHb9.png"));
 
             assertTrue(true);
         }catch(IOException | PTMFileException e){

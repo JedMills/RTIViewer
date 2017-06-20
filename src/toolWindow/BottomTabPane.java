@@ -4,10 +4,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -36,7 +33,7 @@ public class BottomTabPane extends TabPane {
     private BorderPane imageBorderPane;
     private Image defaultImage;
 
-    private VBox vBox;
+    private VBox previewVBox;
     private StackPane imageContainerPane;
     private Rectangle previewWindowRect;
     private float previewRectScale = 1.0f;
@@ -55,8 +52,7 @@ public class BottomTabPane extends TabPane {
     private void createComponents(){
         Tab previewTab = createPreviewTab();
 
-        Tab bookmarksTab = new Tab("Bookmarks");
-        bookmarksTab.setClosable(false);
+        Tab bookmarksTab = createBookmarksTab();
 
         Tab saveImageTab = new Tab("Save image");
         saveImageTab.setClosable(false);
@@ -69,7 +65,7 @@ public class BottomTabPane extends TabPane {
         Tab previewTab = new Tab("Preview");
         previewTab.setClosable(false);
 
-        vBox = new VBox();
+        previewVBox = new VBox();
 
         previewGridPane = new GridPane();
 
@@ -110,10 +106,10 @@ public class BottomTabPane extends TabPane {
         previewGridPane.setVgap(5);
         previewGridPane.setHgap(5);
 
-        vBox.getChildren().addAll(previewGridPane, imageBorderPane);
-        vBox.setMargin(previewGridPane, new Insets(5, 0, 5, 0));
+        previewVBox.getChildren().addAll(previewGridPane, imageBorderPane);
+        previewVBox.setMargin(previewGridPane, new Insets(5, 0, 5, 0));
         setStyle("-fx-background-color: #dddddd;");
-        previewTab.setContent(vBox);
+        previewTab.setContent(previewVBox);
 
         return previewTab;
     }
@@ -235,7 +231,7 @@ public class BottomTabPane extends TabPane {
 
         setPrefHeight(height - (getLayoutY() + 45));
 
-        vBox.setPrefWidth(width - 20);
+        previewVBox.setPrefWidth(width - 20);
         previewGridPane.setPrefWidth(width - 40);
 
         imageWidthBox.setPrefWidth(width / 6);
@@ -267,5 +263,31 @@ public class BottomTabPane extends TabPane {
         previewWindowRect.setHeight(imagePreview.getBoundsInParent().getHeight() / imageScale);
         previewWindowRect.setTranslateX((x / imageScale) * imagePreview.getBoundsInParent().getWidth() / 2);
         previewWindowRect.setTranslateY((-y / imageScale) * imagePreview.getBoundsInParent().getHeight() / 2);
+    }
+
+
+
+    private Tab createBookmarksTab(){
+        Tab tab = new Tab("Bookmarks");
+        tab.setClosable(false);
+
+        VBox vBox = new VBox();
+        vBox.setFillWidth(true);
+
+        GridPane bookmarkPane = new GridPane();
+        ColumnConstraints column1 = new ColumnConstraints();
+        ComboBox<String> comboBox = new ComboBox<>();
+        GridPane.setConstraints(comboBox, 0, 0, 1, 1);
+        Button bookmarkAdd = new Button("Add");
+        GridPane.setConstraints(bookmarkAdd, 1, 0, 1, 1);
+        Button bookmarkDel = new Button("Del");
+        GridPane.setConstraints(bookmarkDel, 2, 0, 1, 1);
+
+        bookmarkPane.getChildren().addAll(comboBox, bookmarkAdd, bookmarkDel);
+        bookmarkPane.getColumnConstraints().add(column1);
+
+        vBox.getChildren().add(bookmarkPane);
+        tab.setContent(vBox);
+        return tab;
     }
 }

@@ -38,7 +38,6 @@ public class PTMObjectHSH extends PTMObject {
         this.basisTerms = basisTerms;
         this.basisType = basisType;
 
-
         redVals1 = texelData[0];
         redVals2 = texelData[1];
         redVals3 = texelData[2];
@@ -141,8 +140,8 @@ public class PTMObjectHSH extends PTMObject {
     protected void createPreviewImage() {
         previewImage = new WritableImage(width, height);
 
-        float phi = 0.0f;
-        float theta = (float) acos(1.0);
+        float phi = 0.1f;
+        float theta = (float) acos(0.9);
 
         float[] hWeights = getHSH(theta, phi, basisTerms);
 
@@ -155,6 +154,7 @@ public class PTMObjectHSH extends PTMObject {
                 r = 0.0f;
                 g = 0.0f;
                 b = 0.0f;
+
                 for(int k = 0; k < basisTerms; k++){
                     if(k < 3){r += redVals1.get(offset + k) * hWeights[k];}
                     else if(k < 6){r += redVals2.get(offset + k - 3) * hWeights[k];}
@@ -187,41 +187,26 @@ public class PTMObjectHSH extends PTMObject {
         }
     }
 
-    public WritableImage createNormalsMap(){
-        WritableImage writableImage = new WritableImage(width, height);
-        int offset;
-        float r, g, b;
-        for(int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                offset = (y * width + x) * 3;
 
-
-            }
-        }
-
-        return writableImage;
-    }
-
-
-    private float[] getHSH(float theta, float phi, int order){
+    private float[] getHSH(float theta, float phi, int basisTerms){
         double[] hweights = new double[16];
         double cosPhi = cos(phi);
         double cosTheta = cos(theta);
         double cosTheta2 = cosTheta * cosTheta;
+
         hweights[0] = 1/sqrt(2*PI);
         hweights[1] = sqrt(6/PI)      *  (cosPhi*sqrt(cosTheta-cosTheta2));
         hweights[2] = sqrt(3/(2*PI))  *  (-1. + 2.*cosTheta);
         hweights[3] = sqrt(6/PI)      *  (sqrt(cosTheta - cosTheta2)*sin(phi));
-        if (order > 2)
-        {
+
+        if (basisTerms > 4) {
             hweights[4] = sqrt(30/PI)     *  (cos(2.*phi)*(-cosTheta + cosTheta2));
             hweights[5] = sqrt(30/PI)     *  (cosPhi*(-1. + 2.*cosTheta)*sqrt(cosTheta - cosTheta2));
             hweights[6] = sqrt(5/(2*PI))  *  (1 - 6.*cosTheta + 6.*cosTheta2);
             hweights[7] = sqrt(30/PI)     *  ((-1 + 2.*cosTheta)*sqrt(cosTheta - cosTheta2)*sin(phi));
             hweights[8] = sqrt(30/PI)     *  ((-cosTheta + cosTheta2)*sin(2.*phi));
         }
-        if (order > 3)
-        {
+        if (basisTerms > 9) {
             hweights[9]  = 2*sqrt(35/PI)	*	(cos(3.0*phi)*pow((cosTheta - cosTheta2), 1.5f));
             hweights[10] = sqrt(210/PI)	*	(cos(2.0*phi)*(-1 + 2*cosTheta)*(-cosTheta + cosTheta2));
             hweights[11] = 2*sqrt(21/PI)  *	(cos(phi)*sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2));
@@ -242,7 +227,6 @@ public class PTMObjectHSH extends PTMObject {
     public int getBasisTerms() {
         return basisTerms;
     }
-
 
     public FloatBuffer getRedVals1() {
         return redVals1;
