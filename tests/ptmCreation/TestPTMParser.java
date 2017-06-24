@@ -20,7 +20,7 @@ public class TestPTMParser {
     @Test
     public void testCreateHSHObject(){
         try{
-            PTMObjectHSH ptmObject1 = (PTMObjectHSH) PTMParser.createPtmFromFile("fishFossil.rti");
+            PTMObjectHSH ptmObject1 = (PTMObjectHSH) PTMParser.createPtmFromFile("fishHSHBasis2.rti");
             BufferedImage renderedImage1 = SwingFXUtils.fromFXImage(ptmObject1.previewImage, null);
             ImageIO.write(renderedImage1, "png", new File("testHSHb4.png"));
 

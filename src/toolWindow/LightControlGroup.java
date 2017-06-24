@@ -17,7 +17,10 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import openGLWindow.RTIWindow;
 import utils.Utils;
+
+import static java.lang.Math.*;
 
 /**
  * Created by Jed on 14-Jun-17.
@@ -51,8 +54,11 @@ public class LightControlGroup extends StackPane {
         this.primaryStgae = primaryStage;
 
         createLightControl();
+        /*
         setStyle(  "-fx-border-color: #dddddd;" +
                 "-fx-border-radius: 5;");
+        */
+        setId("lightControlGroup");
         setAlignment(Pos.CENTER);
         setPadding(new Insets(5, 0, 5, 0));
     }
@@ -67,7 +73,6 @@ public class LightControlGroup extends StackPane {
         light.setX(0);
         light.setY(0);
         light.setZ(25);
-
 
         Lighting lighting = new Lighting();
         lighting.setLight(light);

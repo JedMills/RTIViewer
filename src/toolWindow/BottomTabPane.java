@@ -1,5 +1,6 @@
 package toolWindow;
 
+import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -12,7 +13,9 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import openGLWindow.RTIWindow;
+import openGLWindow.RTIWindowHSH;
 import openGLWindow.RTIWindowLRGB;
 import openGLWindow.RTIWindowRGB;
 
@@ -38,6 +41,31 @@ public class BottomTabPane extends TabPane {
     private Rectangle previewWindowRect;
     private float previewRectScale = 1.0f;
 
+    private ComboBox<String> bookmarkComboBox;
+    private Button bookmarkAdd;
+    private Button bookmarkDel;
+
+    private ListView<String> bookmarksList;
+    private Button notesEdit;
+    private Button notesAdd;
+    private Button notesDel;
+    private Button updateBookmark;
+
+    private Label fileNameLabel;
+    private Label imageWidthLabel;
+    private Label imageHeightLabel;
+    private Label imageFormatLabel;
+
+    Label saveAsLabel;
+    Label saveChannelsLabel;
+    RadioButton redChannelButton;
+    RadioButton greenChannelButton;
+    RadioButton blueChannelButton;
+    Label saveFormatLabel;
+    ComboBox<String> imageFormats;
+    Button saveButton;
+
+
     public BottomTabPane(RTIViewer rtiViewer, Scene parent){
         super();
         this.rtiViewer = rtiViewer;
@@ -46,16 +74,13 @@ public class BottomTabPane extends TabPane {
         defaultImage = new Image("file:rsc/images/exeterUniLogoMedium.jpg");
 
         createComponents();
-        setStyle("-fx-border-color: #dddddd;");
+        setId("bottomTabPane");
     }
 
     private void createComponents(){
-        Tab previewTab = createPreviewTab();
-
         Tab bookmarksTab = createBookmarksTab();
-
-        Tab saveImageTab = new Tab("Save image");
-        saveImageTab.setClosable(false);
+        Tab previewTab = createPreviewTab();
+        Tab saveImageTab = createImageTab();
 
         getTabs().addAll(previewTab, bookmarksTab, saveImageTab);
     }
@@ -69,19 +94,19 @@ public class BottomTabPane extends TabPane {
 
         previewGridPane = new GridPane();
 
-        Label fileNameLabel = new Label("File:");
+        fileNameLabel = new Label("File:");
         fileName = new TextField("");
         fileName.setEditable(false);
 
-        Label imageWidthLabel = new Label("Width:");
+        imageWidthLabel = new Label("Width:");
         imageWidthBox = new TextField("");
         imageWidthBox.setEditable(false);
 
-        Label imageHeightLabel = new Label("Height:");
+        imageHeightLabel = new Label("Height:");
         imageHeightBox = new TextField("");
         imageHeightBox.setEditable(false);
 
-        Label imageFormatLabel = new Label("Format:");
+        imageFormatLabel = new Label("Format:");
         imageFormat = new TextField("");
         imageFormat.setEditable(false);
 
@@ -107,8 +132,8 @@ public class BottomTabPane extends TabPane {
         previewGridPane.setHgap(5);
 
         previewVBox.getChildren().addAll(previewGridPane, imageBorderPane);
+        previewVBox.setMargin(imageBorderPane, new Insets(5, 5, 5, 5));
         previewVBox.setMargin(previewGridPane, new Insets(5, 0, 5, 0));
-        setStyle("-fx-background-color: #dddddd;");
         previewTab.setContent(previewVBox);
 
         return previewTab;
@@ -124,7 +149,6 @@ public class BottomTabPane extends TabPane {
 
         imagePreview = new ImageView();
         imagePreview.setPreserveRatio(true);
-
 
         imageContainerPane = new StackPane(imagePreview, previewWindowRect);
         imageContainerPane.setMinWidth(0);
@@ -211,14 +235,14 @@ public class BottomTabPane extends TabPane {
     public void setPreviewImage(Image image){
         imagePreview.setImage(image);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
-        //imageBorderPane.setStyle("-fx-background-color: #000000;");
+        imageBorderPane.setStyle("-fx-background-color: #000000;");
         previewWindowRect.setStroke(Color.RED);
     }
 
     public void setDefaultImage(){
         imagePreview.setImage(defaultImage);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
-        //imageBorderPane.setStyle("-fx-background-color: #ffffff;");
+        imageBorderPane.setStyle("-fx-background-color: #ffffff;");
         previewWindowRect.setStroke(Color.TRANSPARENT);
     }
 
@@ -226,7 +250,7 @@ public class BottomTabPane extends TabPane {
         setPrefWidth(width - 20);
 
         if(getLayoutY() < 300){
-            setLayoutY(371);
+            setLayoutY(395);
         }
 
         setPrefHeight(height - (getLayoutY() + 45));
@@ -238,7 +262,42 @@ public class BottomTabPane extends TabPane {
         imageHeightBox.setPrefWidth(width / 6);
         imageFormat.setPrefWidth(width / 6);
 
+        bookmarkComboBox.setPrefWidth(width / 2);
+        bookmarksList.setPrefWidth(width / 1.5);
+
         imageBorderPane.setPrefHeight(getPrefHeight() - 45);
+        setFonts(width, height);
+    }
+
+
+    private void setFonts(double width, double height){
+        if(width < 335){
+            setComponentLabels(12, 14);
+        }else if(width < 450){
+            setComponentLabels(14, 18);
+        }else{
+            setComponentLabels(16, 21);
+        }
+    }
+
+    private void setComponentLabels(double previewFontSize, double saveFontSize){
+        for(Label label : new Label[]{saveAsLabel, saveChannelsLabel, saveChannelsLabel,
+                                        saveFormatLabel}){
+            if(label != null) {label.setFont(Font.font(saveFontSize));}
+        }
+
+        for(Label label : new Label[]{fileNameLabel, imageWidthLabel, imageHeightLabel,
+                imageFormatLabel}){
+            if(label != null){label.setFont(Font.font(previewFontSize));}
+        }
+
+        for(RadioButton button : new RadioButton[]{redChannelButton, greenChannelButton,
+                                                    blueChannelButton}){
+            if(button != null){button.setFont(Font.font(saveFontSize));}
+        }
+
+        if(imageFormats != null){imageFormats.getEditor().setFont(Font.font(saveFontSize));}
+        if(saveButton != null){saveButton.setFont(Font.font(saveFontSize));}
     }
 
 
@@ -251,6 +310,8 @@ public class BottomTabPane extends TabPane {
             setFormatText("PTM RGB");
         }else if(RTIWindow instanceof RTIWindowLRGB){
             setFormatText("PTM LRGB");
+        }else if(RTIWindow instanceof RTIWindowHSH){
+            setFormatText("HSH");
         }
 
         setPreviewImage(RTIWindow.ptmObject.previewImage);
@@ -272,22 +333,124 @@ public class BottomTabPane extends TabPane {
         tab.setClosable(false);
 
         VBox vBox = new VBox();
+        vBox.setPadding(new Insets(5, 5, 5, 5));
         vBox.setFillWidth(true);
 
         GridPane bookmarkPane = new GridPane();
-        ColumnConstraints column1 = new ColumnConstraints();
-        ComboBox<String> comboBox = new ComboBox<>();
-        GridPane.setConstraints(comboBox, 0, 0, 1, 1);
-        Button bookmarkAdd = new Button("Add");
-        GridPane.setConstraints(bookmarkAdd, 1, 0, 1, 1);
-        Button bookmarkDel = new Button("Del");
-        GridPane.setConstraints(bookmarkDel, 2, 0, 1, 1);
+        bookmarkPane.setAlignment(Pos.CENTER);
+        bookmarkPane.setHgap(5);
+        bookmarkPane.setId("bottomBookmarkPane");
+        bookmarkPane.setPadding(new Insets(5, 5, 5, 5));
 
-        bookmarkPane.getChildren().addAll(comboBox, bookmarkAdd, bookmarkDel);
-        bookmarkPane.getColumnConstraints().add(column1);
+        Label bookmarkLabel = new Label("Bookmark:");
+        GridPane.setConstraints(bookmarkLabel, 0, 0, 1, 1);
+        bookmarkComboBox = new ComboBox<>();
+        GridPane.setConstraints(bookmarkComboBox, 1, 0, 1, 1);
+        bookmarkAdd = new Button("Add");
+        GridPane.setConstraints(bookmarkAdd, 2, 0, 1, 1);
+        bookmarkDel = new Button("Del");
+        GridPane.setConstraints(bookmarkDel, 3, 0, 1, 1);
 
-        vBox.getChildren().add(bookmarkPane);
+        bookmarkPane.getChildren().addAll(bookmarkLabel, bookmarkComboBox, bookmarkAdd, bookmarkDel);
+        vBox.setMargin(bookmarkPane, new Insets(10, 0, 5, 0));
+
+
+        GridPane bookmarkListPane = new GridPane();
+        bookmarkListPane.setAlignment(Pos.CENTER);
+        bookmarkListPane.setHgap(5);
+        bookmarkListPane.setVgap(5);
+        Label notesLabel = new Label("Notes:");
+        GridPane.setConstraints(notesLabel, 0, 0, 1, 1);
+        bookmarksList = new ListView<>();
+        bookmarksList.setId("bookmarksList");
+        GridPane.setConstraints(bookmarksList, 0, 1, 2, 3);
+        notesEdit = new Button("Edit");
+        GridPane.setConstraints(notesEdit, 2, 1, 1, 1);
+        notesAdd = new Button("Add");
+        GridPane.setConstraints(notesAdd, 2, 2, 1, 1);
+        notesDel = new Button("Del");
+        GridPane.setConstraints(notesDel, 2, 3, 1, 1);
+        Label updateBookmarkLabel = new Label("Light, Zoom, Pan & Rendering:");
+        GridPane.setConstraints(updateBookmarkLabel, 0, 4, 2, 1);
+        updateBookmark = new Button("Update");
+        GridPane.setConstraints(updateBookmark, 2, 4, 1, 1);
+
+        bookmarkListPane.getChildren().addAll(  notesLabel, bookmarksList,
+                                                notesEdit, notesAdd, notesDel,
+                                                updateBookmarkLabel, updateBookmark);
+        bookmarkListPane.setId("bookmarkListPane");
+
+        bookmarkListPane.setPadding(new Insets(5, 5, 5, 5));
+        bookmarkListPane.setMinHeight(0);
+        bookmarksList.setMinHeight(0);
+        notesEdit.setMinHeight(0);
+        notesAdd.setMinHeight(0);
+        notesDel.setMinHeight(0);
+        updateBookmark.setMinHeight(0);
+
+        vBox.setMargin(bookmarkListPane, new Insets(5, 0, 0, 0));
+
+        vBox.getChildren().addAll(bookmarkPane, bookmarkListPane);
         tab.setContent(vBox);
         return tab;
+    }
+
+
+    private Tab createImageTab(){
+        Tab imageTab = new Tab("Save");
+        imageTab.setClosable(false);
+
+        VBox vBox = new VBox();
+
+        GridPane gridPane = new GridPane();
+        saveAsLabel = new Label("Save as image:");
+        GridPane.setConstraints(saveAsLabel, 0, 0, 1, 1);
+
+        VBox vBox1 = new VBox();
+
+        saveChannelsLabel = new Label("Save colour channels:");
+        redChannelButton = new RadioButton("Red");
+        greenChannelButton = new RadioButton("Green");
+        blueChannelButton = new RadioButton("Blue");
+        vBox1.getChildren().addAll(saveChannelsLabel, redChannelButton, greenChannelButton, blueChannelButton);
+        vBox1.setSpacing(5);
+        GridPane.setConstraints(vBox1, 0, 1, 1, 2);
+        vBox1.setFillWidth(true);
+        vBox1.setPadding(new Insets(5, 5, 5, 5));
+        vBox1.setId("bottomTabPaneColourChannelsPane");
+
+        VBox vBox2 = new VBox();
+        vBox2.setFillWidth(true);
+
+        saveFormatLabel = new Label("Save as format:");
+        imageFormats = new ComboBox<>(FXCollections.observableArrayList(
+                    ".jpg",
+                            ".png"
+        ));
+        imageFormats.getSelectionModel().select(0);
+
+        vBox2.getChildren().addAll(saveFormatLabel, imageFormats);
+        vBox2.setId("bottomTabPaneFormatPane");
+
+        vBox2.setPadding(new Insets(5, 5, 5, 5));
+        vBox.setSpacing(5);
+        GridPane.setConstraints(vBox2, 1, 1, 1, 1);
+
+        saveButton = new Button("Save as...");
+        GridPane.setConstraints(saveButton, 1, 2, 1, 1);
+        saveButton.setAlignment(Pos.CENTER);
+
+        gridPane.setHgap(5);
+        gridPane.setVgap(5);
+
+        gridPane.getChildren().addAll(saveAsLabel, vBox1, vBox2, saveButton);
+        vBox.getChildren().add(gridPane);
+        vBox.setAlignment(Pos.CENTER);
+
+        gridPane.setAlignment(Pos.TOP_CENTER);
+
+
+        imageTab.setContent(vBox);
+        return imageTab;
     }
 }

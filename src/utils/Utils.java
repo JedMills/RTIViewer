@@ -1,5 +1,6 @@
 package utils;
 
+import java.awt.image.BufferedImage;
 import java.nio.IntBuffer;
 
 /**
@@ -512,5 +513,104 @@ public class Utils {
         returnVec.z = (mat[2][0] * vec.x) + (mat[2][1] * vec.y) + (mat[2][2] * vec.z);
 
         return returnVec;
+    }
+
+
+
+    public static int[] intsFromStrings(String[] strings, int num) throws NumberFormatException{
+        int[] returnItems = new int[num];
+        for(int i = 0; i < num; i ++){
+            returnItems[i] = Integer.parseInt(strings[i]);
+        }
+        return returnItems;
+    }
+
+
+    public static int[] flatten(int[][] array){
+        int sideLength = array[0].length;
+        for(int i = 0; i < array.length; i++){
+            if(array[i].length != sideLength){
+                throw new RuntimeException("flatten method must take in a non-ragged array");
+            }
+        }
+        int[] returnArray = new int[array.length * array[0].length];
+
+        int position = 0;
+        for(int[] i : array){
+            for(int j : i){
+                returnArray[position++] = j;
+            }
+        }
+
+        return returnArray;
+    }
+
+
+    public static int[] sliceArray(int[] array, int start, int end){
+        int length = end - start;
+        int[] slice = new int[length];
+
+        for(int i = 0; i < length; i++){
+            slice[i] = array[start + i];
+        }
+        return slice;
+    }
+
+
+    public static int indexOf(int[] array, int x, int size){
+        int index = -1;
+        for(int i = 0; i < size; i++){
+            if(array[i] == x){
+                index = i;
+            }
+        }
+        return index;
+    }
+
+    public static int[] combine(int[] ref, int[] plane, int size){
+        int[] returnArray = new int[size];
+        for(int i = 0; i < size; i++){
+            returnArray[i] = ref[i] + plane[i] - 128;
+            if(returnArray[i] < 0){
+                returnArray[i] += 256;
+            }
+        }
+        return returnArray;
+    }
+
+    public static int[] invert(int[] source, int size){
+        int[] result = new int[size];
+        for(int i = 0; i < size; i++){
+            result[i] = 255 - source[i];
+        }
+        return result;
+    }
+
+
+    public static void correctCoeff(int[] c, byte[] info, int sizeInfo, int w, int h){
+        for(int i = 0; i < sizeInfo; i++){
+            int p3 = info[i];
+            int p2 = info[i+1];
+            int p1 = info[i+2];
+            int p0 = info[i+3];
+            int v = info[i+4];
+            int idx = p3<<24 | p2<<16 | p1<<8 | p0;
+            int w2 = idx % w;
+            int h3 = idx / w;
+            int h2 = h - h3 - 1;
+            int idx2 = h2*w + w2;
+            c[idx2] = v;
+        }
+    }
+
+
+    public static void flip(BufferedImage image){
+        for (int i=0;i<image.getWidth();i++)
+            for (int j=0;j<image.getHeight()/2;j++)
+            {
+                int tmp = image.getRGB(i, j);
+                image.setRGB(i, j, image.getRGB(i, image.getHeight()-j-1));
+                image.setRGB(i, image.getHeight()-j-1, tmp);
+            }
     }
 }

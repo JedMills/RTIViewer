@@ -765,9 +765,6 @@
  *                                                                             *
  ******************************************************************************/
 
-.slider {
-    -fx-skin: "jfxtras.styles.jmetro8.FilledSliderSkin";
-}
 
 .slider .thumb {
     -fx-background-color: white;

@@ -50,15 +50,22 @@ public class PTMObjectHSH extends PTMObject {
         blueVals2 = texelData[7];
         blueVals3 = texelData[8];
 
+        for(int i = 0; i < 10; i ++){
+            System.out.println(redVals1.get(i));
+        }
+        for(int i = 0; i < 10; i ++){
+            System.out.println(redVals2.get(i));
+        }
+
         calculateNormals();
         createPreviewImage();
     }
 
     @Override
     protected void calculateNormals() {
-        float[] hWeights1 = getHSH((float)PI / 4, (float)PI / 6, basisTerms);
-        float[] hWeights2 = getHSH((float)PI / 4, 5 * (float)PI / 6, basisTerms);
-        float[] hWeights3 = getHSH((float)PI / 4, 3 * (float)PI / 2, basisTerms);
+        double[] hWeights1 = getHSH((float)PI / 4, (float)PI / 6, basisTerms);
+        double[] hWeights2 = getHSH((float)PI / 4, 5 * (float)PI / 6, basisTerms);
+        double[] hWeights3 = getHSH((float)PI / 4, 3 * (float)PI / 2, basisTerms);
 
         float[][] lInverse = new float[3][3];
         lInverse[0][0] = 0.816498f;
@@ -140,10 +147,10 @@ public class PTMObjectHSH extends PTMObject {
     protected void createPreviewImage() {
         previewImage = new WritableImage(width, height);
 
-        float phi = 0.1f;
-        float theta = (float) acos(0.9);
+        float phi = 0.0f;
+        float theta = (float) acos(1.0);
 
-        float[] hWeights = getHSH(theta, phi, basisTerms);
+        double[] hWeights = getHSH(theta, phi, basisTerms);
 
         int offset;
         float r, g, b;
@@ -156,9 +163,9 @@ public class PTMObjectHSH extends PTMObject {
                 b = 0.0f;
 
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){r += redVals1.get(offset + k) * hWeights[k];}
-                    else if(k < 6){r += redVals2.get(offset + k - 3) * hWeights[k];}
-                    else if(k < 9){r += redVals3.get(offset + k - 6) * hWeights[k];}
+                    if(k < 3){r += redVals1.get(offset + k) * (hWeights[k]);}
+                    else if(k < 6){r += redVals2.get(offset + k - 3) * (hWeights[k]);}
+                    else if(k < 9){r += redVals3.get(offset + k - 6) * (hWeights[k]);}
 
                     if(k < 3){g += greenVals1.get(offset + k) * hWeights[k];}
                     else if(k < 6){g += greenVals2.get(offset + k - 3) * hWeights[k];}
@@ -188,7 +195,7 @@ public class PTMObjectHSH extends PTMObject {
     }
 
 
-    private float[] getHSH(float theta, float phi, int basisTerms){
+    private double[] getHSH(float theta, float phi, int basisTerms){
         double[] hweights = new double[16];
         double cosPhi = cos(phi);
         double cosTheta = cos(theta);
@@ -196,7 +203,7 @@ public class PTMObjectHSH extends PTMObject {
 
         hweights[0] = 1/sqrt(2*PI);
         hweights[1] = sqrt(6/PI)      *  (cosPhi*sqrt(cosTheta-cosTheta2));
-        hweights[2] = sqrt(3/(2*PI))  *  (-1. + 2.*cosTheta);
+        hweights[2] = sqrt(3/(2*PI))  *  (-1.0 + 2.0*cosTheta);
         hweights[3] = sqrt(6/PI)      *  (sqrt(cosTheta - cosTheta2)*sin(phi));
 
         if (basisTerms > 4) {
@@ -206,21 +213,16 @@ public class PTMObjectHSH extends PTMObject {
             hweights[7] = sqrt(30/PI)     *  ((-1 + 2.*cosTheta)*sqrt(cosTheta - cosTheta2)*sin(phi));
             hweights[8] = sqrt(30/PI)     *  ((-cosTheta + cosTheta2)*sin(2.*phi));
         }
-        if (basisTerms > 9) {
+        if (basisTerms > 6) {
             hweights[9]  = 2*sqrt(35/PI)	*	(cos(3.0*phi)*pow((cosTheta - cosTheta2), 1.5f));
-            hweights[10] = sqrt(210/PI)	*	(cos(2.0*phi)*(-1 + 2*cosTheta)*(-cosTheta + cosTheta2));
-            hweights[11] = 2*sqrt(21/PI)  *	(cos(phi)*sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2));
-            hweights[12] = sqrt(7/(2*PI)) *	(-1 + 12*cosTheta - 30*cosTheta2 + 20*cosTheta2*cosTheta);
-            hweights[13] = 2*sqrt(21/PI)  *	(sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2)*sin(phi));
-            hweights[14] = sqrt(210/PI)  *	(-1 + 2*cosTheta)*(-cosTheta + cosTheta2)*sin(2*phi);
-            hweights[15] = 2*sqrt(35/PI)  *	pow((cosTheta - cosTheta2), 1.5f)*sin(3*phi);
+            hweights[10] = sqrt(210/PI)	    *	(cos(2.0*phi)*(-1 + 2*cosTheta)*(-cosTheta + cosTheta2));
+            hweights[11] = 2*sqrt(21/PI)    *	(cos(phi)*sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2));
+            hweights[12] = sqrt(7/(2*PI))   *	(-1 + 12*cosTheta - 30*cosTheta2 + 20*cosTheta2*cosTheta);
+            hweights[13] = 2*sqrt(21/PI)    *	(sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2)*sin(phi));
+            hweights[14] = sqrt(210/PI)     *	(-1 + 2*cosTheta)*(-cosTheta + cosTheta2)*sin(2*phi);
+            hweights[15] = 2*sqrt(35/PI)    *	pow((cosTheta - cosTheta2), 1.5f)*sin(3*phi);
         }
-
-        float[] hWeightsOut = new float[16];
-        for(int i = 0; i < 16; i++){
-            hWeightsOut[i] = (float) hweights[i];
-        }
-        return hWeightsOut;
+        return hweights;
     }
 
 

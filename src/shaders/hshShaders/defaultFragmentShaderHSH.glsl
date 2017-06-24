@@ -80,17 +80,20 @@ void main() {
 
     ivec2 ptmCoords = ivec2(convertToPTMCoords(coords));
 
-    float lightZ = 1 - (lightX * lightX) - (lightY * lightY);
+    float lightZ = sqrt(1 - (lightX * lightX) - (lightY * lightY));
     vec3 temp = vec3(lightX, lightY, lightZ);
-    temp = normalize(temp);
+    /* temp = normalize(temp); */
 
-    float phi = atan(lightY, lightX);
+    float phi = atan(temp.y / temp.x);
 
+/*
     if(phi < 0){
         phi = 2 * PI + phi;
     }
-
-    float theta = min(acos(temp.z), PI / 2 - 0.04);
+*/
+    //float theta = min(acos(temp.z / length(temp)), PI / 2);
+    //float theta = atan(sqrt(temp.x * temp.x + temp.y * temp.y) / (temp.z));
+    float theta = acos(temp.z / length(temp));
 
     int basisTerms = texelFetch(dataTexture, ivec2(0, 0), 0).x;
 
@@ -159,9 +162,11 @@ void main() {
 
     }
 
+
     r /= 255.0;
     g /= 255.0;
     b /= 255.0;
+
 
     colorOut = vec4(r, g, b, 1);
 }

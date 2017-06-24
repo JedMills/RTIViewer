@@ -42,6 +42,12 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
                     Thread thread = new Thread(new PTMCreator(file));
                     thread.start();
                 }
+            }else if(source.getId().equals("close")){
+                rtiViewer.closeEverything();
+            }else if(source.getId().equals("closePTMWindow")){
+                rtiViewer.closeCurrentWindow();
+            }else if(source.getId().equals("saveAsImage")){
+                rtiViewer.setFocusSave();
             }
         }
     }

@@ -24,6 +24,7 @@ import ptmCreation.PTMObject;
 import ptmCreation.PTMObjectHSH;
 import ptmCreation.PTMObjectLRGB;
 import ptmCreation.PTMObjectRGB;
+import utils.ShaderUtils;
 import utils.Utils;
 
 import java.util.ArrayList;
@@ -49,17 +50,16 @@ public class RTIViewer extends Application {
     public static double globalImgUnMaskGain = FilterParamsPane.INITIAL_IMG_UN_MASK_GAIN_VAL;
     public static double globalCoeffUnMaskGain = FilterParamsPane.INITIAL_COEFF_UN_MASK_GAIN_VAL;
 
-    private LightControlGroup lightControlGroup;
-   // private ComboBox<String> filterTypeBox;
-    private FilterParamsPane paramsPane;
+    private static LightControlGroup lightControlGroup;
+    private static FilterParamsPane paramsPane;
     private static BottomTabPane bottomTabPane;
-    public FlowPane flowPane;
+    public static FlowPane flowPane;
 
-    public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
+    public static enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
                             IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN;}
 
 
-    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
+    public static enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
                                 COEFF_UN_MASK;}
 
     public static ShaderProgram currentProgram = ShaderProgram.DEFAULT;
@@ -68,7 +68,7 @@ public class RTIViewer extends Application {
 
     public static Alert entryAlert;
     public static Alert fileReadingAlert;
-    public final FileChooser fileChooser = new FileChooser();
+    public static final FileChooser fileChooser = new FileChooser();
 
     private static ArrayList<RTIWindow> RTIWindows = new ArrayList<>();
 
@@ -85,10 +85,7 @@ public class RTIViewer extends Application {
 
         this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent event) {
-                for(RTIWindow RTIWindow : RTIWindows){
-                    RTIWindow.setShouldClose(true);
-                }
-                Platform.exit();
+                closeEverything();
             }
         });
 
@@ -113,6 +110,8 @@ public class RTIViewer extends Application {
 
         mainScene = createScene(primaryStage);
 
+        mainScene.getStylesheets().add("stylesheets/metroDark.css");
+        //mainScene.getStylesheets().add("stylesheets/default.css");
         primaryStage.setScene(mainScene);
 
         primaryStage.show();
@@ -130,9 +129,10 @@ public class RTIViewer extends Application {
 
     private Scene createScene(Stage primaryStage){
         flowPane = new FlowPane();
+        flowPane.setId("mainSceneFlowPane");
         Scene scene = new Scene(flowPane, width, height);
 
-        MenuBar menuBar = createMenuBar(primaryStage);
+        MenuBar menuBar = new TopMenuBar(primaryStage);
         flowPane.getChildren().add(menuBar);
 
         lightControlGroup = new LightControlGroup(this, primaryStage, flowPane);
@@ -151,77 +151,12 @@ public class RTIViewer extends Application {
         return scene;
     }
 
-
-    private MenuBar createMenuBar(Stage primaryStage){
-        MenuBar menuBar = new MenuBar();
-
-        Menu menuFile = new Menu("File");
-        MenuItem open = new MenuItem("Open");
-
-        Image openIcon = new Image("file:rsc/images/icons/folder-4x.png");
-        ImageView openView = new ImageView(openIcon);
-        openView.setFitHeight(15);
-        openView.setFitWidth(15);
-        open.setGraphic(openView);
-        open.setOnAction(MenuBarListener.getInstance());
-        open.setId("open");
-
-        MenuItem save = new MenuItem("Save as image");
-        save.setOnAction(MenuBarListener.getInstance());
-        save.setId("save");
-        Image saveIcon = new Image("file:rsc/images/icons/image-4x.png");
-        ImageView saveView = new ImageView(saveIcon);
-        saveView.setFitWidth(15);
-        saveView.setFitHeight(15);
-        save.setGraphic(saveView);
-
-
-        MenuItem close = new MenuItem("Close");
-        close.setOnAction(MenuBarListener.getInstance());
-        close.setId("close");
-        Image closeIcon = new Image("file:rsc/images/icons/circle-x-4x.png");
-        ImageView closeView = new ImageView(closeIcon);
-        closeView.setFitHeight(15);
-        closeView.setFitWidth(15);
-        close.setGraphic(closeView);
-
-        MenuItem closePTMWindow = new MenuItem("Close image");
-        closePTMWindow.setOnAction(MenuBarListener.getInstance());
-        closePTMWindow.setId("closePTMWindow");
-        Image closeWinIcon = new Image("file:rsc/images/icons/x-4x.png");
-        ImageView closeWinView = new ImageView(closeWinIcon);
-        closeWinView.setFitWidth(15);
-        closeWinView.setFitHeight(15);
-        closePTMWindow.setGraphic(closeWinView);
-
-        menuFile.getItems().addAll(open, close, save, closePTMWindow);
-
-        Menu menuEdit = new Menu("Edit");
-        MenuItem preferences = new MenuItem("Preferences");
-        preferences.setOnAction(MenuBarListener.getInstance());
-        preferences.setId("preferences");
-        Image prefsIcon = new Image("file:rsc/images/icons/cog-4x.png");
-        ImageView prefsView = new ImageView(prefsIcon);
-        prefsView.setFitHeight(15);
-        prefsView.setFitWidth(15);
-        preferences.setGraphic(prefsView);
-
-        menuEdit.getItems().addAll(preferences);
-
-        Menu menuView = new Menu("View");
-        menuBar.getMenus().addAll(menuFile, menuEdit, menuView);
-        menuBar.prefWidthProperty().bind(primaryStage.widthProperty());
-
-        return menuBar;
-    }
-
-
     public static void main(String[] args) {
         launch(args);
     }
 
 
-    public void setGlobalVal(GlobalParam param, double value){
+    public static void setGlobalVal(GlobalParam param, double value){
         if(param.equals(GlobalParam.DIFF_GAIN)){globalDiffGainVal = value;}
         else if(param.equals(GlobalParam.DIFF_COLOUR)){globalDiffColourVal = value;}
         else if(param.equals(GlobalParam.SPECULARITY)){globalSpecularityVal = value;}
@@ -314,7 +249,8 @@ public class RTIViewer extends Application {
         if(selectedWindow != null){
             bottomTabPane.updateViewportRect(   selectedWindow.getViewportX(),
                                                 selectedWindow.getViewportY(),
-                                                selectedWindow.getImageScale());}
+                                                selectedWindow.getImageScale());
+        }
     }
 
 
@@ -327,5 +263,24 @@ public class RTIViewer extends Application {
 
     public static int getHeight() {
         return height;
+    }
+
+    public void closeEverything(){
+        for(RTIWindow RTIWindow : RTIWindows){
+            RTIWindow.setShouldClose(true);
+        }
+        Platform.exit();
+    }
+
+    public static void closeCurrentWindow(){
+        if(selectedWindow != null){
+            selectedWindow.setShouldClose(true);
+            removeWindow(selectedWindow);
+        }
+    }
+
+    public static void setFocusSave(){
+        bottomTabPane.getSelectionModel().select(2);
+        bottomTabPane.requestFocus();
     }
 }

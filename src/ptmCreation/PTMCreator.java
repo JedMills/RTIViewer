@@ -23,10 +23,8 @@ public class PTMCreator implements Runnable {
     @Override
     public void run() {
         try {
-            RTIViewer.setCursor(Cursor.WAIT);
             targetObject = PTMParser.createPtmFromFile(sourceFile);
             RTIViewer.createNewPTMWindow(targetObject);
-            RTIViewer.setCursor(Cursor.DEFAULT);
         }catch(IOException e){
             RTIViewer.fileReadingAlert.setContentText("Error accessing file at: " +
                                                         sourceFile.getPath());

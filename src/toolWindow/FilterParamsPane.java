@@ -12,10 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 
 /**
  * Created by Jed on 29-May-17.
@@ -91,30 +88,35 @@ public class FilterParamsPane extends Pane {
                                         coeffUnMaskGainLabel,   coeffUnMaskGainSlider,  coeffUnMaskGainSpinner};
 
         hideAllItems();
+        setId("filterParamsPane");
     }
 
     private void createComponents(){
+        VBox vBox = new VBox();
         gridPane = new GridPane();
         gridPane.setHgap(20);
         gridPane.setVgap(20);
         gridPane.setAlignment(Pos.TOP_CENTER);
 
-        createComboBox(gridPane);
+        createComboBox(vBox);
         createDiffGainComponents(gridPane);
         createSpecularEnhanceComponents(gridPane);
         createNormUnsharpMaskComponents(gridPane);
         createImgUnsharpMaskComponents(gridPane);
         createCoeffUnsharpMaskComponents(gridPane);
 
-        getChildren().add(gridPane);
+        vBox.getChildren().add(gridPane);
 
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setStyle(  "-fx-border-color: #dddddd;" +
-                            "-fx-border-radius: 5;");
+        //getChildren().add(gridPane);
+        getChildren().add(vBox);
+        vBox.setAlignment(Pos.TOP_CENTER);
+
+        gridPane.setPadding(new Insets(0, 5, 5, 5));
+        setPadding(new Insets(0, -1, 0, -1));
     }
 
 
-    private void createComboBox(GridPane gridPane){
+    private void createComboBox(VBox vBox){
         ObservableList<String> options = FXCollections.observableArrayList(
                 "Default view",
                 "Normals visualisation",
@@ -135,9 +137,10 @@ public class FilterParamsPane extends Pane {
             }
         });
 
-        GridPane.setConstraints(comboBox, 1, 0, 1,1);
-
-        gridPane.getChildren().add(comboBox);
+        //GridPane.setConstraints(comboBox, 1, 0, 1,1);
+        //gridPane.getChildren().add(comboBox);
+        vBox.setMargin(comboBox, new Insets(5, 0 , 5, 0));
+        vBox.getChildren().add(comboBox);
     }
 
 
