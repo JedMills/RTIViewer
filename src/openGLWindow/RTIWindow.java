@@ -194,6 +194,15 @@ public abstract class RTIWindow implements Runnable{
 
         //don't make the window visible yet, make it resizable and display at 60Hz
         glfwDefaultWindowHints();
+
+        if(System.getProperty("os.name").toLowerCase().contains("mac")) {
+            //setting up core OpenGL version, required to get shaders to compile on macOS
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        }
+
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_REFRESH_RATE, 60);

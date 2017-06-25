@@ -10,8 +10,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -20,11 +18,7 @@ import openGLWindow.RTIWindowHSH;
 import openGLWindow.RTIWindowLRGB;
 import openGLWindow.RTIWindow;
 import openGLWindow.RTIWindowRGB;
-import ptmCreation.PTMObject;
-import ptmCreation.PTMObjectHSH;
-import ptmCreation.PTMObjectLRGB;
-import ptmCreation.PTMObjectRGB;
-import utils.ShaderUtils;
+import ptmCreation.*;
 import utils.Utils;
 
 import java.util.ArrayList;
@@ -55,12 +49,14 @@ public class RTIViewer extends Application {
     private static BottomTabPane bottomTabPane;
     public static FlowPane flowPane;
 
-    public static enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
+    public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
                             IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN;}
 
 
-    public static enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
+    public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
                                 COEFF_UN_MASK;}
+
+    public enum ViewerTheme{DEFAULT, METRO_DARK, METRO_LIGHT;}
 
     public static ShaderProgram currentProgram = ShaderProgram.DEFAULT;
 
@@ -106,12 +102,11 @@ public class RTIViewer extends Application {
         primaryStage.setTitle("RTI Viewer");
 
         createAlerts();
-        MenuBarListener.init(this);
 
         mainScene = createScene(primaryStage);
 
-        mainScene.getStylesheets().add("stylesheets/metroDark.css");
-        //mainScene.getStylesheets().add("stylesheets/default.css");
+        mainScene.getStylesheets().add("stylesheets/default.css");
+
         primaryStage.setScene(mainScene);
 
         primaryStage.show();
@@ -265,7 +260,7 @@ public class RTIViewer extends Application {
         return height;
     }
 
-    public void closeEverything(){
+    public static void closeEverything(){
         for(RTIWindow RTIWindow : RTIWindows){
             RTIWindow.setShouldClose(true);
         }
@@ -282,5 +277,22 @@ public class RTIViewer extends Application {
     public static void setFocusSave(){
         bottomTabPane.getSelectionModel().select(2);
         bottomTabPane.requestFocus();
+    }
+
+
+    public static void setTheme(ViewerTheme theme){
+
+        mainScene.getStylesheets().clear();
+        PTMCreator.setLoadingDialogTheme(theme);
+
+        if(theme.equals(ViewerTheme.DEFAULT)){
+            mainScene.getStylesheets().add("stylesheets/default.css");
+        }else if(theme.equals(ViewerTheme.METRO_DARK)){
+            mainScene.getStylesheets().add("stylesheets/metroDark.css");
+        }else if(theme.equals(ViewerTheme.METRO_LIGHT)){
+            mainScene.getStylesheets().add("stylesheets/metroLight.css");
+        }
+
+
     }
 }

@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 .button {
-    -fx-padding: 5 22 5 22;
+    /* -fx-padding: 5 22 5 22; */
 
     -fx-border-color: transparent;
     -fx-border-width: 2;
@@ -39,7 +39,7 @@
     -fx-background-color: #cccccc;
 
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-    -fx-font-size: 11pt;
+    /* -fx-font-size: 11pt; */
     -fx-text-fill: black;
 }
 
@@ -49,7 +49,7 @@
 
 .button:pressed, .button:default:hover:pressed
 {
-  -fx-background-color: black;
+  -fx-background-color: #2b2b2b;
   -fx-text-fill: white;
 }
 
@@ -334,10 +334,8 @@
     -fx-background-color: white;
     -fx-background-insets: 0, 1, 2;
     -fx-background-radius: 0 0 0 0, 0 0 0 0, 0 0 0 0;
-    -fx-padding: 0.5em 0em 0.5em 0em; /* 6 0 6 0 */
+    /* -fx-padding: 0.5em 0em 0.5em 0em; */ /* 6 0 6 0 */
 
-    -fx-border-color: #212121;
-    -fx-border-style: solid;
 }
 
 .context-menu .separator {
@@ -595,9 +593,7 @@
  * TextBox (and PasswordBox)                                                   *
  *                                                                             *
  ******************************************************************************/
-.text-field{
-    -fx-skin: "jfxtras.styles.jmetro8.MetroTextFieldSkin";
-}
+
 
 .text-input{
     -fx-background-radius: 0, 0;
@@ -1056,3 +1052,42 @@
     -fx-background-insets: 0;
 }
 
+
+#mainSceneFlowPane{
+    -fx-background-color: #ffffff;
+}
+
+.tab-pane .tab-header-area .tab-header-background{
+    -fx-opacity: 0;
+}
+
+.tab-content-area{
+    -fx-background-color: #f0f0f0;
+}
+
+.tab-pane .tab{
+    -fx-background-color: #d2d2d2;
+    -fx-background-radius: 0;
+}
+
+.tab-pane .tab:selected{
+    -fx-background-color: #f0f0f0;;
+}
+
+.menu-bar{
+    -fx-background-color: #f0f0f0;
+}
+
+.menu-bar .menu-button:showing,
+.menu-bar .menu-button:hover,
+.menu-bar .menu-button:selected{
+    -fx-background-color: #55c4fe;
+}
+
+.menu-bar .menu .context-menu{
+    -fx-padding: 0 0 0 0;
+}
+
+.button .label{
+    -fx-padding: 0 0 0 0;
+}

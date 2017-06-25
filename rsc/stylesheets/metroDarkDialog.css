@@ -1,0 +1,11 @@
+#loadingDialogMainBox{
+    -fx-background-color: #2b2b2b;
+}
+
+#loadingDialogLabel{
+    -fx-text-fill: #ffffff;
+}
+
+#loadingDialogProgressIndicator{
+    -fx-progress-color: #55c4fe;
+}

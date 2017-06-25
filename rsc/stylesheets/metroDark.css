@@ -30,17 +30,18 @@
  ******************************************************************************/
 
 .button {
-    -fx-padding: 5 22 5 22;
+    /* -fx-padding: 5 22 5 22; */
 
     -fx-border-color: #e2e2e2;
     -fx-border-width: 2;
 
-    -fx-background-radius: 0;
+    -fx-background-radius: 1px;
+    -fx-border-radius: 1px;
 
     -fx-background-color: #1d1d1d;
 
      -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-    -fx-font-size: 11pt;
+    /* -fx-font-size: 11pt; */
     -fx-text-fill: #d8d8d8;
 }
 
@@ -342,25 +343,25 @@
  ******************************************************************************/
 
 .context-menu {
-    -fx-background-color: white;
+    -fx-background-color: #1d1d1d;
     -fx-background-insets: 0, 1, 2;
     -fx-background-radius: 0 0 0 0, 0 0 0 0, 0 0 0 0;
-    -fx-padding: 0.5em 0em 0.5em 0em; /* 6 0 6 0 */
+    /* -fx-padding: 0.5em 0em 0.5em 0em; */ /* 6 0 6 0 */
 }
 
 .context-menu .separator {
     -fx-padding: 0.58333275em 1.333332em 0.58333275em 1.333332em;  /*7 16 7 16 */
 }
 
-/* TODO: try to scope the menu-item style to the contextmenu */
 .menu-item {
     -fx-background-color: transparent;
-    -fx-padding: 0.666666em 1.333332em 0.666666em 1.333332em;   /*8 16 8 16 */
+    -fx-padding: 0.666666em 1.0em 0.666666em 1.0em;   /*8 16 8 16 */
+    -fx-text-fill: #ffffff;
 }
 
 .menu-item .label {
     -fx-padding: 0em 1.333332em 0em 0em;
-    -fx-text-fill: #212121;
+    -fx-text-fill: #ffffff;
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
     -fx-font-size: 11pt;
 }
@@ -371,14 +372,12 @@
      -fx-background-color: #dedede;
 }
 
-.menu-item:pressed
-{
+.menu-item:pressed{
     -fx-background-color: #212121;
     -fx-text-fill: white;
 }
 
-.menu-item:pressed .label
-{
+.menu-item:pressed .label{
     -fx-text-fill: white;
 }
 
@@ -658,9 +657,6 @@
  *                                                                             *
  ******************************************************************************/
 
-.text-field{
-    -fx-skin: "jfxtras.styles.jmetro8.MetroTextFieldSkin";
-}
 
 .text-input{
     -fx-background-radius: 0, 0;
@@ -1146,4 +1142,81 @@
 .list-view:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:focused{
     -fx-text-fill: white;
 }
+
+
+
+.label{
+    -fx-text-fill: #ffffff;
+}
+
+#mainSceneFlowPane{
+    -fx-background-color: #2b2b2b;
+}
+
+.tab-pane .tab-header-area .tab-header-background{
+    -fx-opacity: 0;
+}
+
+.tab-content-area{
+    -fx-background-color: #151515;
+}
+
+.tab-pane .tab{
+    -fx-background-color: #d2d2d2;
+    -fx-background-radius: 0;
+}
+
+.tab-pane .tab:selected{
+    -fx-background-color: #151515;;
+}
+
+.tab-pane .tab:selected .tab-label{
+    -fx-text-fill: #ffffff;
+}
+
+#bookmarksList{
+    -fx-background-color: #d2d2d2;
+}
+
+.menu-bar{
+    -fx-background-color: #d2d2d2;
+}
+
+.menu-bar .label{
+    -fx-text-fill: #323232;
+}
+
+.menu-bar .menu-button:showing,
+.menu-bar .menu-button:hover,
+.menu-bar .menu-button:selected{
+    -fx-background-color: #55c4fe;
+}
+
+.menu-bar .menu .context-menu .menu-item .label{
+    -fx-text-fill: #ffffff;
+}
+
+.menu-bar .menu .context-menu .menu-item:hover .label,
+.menu-bar .menu .context-menu .menu-item:showing .label,
+.menu-bar .menu .context-menu .menu-item:selected .label,
+.menu-bar .menu .context-menu .menu-item:focused .label{
+    -fx-text-fill: #323232;
+}
+
+.menu-bar .menu .context-menu .menu-item:hover .arrow,
+.menu-bar .menu .context-menu .menu-item:showing .arrow,
+.menu-bar .menu .context-menu .menu-item:selected .arrow,
+.menu-bar .menu .context-menu .menu-item:focused .arrow{
+    -fx-background-color: #323232;
+}
+
+.menu-bar .menu .context-menu{
+    -fx-padding: 0 0 0 0;
+}
+
+.button .label{
+    -fx-padding: 0 0 0 0;
+}
+
+
 

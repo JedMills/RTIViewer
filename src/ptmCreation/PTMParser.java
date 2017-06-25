@@ -1,17 +1,12 @@
 package ptmCreation;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.*;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import com.trolltech.qt.core.QByteArray;
-import com.trolltech.qt.gui.QIcon;
-import com.trolltech.qt.gui.QImage;
 import org.lwjgl.BufferUtils;
 import utils.Utils;
 
@@ -306,6 +301,7 @@ public class PTMParser {
 
             //read and parse the 9 reference plane nums
             line = reader.readLine();
+            header += line + " ";
             items = line.split("(\\s+)");
             int[] refPlanes = Utils.intsFromStrings(items, 9);
             data[4] = refPlanes;
@@ -323,7 +319,6 @@ public class PTMParser {
             items = line.split("(\\s+)");
             int[] sideData = Utils.intsFromStrings(items, 9);
             data[6] = sideData;
-
 
             int headerLength = header.length();
             data[0] = new int[]{headerLength};
@@ -551,24 +546,12 @@ public class PTMParser {
 
         //make a scanner to scan in all the data as characters
         ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
-        //stream.skip(dataStartPos + 23);
-        for(int i = 0; i < dataStartPos + 23; i++){
-            System.out.print((char)stream.read());
-        }
-        System.out.println();
-
-
-        try {
-            Thread.currentThread().sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        stream.skip(dataStartPos);
 
         int[][] plane = new int[9][];
         int[] planeLength = new int[9];
         byte[][] info = new byte[9][];
         byte[] compressedPlane;
-        QImage imagePlane;
 
         for(int i = 0; i < 9; i++){
             //read the compressed plane
@@ -584,7 +567,6 @@ public class PTMParser {
                 info[i][j] = (byte)stream.read();
             }
 
-
             JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(new ByteArrayInputStream(compressedPlane));
             BufferedImage image = decoder.decodeAsBufferedImage();
             Utils.flip(image);
@@ -593,26 +575,6 @@ public class PTMParser {
             for(int j = 0; j < planeLength[i]; j++){
                 plane[i][j] = image.getRaster().getDataBuffer().getElem(j);
             }
-
-            //imagePlane = QImage.fromData(byteArray, "JPEG");
-            //imagePlane = new QImage();
-            //boolean b = imagePlane.loadFromData(byteArray, "JPEG");
-
-            //System.out.println(b);
-            /*
-            if(imagePlane.isNull()){
-                throw new PTMFileException("Error parsing compressed data from file.");
-            }
-            */
-            /*
-            QImage transformed = imagePlane.mirrored(false, true);
-            planeLength[i] = transformed.height() * transformed.width();
-            plane[i] = new byte[planeLength[i]];
-            for(int j = 0; j < planeLength[i]; j++){
-                plane[i][j] = transformed.bits().byteAt(j);
-            }
-            */
-
         }
 
         int[][] coeffs = new int[9][];
@@ -646,10 +608,6 @@ public class PTMParser {
         int offset3;
         int nextVal;
 
-        for(int i = 0; i < 6; i++){
-            System.out.println(biasCoeffs[i] + ", " + scaleCoeffs[i]);
-        }
-
         for(int y = height - 1; y >= 0; y--){
             for(int x = 0; x < width; x++){
                 offset = (y * width) + x;
@@ -666,7 +624,6 @@ public class PTMParser {
             }
         }
 
-        System.out.println(stream.available());
         stream.close();
         return new IntBuffer[]{ptmCoeffs1, ptmCoeffs2, rgbCoeffs};
     }

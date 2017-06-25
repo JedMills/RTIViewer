@@ -137,8 +137,7 @@ public class FilterParamsPane extends Pane {
             }
         });
 
-        //GridPane.setConstraints(comboBox, 1, 0, 1,1);
-        //gridPane.getChildren().add(comboBox);
+
         vBox.setMargin(comboBox, new Insets(5, 0 , 5, 0));
         vBox.getChildren().add(comboBox);
     }

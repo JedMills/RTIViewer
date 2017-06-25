@@ -21,6 +21,15 @@ public class TopMenuBar extends MenuBar {
     }
 
     private void createMenuBar(Stage primaryStage){
+        Menu menuFile = createFileMenu();
+        Menu menuEdit = createEditMenu();
+
+        Menu menuView = new Menu("View");
+        getMenus().addAll(menuFile, menuEdit, menuView);
+        prefWidthProperty().bind(primaryStage.widthProperty());
+    }
+
+    private Menu createFileMenu(){
         Menu menuFile = new Menu("File");
         MenuItem open = new MenuItem("Open");
 
@@ -62,9 +71,15 @@ public class TopMenuBar extends MenuBar {
 
         menuFile.getItems().addAll(open, close, save, closePTMWindow);
 
+        return menuFile;
+    }
+
+
+    private Menu createEditMenu(){
         Menu menuEdit = new Menu("Edit");
-        MenuItem preferences = new MenuItem("Preferences");
-        preferences.setOnAction(MenuBarListener.getInstance());
+
+
+        Menu preferences = new Menu("Preferences");
         preferences.setId("preferences");
         Image prefsIcon = new Image("file:rsc/images/icons/cog-4x.png");
         ImageView prefsView = new ImageView(prefsIcon);
@@ -72,11 +87,23 @@ public class TopMenuBar extends MenuBar {
         prefsView.setFitWidth(15);
         preferences.setGraphic(prefsView);
 
+        Menu themes = new Menu("Themes");
+        preferences.getItems().add(themes);
+
+        MenuItem deafultTheme = new MenuItem("Default");
+        deafultTheme.setId("defaultTheme");
+        deafultTheme.setOnAction(MenuBarListener.getInstance());
+        MenuItem metroDarkTheme = new MenuItem("Metro Dark");
+        metroDarkTheme.setId("metroDarkTheme");
+        metroDarkTheme.setOnAction(MenuBarListener.getInstance());
+        MenuItem metroLightTheme = new MenuItem("Metro Light");
+        metroLightTheme.setId("metroLightTheme");
+        metroLightTheme.setOnAction(MenuBarListener.getInstance());
+
+        themes.getItems().addAll(deafultTheme, metroDarkTheme, metroLightTheme);
+
         menuEdit.getItems().addAll(preferences);
 
-        Menu menuView = new Menu("View");
-        getMenus().addAll(menuFile, menuEdit, menuView);
-        prefWidthProperty().bind(primaryStage.widthProperty());
-
+        return menuEdit;
     }
 }

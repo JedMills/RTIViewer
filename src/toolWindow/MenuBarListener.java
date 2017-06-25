@@ -12,8 +12,6 @@ import java.io.File;
  */
 public class MenuBarListener implements EventHandler<ActionEvent>{
 
-    private RTIViewer rtiViewer;
-
     private static MenuBarListener ourInstance = new MenuBarListener();
 
     public static MenuBarListener getInstance() {
@@ -23,11 +21,6 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
     private MenuBarListener() {
     }
 
-    public static void init(RTIViewer rtiViewer){
-        ourInstance.rtiViewer = rtiViewer;
-    }
-
-
 
     @Override
     public void handle(ActionEvent event) {
@@ -36,18 +29,24 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
             source = (MenuItem) event.getSource();
 
             if(source.getId().equals("open")){
-                rtiViewer.fileChooser.setTitle("Open RTI File");
-                File file = rtiViewer.fileChooser.showOpenDialog(rtiViewer.primaryStage);
+                RTIViewer.fileChooser.setTitle("Open RTI File");
+                File file = RTIViewer.fileChooser.showOpenDialog(RTIViewer.primaryStage);
                 if(file != null) {
                     Thread thread = new Thread(new PTMCreator(file));
                     thread.start();
                 }
             }else if(source.getId().equals("close")){
-                rtiViewer.closeEverything();
+                RTIViewer.closeEverything();
             }else if(source.getId().equals("closePTMWindow")){
-                rtiViewer.closeCurrentWindow();
+                RTIViewer.closeCurrentWindow();
             }else if(source.getId().equals("saveAsImage")){
-                rtiViewer.setFocusSave();
+                RTIViewer.setFocusSave();
+            }else if(source.getId().equals("defaultTheme")){
+                RTIViewer.setTheme(RTIViewer.ViewerTheme.DEFAULT);
+            }else if(source.getId().equals("metroDarkTheme")){
+                RTIViewer.setTheme(RTIViewer.ViewerTheme.METRO_DARK);
+            }else if(source.getId().equals("metroLightTheme")){
+                RTIViewer.setTheme(RTIViewer.ViewerTheme.METRO_LIGHT);
             }
         }
     }

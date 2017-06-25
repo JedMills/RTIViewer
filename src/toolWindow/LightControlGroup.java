@@ -54,10 +54,6 @@ public class LightControlGroup extends StackPane {
         this.primaryStgae = primaryStage;
 
         createLightControl();
-        /*
-        setStyle(  "-fx-border-color: #dddddd;" +
-                "-fx-border-radius: 5;");
-        */
         setId("lightControlGroup");
         setAlignment(Pos.CENTER);
         setPadding(new Insets(5, 0, 5, 0));

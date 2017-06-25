@@ -346,9 +346,16 @@ public class BottomTabPane extends TabPane {
         GridPane.setConstraints(bookmarkLabel, 0, 0, 1, 1);
         bookmarkComboBox = new ComboBox<>();
         GridPane.setConstraints(bookmarkComboBox, 1, 0, 1, 1);
+
         bookmarkAdd = new Button("Add");
+        bookmarkAdd.setId("addBookmarkButton");
+        bookmarkAdd.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(bookmarkAdd, 2, 0, 1, 1);
+
+
         bookmarkDel = new Button("Del");
+        bookmarkDel.setId("deleteBookmarkButton");
+        bookmarkDel.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(bookmarkDel, 3, 0, 1, 1);
 
         bookmarkPane.getChildren().addAll(bookmarkLabel, bookmarkComboBox, bookmarkAdd, bookmarkDel);
