@@ -5,13 +5,12 @@ import javafx.scene.paint.Color;
 import org.lwjgl.BufferUtils;
 import utils.Utils;
 
-import javax.rmi.CORBA.Util;
 import java.nio.IntBuffer;
 
 /**
  * Created by Jed on 12-Jun-17.
  */
-public class PTMObjectLRGB extends PTMObject {
+public class PTMObjectLRGB extends RTIObject {
 
     private IntBuffer lumCoeffs1;
     private IntBuffer lumCoeffs2;

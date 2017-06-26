@@ -3,7 +3,7 @@ package toolWindow;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
-import ptmCreation.PTMCreator;
+import ptmCreation.RTICreator;
 
 import java.io.File;
 
@@ -32,7 +32,7 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
                 RTIViewer.fileChooser.setTitle("Open RTI File");
                 File file = RTIViewer.fileChooser.showOpenDialog(RTIViewer.primaryStage);
                 if(file != null) {
-                    Thread thread = new Thread(new PTMCreator(file));
+                    Thread thread = new Thread(new RTICreator(file));
                     thread.start();
                 }
             }else if(source.getId().equals("close")){

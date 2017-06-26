@@ -1,11 +1,10 @@
 package ptmCreation;
 
+import bookmarks.Bookmark;
+import bookmarks.BookmarkCreator;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.VBox;
@@ -16,17 +15,18 @@ import toolWindow.RTIViewer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Created by Jed on 03-Jun-17.
  */
-public class PTMCreator implements Runnable {
+public class RTICreator implements Runnable {
 
-    private PTMObject targetObject;
+    private RTIObject targetObject;
     private File sourceFile;
     private static LoadingDialog loadingDialog  = new LoadingDialog();
 
-    public PTMCreator(File sourceFile){
+    public RTICreator(File sourceFile){
         this.sourceFile = sourceFile;
     }
 
@@ -39,28 +39,28 @@ public class PTMCreator implements Runnable {
                     loadingDialog.show();
                 }
             });
-            targetObject = PTMParser.createPtmFromFile(sourceFile);
+            targetObject = RTIParser.createPtmFromFile(sourceFile);
+            ArrayList<Bookmark> bookmarks = getBookmarksFromXML(sourceFile);
+
+            if(bookmarks.size() > 0){
+                targetObject.setBookmarks(bookmarks);
+            }
+
             RTIViewer.createNewPTMWindow(targetObject);
         }catch(IOException e){
             RTIViewer.fileReadingAlert.setContentText("Error accessing file at: " +
                                                         sourceFile.getPath());
 
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    RTIViewer.fileReadingAlert.showAndWait();
-                }
-            });
-        }catch(PTMFileException e){
-            RTIViewer.fileReadingAlert.setContentText("Error when parsing file at: " +
+            showFileReadingAlert();
+        }catch(RTIFileException e){
+            RTIViewer.fileReadingAlert.setContentText("Error when reading file at: " +
                                                         sourceFile.getPath() + ": " +
                                                         e.getMessage());
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    RTIViewer.fileReadingAlert.showAndWait();
-                }
-            });
+            showFileReadingAlert();
+        }catch (RuntimeException e){
+            RTIViewer.fileReadingAlert.setContentText("Unknown error when reading file at: " +
+                                                        sourceFile.getPath() + ".");
+            showFileReadingAlert();
         }finally{
             Platform.runLater(new Runnable() {
                 @Override
@@ -70,6 +70,17 @@ public class PTMCreator implements Runnable {
             });
         }
     }
+
+
+    private static void showFileReadingAlert(){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                RTIViewer.fileReadingAlert.showAndWait();
+            }
+        });
+    }
+
 
     public static void setLoadingDialogTheme(RTIViewer.ViewerTheme theme){
         loadingDialog.scene.getStylesheets().clear();
@@ -119,5 +130,39 @@ public class PTMCreator implements Runnable {
             stage.hide();
         }
 
+    }
+
+
+
+    private static ArrayList<Bookmark> getBookmarksFromXML(File sourceFile){
+        ArrayList<Bookmark> bookmarks = new ArrayList<>();
+
+        String fileSuffix = "";
+        if(sourceFile.getName().endsWith(".rti")){
+            fileSuffix = "_rti.xmp";
+        }else if(sourceFile.getName().endsWith(".ptm")){
+            fileSuffix = "_ptm.xmp";
+        }else{
+            return bookmarks;
+        }
+        String filePrefix = sourceFile.getName().substring(0, sourceFile.getName().length() - 4);
+        String bookmarksFileName = filePrefix + fileSuffix;
+
+        String bookmarksPath = sourceFile.getParent() + "\\" + bookmarksFileName;
+        File bookmarkFile = new File(bookmarksPath);
+
+        if(bookmarkFile.exists() && !bookmarkFile.isDirectory()){
+            try{
+                bookmarks = BookmarkCreator.createBookmarksFromFile(bookmarkFile);
+                return bookmarks;
+            }catch (Exception e){
+                RTIViewer.fileReadingAlert.setContentText("Error when reading bookmarks file at: " +
+                                                            bookmarkFile.getAbsolutePath() +
+                                                            ". Bookmarks file will be ignored.");
+                showFileReadingAlert();
+            }
+        }
+
+        return bookmarks;
     }
 }

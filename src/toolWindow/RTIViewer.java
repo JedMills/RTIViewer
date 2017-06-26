@@ -1,5 +1,6 @@
 package toolWindow;
 
+import bookmarks.BookmarkCreator;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -71,7 +72,23 @@ public class RTIViewer extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         RTIViewer.primaryStage = primaryStage;
-        primaryStage.setResizable(true);
+        setupPrimaryStage();
+
+        createAlerts();
+
+        mainScene = createScene(primaryStage);
+
+        mainScene.getStylesheets().add("stylesheets/default.css");
+
+        primaryStage.setScene(mainScene);
+
+        primaryStage.show();
+        primaryStage.sizeToScene();
+    }
+
+
+    private void setupPrimaryStage(){
+        RTIViewer.primaryStage.setResizable(true);
 
         RTIViewer.primaryStage.setMinWidth(300);
         RTIViewer.primaryStage.setMinHeight(600);
@@ -100,17 +117,6 @@ public class RTIViewer extends Application {
         });
 
         primaryStage.setTitle("RTI Viewer");
-
-        createAlerts();
-
-        mainScene = createScene(primaryStage);
-
-        mainScene.getStylesheets().add("stylesheets/default.css");
-
-        primaryStage.setScene(mainScene);
-
-        primaryStage.show();
-        primaryStage.sizeToScene();
     }
 
 
@@ -120,6 +126,7 @@ public class RTIViewer extends Application {
 
         fileReadingAlert = new Alert(Alert.AlertType.ERROR);
         entryAlert.setTitle("PTM File Reading Error");
+        BookmarkCreator.createDialog();
     }
 
     private Scene createScene(Stage primaryStage){
@@ -162,20 +169,20 @@ public class RTIViewer extends Application {
         else if(param.equals(GlobalParam.COEFF_UN_MASK_GAIN)){globalCoeffUnMaskGain = value;}
     }
 
-    public static void createNewPTMWindow(PTMObject ptmObject){
+    public static void createNewPTMWindow(RTIObject RTIObject){
         try {
-            if(ptmObject instanceof PTMObjectRGB) {
-                RTIWindow rtiWindow = new RTIWindowRGB((PTMObjectRGB) ptmObject);
+            if(RTIObject instanceof PTMObjectRGB) {
+                RTIWindow rtiWindow = new RTIWindowRGB((PTMObjectRGB) RTIObject);
                 Thread thread = new Thread(rtiWindow);
                 thread.start();
                 RTIWindows.add(rtiWindow);
-            }else if(ptmObject instanceof PTMObjectLRGB){
-                RTIWindow rtiWindow = new RTIWindowLRGB((PTMObjectLRGB) ptmObject);
+            }else if(RTIObject instanceof PTMObjectLRGB){
+                RTIWindow rtiWindow = new RTIWindowLRGB((PTMObjectLRGB) RTIObject);
                 Thread thread = new Thread(rtiWindow);
                 thread.start();
                 RTIWindows.add(rtiWindow);
-            }else if(ptmObject instanceof PTMObjectHSH){
-                RTIWindow rtiWindow = new RTIWindowHSH((PTMObjectHSH) ptmObject);
+            }else if(RTIObject instanceof RTIObjectHSH){
+                RTIWindow rtiWindow = new RTIWindowHSH((RTIObjectHSH) RTIObject);
                 Thread thread = new Thread(rtiWindow);
                 thread.start();
                 RTIWindows.add(rtiWindow);
@@ -220,18 +227,15 @@ public class RTIViewer extends Application {
     }
 
 
-    public static void setFocusedWindow(RTIWindow RTIWindow){
-        selectedWindow = RTIWindow;
-        bottomTabPane.updateSelectedWindow(RTIWindow);
-        bottomTabPane.updateViewportRect(RTIWindow.getViewportX(), RTIWindow.getViewportY(), RTIWindow.getImageScale());
+    public static void setFocusedWindow(RTIWindow rtiWindow){
+        selectedWindow = rtiWindow;
+        bottomTabPane.updateSelectedWindow(rtiWindow);
+        bottomTabPane.updateViewportRect(rtiWindow.getViewportX(),
+                            rtiWindow.getViewportY(), rtiWindow.getImageScale());
     }
 
     private static void setNoFocusedWindow(){
-        bottomTabPane.setFileText("");
-        bottomTabPane.setWidthText("");
-        bottomTabPane.setHeightText("");
-        bottomTabPane.setFormatText("");
-        bottomTabPane.setDefaultImage();
+        bottomTabPane.setNoFocusedWindow();
 
         selectedWindow = null;
     }
@@ -283,7 +287,7 @@ public class RTIViewer extends Application {
     public static void setTheme(ViewerTheme theme){
 
         mainScene.getStylesheets().clear();
-        PTMCreator.setLoadingDialogTheme(theme);
+        RTICreator.setLoadingDialogTheme(theme);
 
         if(theme.equals(ViewerTheme.DEFAULT)){
             mainScene.getStylesheets().add("stylesheets/default.css");

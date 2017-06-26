@@ -1,12 +1,13 @@
 package openGLWindow;
 
+import javafx.application.Platform;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
-import ptmCreation.PTMObject;
+import ptmCreation.RTIObject;
 import toolWindow.RTIViewer;
 import utils.ShaderUtils;
 
@@ -42,12 +43,12 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public abstract class RTIWindow implements Runnable{
 
     /**The ptm image that this window will display*/
-    public PTMObject ptmObject;
+    public RTIObject rtiObject;
 
-    /**Width of the ptmObject attribute that this window displays*/
+    /**Width of the rtiObject attribute that this window displays*/
     protected float imageWidth;
 
-    /**Height of the ptmObject attribute that this window displays*/
+    /**Height of the rtiObject attribute that this window displays*/
     protected float imageHeight;
 
     /**OpenGL reference for the window created*/
@@ -166,16 +167,16 @@ public abstract class RTIWindow implements Runnable{
 
 
     /**
-     * Creates a new RTIWindow, setting the passed PTMObject as this window's PTMObject, which it will
+     * Creates a new RTIWindow, setting the passed RTIObject as this window's rtiObject, which it will
      * display using the parameters in the RTIViewer window.
      *
-     * @param ptmObject
+     * @param rtiObject
      */
-    public RTIWindow(PTMObject ptmObject){
-        this.ptmObject = ptmObject;
+    public RTIWindow(RTIObject rtiObject){
+        this.rtiObject = rtiObject;
 
-        imageWidth = ptmObject.getWidth();
-        imageHeight = ptmObject.getHeight();
+        imageWidth = rtiObject.getWidth();
+        imageHeight = rtiObject.getHeight();
     }
 
 
@@ -210,7 +211,7 @@ public abstract class RTIWindow implements Runnable{
         //create a new window, of size half image width by half image height, with file location as the title
         window = glfwCreateWindow((int)(imageWidth * 0.5),
                                   (int)(imageHeight * 0.5),
-                                   ptmObject.getFileName(), NULL, NULL);
+                                   rtiObject.getFileName(), NULL, NULL);
 
         //allows the user to zoom in and out with the scroll wheel
         glfwSetScrollCallback(window, new GLFWScrollCallback() {
@@ -224,7 +225,12 @@ public abstract class RTIWindow implements Runnable{
         glfwSetWindowCloseCallback(window, new GLFWWindowCloseCallbackI() {
             @Override
             public void invoke(long window) {
-                RTIViewer.removeWindow(RTIWindow.this);
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        RTIViewer.removeWindow(RTIWindow.this);
+                    }
+                });
                 glfwSetWindowShouldClose(window, true);
             }
         });
@@ -234,7 +240,12 @@ public abstract class RTIWindow implements Runnable{
             @Override
             public void invoke(long window, boolean focused) {
                 if(focused){
-                    RTIViewer.setFocusedWindow(RTIWindow.this);
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            RTIViewer.setFocusedWindow(RTIWindow.this);
+                        }
+                    });
                 }
             }
         });

@@ -1,22 +1,16 @@
 package ptmCreation;
 
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import org.lwjgl.BufferUtils;
 import utils.Utils;
 
-import javax.imageio.ImageIO;
-import java.awt.image.RenderedImage;
-import java.io.File;
-import java.io.IOException;
 import java.nio.IntBuffer;
 
 /**
  * Created by Jed on 12-Jun-17.
  */
-public class PTMObjectRGB extends PTMObject {
+public class PTMObjectRGB extends RTIObject {
 
     /**Contains the coefficients for PTM polynomial in the red channel*/
     private IntBuffer redVals1;

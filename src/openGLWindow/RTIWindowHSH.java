@@ -1,8 +1,7 @@
 package openGLWindow;
 
 import org.lwjgl.BufferUtils;
-import ptmCreation.PTMObject;
-import ptmCreation.PTMObjectHSH;
+import ptmCreation.RTIObjectHSH;
 import toolWindow.RTIViewer;
 
 import java.nio.IntBuffer;
@@ -16,7 +15,7 @@ import static org.lwjgl.opengl.GL20.glUniform1i;
  */
 public class RTIWindowHSH extends RTIWindow {
 
-    private PTMObjectHSH ptmObjectHSH;
+    private RTIObjectHSH RTIObjectHSH;
     private int basisTerms;
 
     private IntBuffer dataTexture;
@@ -34,9 +33,9 @@ public class RTIWindowHSH extends RTIWindow {
     private int blueCoeffs2Ref;
     private int blueCoeffs3Ref;
 
-    public RTIWindowHSH(PTMObjectHSH ptmObject) {
+    public RTIWindowHSH(RTIObjectHSH ptmObject) {
         super(ptmObject);
-        ptmObjectHSH = ptmObject;
+        RTIObjectHSH = ptmObject;
         basisTerms = ptmObject.getBasisTerms();
         dataTexture = BufferUtils.createIntBuffer(3);
         dataTexture.put(0, basisTerms);
@@ -79,24 +78,24 @@ public class RTIWindowHSH extends RTIWindow {
         setShaderTexture(0, dataTexture, 1, 1);
 
         glUniform1i(normalsRef, 1);
-        setNormalsTexture(1, ptmObjectHSH.getNormals());
+        setNormalsTexture(1, RTIObjectHSH.getNormals());
 
         glUniform1i(redCoeffs1Ref, 2);
         glUniform1i(greenCoeffs1Ref, 3);
         glUniform1i(blueCoeffs1Ref, 4);
 
-        setNormalsTexture(2, ptmObjectHSH.getRedVals1());
-        setNormalsTexture(3, ptmObjectHSH.getGreenVals1());
-        setNormalsTexture(4, ptmObjectHSH.getBlueVals1());
+        setNormalsTexture(2, RTIObjectHSH.getRedVals1());
+        setNormalsTexture(3, RTIObjectHSH.getGreenVals1());
+        setNormalsTexture(4, RTIObjectHSH.getBlueVals1());
 
         glUniform1i(redCoeffs2Ref, 5);
         glUniform1i(greenCoeffs2Ref, 6);
         glUniform1i(blueCoeffs2Ref, 7);
 
         if(basisTerms > 3){
-            setNormalsTexture(5, ptmObjectHSH.getRedVals2());
-            setNormalsTexture(6, ptmObjectHSH.getGreenVals2());
-            setNormalsTexture(7, ptmObjectHSH.getBlueVals2());
+            setNormalsTexture(5, RTIObjectHSH.getRedVals2());
+            setNormalsTexture(6, RTIObjectHSH.getGreenVals2());
+            setNormalsTexture(7, RTIObjectHSH.getBlueVals2());
         }
 
         glUniform1i(redCoeffs3Ref, 8);
@@ -104,9 +103,9 @@ public class RTIWindowHSH extends RTIWindow {
         glUniform1i(blueCoeffs3Ref, 10);
 
         if(basisTerms > 6){
-            setNormalsTexture(8, ptmObjectHSH.getRedVals3());
-            setNormalsTexture(9, ptmObjectHSH.getGreenVals3());
-            setNormalsTexture(10, ptmObjectHSH.getBlueVals3());
+            setNormalsTexture(8, RTIObjectHSH.getRedVals3());
+            setNormalsTexture(9, RTIObjectHSH.getGreenVals3());
+            setNormalsTexture(10, RTIObjectHSH.getBlueVals3());
         }
     }
 }

@@ -1,5 +1,9 @@
 package toolWindow;
 
+import bookmarks.Bookmark;
+import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -14,10 +18,14 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
+import javafx.util.Callback;
 import openGLWindow.RTIWindow;
 import openGLWindow.RTIWindowHSH;
 import openGLWindow.RTIWindowLRGB;
 import openGLWindow.RTIWindowRGB;
+
+import java.util.ArrayList;
 
 
 /**
@@ -26,6 +34,7 @@ import openGLWindow.RTIWindowRGB;
 public class BottomTabPane extends TabPane {
 
     private RTIViewer rtiViewer;
+    private RTIWindow currentRTIWindow;
     private Scene parent;
     private GridPane previewGridPane;
     private TextField fileName;
@@ -45,7 +54,7 @@ public class BottomTabPane extends TabPane {
     private Button bookmarkAdd;
     private Button bookmarkDel;
 
-    private ListView<String> bookmarksList;
+    private ListView<Bookmark.Note> notesList;
     private Button notesEdit;
     private Button notesAdd;
     private Button notesDel;
@@ -73,6 +82,7 @@ public class BottomTabPane extends TabPane {
 
         defaultImage = new Image("file:rsc/images/exeterUniLogoMedium.jpg");
 
+        BookmarkPaneListener.init(this);
         createComponents();
         setId("bottomTabPane");
     }
@@ -80,7 +90,7 @@ public class BottomTabPane extends TabPane {
     private void createComponents(){
         Tab bookmarksTab = createBookmarksTab();
         Tab previewTab = createPreviewTab();
-        Tab saveImageTab = createImageTab();
+        Tab saveImageTab = createSaveImageTab();
 
         getTabs().addAll(previewTab, bookmarksTab, saveImageTab);
     }
@@ -263,7 +273,7 @@ public class BottomTabPane extends TabPane {
         imageFormat.setPrefWidth(width / 6);
 
         bookmarkComboBox.setPrefWidth(width / 2);
-        bookmarksList.setPrefWidth(width / 1.5);
+        notesList.setPrefWidth(width / 1.5);
 
         imageBorderPane.setPrefHeight(getPrefHeight() - 45);
         setFonts(width, height);
@@ -301,20 +311,25 @@ public class BottomTabPane extends TabPane {
     }
 
 
-    public void updateSelectedWindow(RTIWindow RTIWindow){
-        setFileText(RTIWindow.ptmObject.getFileName());
-        setWidthText(String.valueOf(RTIWindow.ptmObject.getWidth()));
-        setHeightText(String.valueOf(RTIWindow.ptmObject.getHeight()));
+    public void updateSelectedWindow(RTIWindow rtiWindow){
+        if(rtiWindow == currentRTIWindow){return;}
+        currentRTIWindow = rtiWindow;
 
-        if(RTIWindow instanceof RTIWindowRGB){
+        setFileText(rtiWindow.rtiObject.getFileName());
+        setWidthText(String.valueOf(rtiWindow.rtiObject.getWidth()));
+        setHeightText(String.valueOf(rtiWindow.rtiObject.getHeight()));
+        setBookmarks(rtiWindow.rtiObject.getBookmarks());
+
+        if(rtiWindow instanceof RTIWindowRGB){
             setFormatText("PTM RGB");
-        }else if(RTIWindow instanceof RTIWindowLRGB){
+        }else if(rtiWindow instanceof RTIWindowLRGB){
             setFormatText("PTM LRGB");
-        }else if(RTIWindow instanceof RTIWindowHSH){
+        }else if(rtiWindow instanceof RTIWindowHSH){
             setFormatText("HSH");
         }
 
-        setPreviewImage(RTIWindow.ptmObject.previewImage);
+        setPreviewImage(rtiWindow.rtiObject.previewImage);
+
     }
 
 
@@ -345,6 +360,8 @@ public class BottomTabPane extends TabPane {
         Label bookmarkLabel = new Label("Bookmark:");
         GridPane.setConstraints(bookmarkLabel, 0, 0, 1, 1);
         bookmarkComboBox = new ComboBox<>();
+        bookmarkComboBox.setId("bookmarkComboBox");
+        bookmarkComboBox.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(bookmarkComboBox, 1, 0, 1, 1);
 
         bookmarkAdd = new Button("Add");
@@ -366,30 +383,66 @@ public class BottomTabPane extends TabPane {
         bookmarkListPane.setAlignment(Pos.CENTER);
         bookmarkListPane.setHgap(5);
         bookmarkListPane.setVgap(5);
+
         Label notesLabel = new Label("Notes:");
         GridPane.setConstraints(notesLabel, 0, 0, 1, 1);
-        bookmarksList = new ListView<>();
-        bookmarksList.setId("bookmarksList");
-        GridPane.setConstraints(bookmarksList, 0, 1, 2, 3);
+
+        notesList = new ListView<Bookmark.Note>();
+
+
+        notesList.setCellFactory(new Callback<ListView<Bookmark.Note>, ListCell<Bookmark.Note>>() {
+            @Override
+            public ListCell<Bookmark.Note> call(ListView<Bookmark.Note> param) {
+                ListCell<Bookmark.Note> cell = new ListCell<Bookmark.Note>(){
+                    @Override
+                    protected void updateItem(Bookmark.Note item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if(item != null){
+                            setText(item.getSubject());
+
+                            Tooltip tooltip = new Tooltip();
+                            String tooltipText = item.getSubject() + System.lineSeparator() + item.getAuthor() +
+                                    System.lineSeparator() + item.getTimeStamp() + System.lineSeparator() +
+                                    System.lineSeparator() + item.getComment();
+                            tooltip.setText(tooltipText);
+                            tooltip.setPrefWidth(200);
+                            tooltip.setPrefHeight(200);
+                            tooltip.setWrapText(true);
+                            tooltip.setTextAlignment(TextAlignment.JUSTIFY);
+
+                            setTooltip(tooltip);
+                        }
+                    }
+                };
+                return cell;
+            }
+        });
+
+        notesList.setId("notesList");
+        GridPane.setConstraints(notesList, 0, 1, 2, 3);
+
         notesEdit = new Button("Edit");
         GridPane.setConstraints(notesEdit, 2, 1, 1, 1);
+
         notesAdd = new Button("Add");
         GridPane.setConstraints(notesAdd, 2, 2, 1, 1);
+
         notesDel = new Button("Del");
         GridPane.setConstraints(notesDel, 2, 3, 1, 1);
+
         Label updateBookmarkLabel = new Label("Light, Zoom, Pan & Rendering:");
         GridPane.setConstraints(updateBookmarkLabel, 0, 4, 2, 1);
         updateBookmark = new Button("Update");
         GridPane.setConstraints(updateBookmark, 2, 4, 1, 1);
 
-        bookmarkListPane.getChildren().addAll(  notesLabel, bookmarksList,
+        bookmarkListPane.getChildren().addAll(  notesLabel, notesList,
                                                 notesEdit, notesAdd, notesDel,
                                                 updateBookmarkLabel, updateBookmark);
         bookmarkListPane.setId("bookmarkListPane");
 
         bookmarkListPane.setPadding(new Insets(5, 5, 5, 5));
         bookmarkListPane.setMinHeight(0);
-        bookmarksList.setMinHeight(0);
+        notesList.setMinHeight(0);
         notesEdit.setMinHeight(0);
         notesAdd.setMinHeight(0);
         notesDel.setMinHeight(0);
@@ -403,7 +456,7 @@ public class BottomTabPane extends TabPane {
     }
 
 
-    private Tab createImageTab(){
+    private Tab createSaveImageTab(){
         Tab imageTab = new Tab("Save");
         imageTab.setClosable(false);
 
@@ -459,5 +512,42 @@ public class BottomTabPane extends TabPane {
 
         imageTab.setContent(vBox);
         return imageTab;
+    }
+
+
+    private void setBookmarks(ArrayList<Bookmark> bookmarks){
+        bookmarkComboBox.getItems().clear();
+        notesList.getItems().clear();
+
+        if(bookmarks == null){return;}
+
+        for(Bookmark bookmark : bookmarks){
+            bookmarkComboBox.getItems().add(bookmark.getName());
+        }
+    }
+
+    public void showNotes(String bookmarkName){
+        notesList.getItems().clear();
+        ArrayList<Bookmark> bookmarks = currentRTIWindow.rtiObject.getBookmarks();
+
+        for(Bookmark bookmark : bookmarks){
+            if(bookmark.getName().equals(bookmarkName)){
+                for(Bookmark.Note note : bookmark.getNotes()){
+                    notesList.getItems().add(note);
+                }
+                break;
+            }
+        }
+    }
+
+
+    public void setNoFocusedWindow(){
+        setFileText("");
+        setWidthText("");
+        setHeightText("");
+        setFormatText("");
+        setDefaultImage();
+
+        setBookmarks(null);
     }
 }

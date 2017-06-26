@@ -22,7 +22,7 @@ import com.sun.image.codec.jpeg.JPEGImageDecoder;
  *
  * Created by jed on 14/05/17.
  */
-public class PTMParser {
+public class RTIParser {
 
     /**Used for checking the PTM version fo the file used*/
     private static final String[] acceptedVersions = new String[]{"PTM_1.2", "#HSH1.2"};
@@ -40,16 +40,16 @@ public class PTMParser {
 
     /**
      * Reads the .ptm file passed in the fileName argument, checks the header etc., reads the data and
-     * scales/biases as appropriate to the file type, creates the new ptmCreation.PTMObject and returns that.
+     * scales/biases as appropriate to the file type, creates the new ptmCreation.RTIObject and returns that.
      *
      * @param fileName              the path to the .ptm file
-     * @return                      a new ptmCreation.PTMObject using the data in he .ptm file
+     * @return                      a new ptmCreation.RTIObject using the data in he .ptm file
      * @throws IOException          if there's an error when trying to access the file
-     * @throws PTMFileException     if there's an error in file type/format/parsing the file
+     * @throws RTIFileException     if there's an error in file type/format/parsing the file
      */
-    public static PTMObject createPtmFromFile(String fileName) throws IOException, PTMFileException{
+    public static RTIObject createPtmFromFile(String fileName) throws IOException, RTIFileException, RuntimeException {
         if(!(fileName.endsWith(".ptm") || fileName.endsWith(".rti"))){
-            throw new PTMFileException("Only '.rti' and '.ptm' files accepted.");
+            throw new RTIFileException("Only '.rti' and '.ptm' files accepted.");
         }
 
         //check the version and format of the file, and get the file format
@@ -62,7 +62,7 @@ public class PTMParser {
             //get the coefficients for the individual texels
             IntBuffer[] texelData = getTexelDataRGB(fileName, format, headerData[0], headerData[1], headerData[2]);
 
-            //create the ptmCreation.PTMObject from the data
+            //create the ptmCreation.RTIObject from the data
             return new PTMObjectRGB(fileName, headerData[1], headerData[2], texelData);
 
         }else if(format.equals("PTM_FORMAT_LRGB")){
@@ -78,7 +78,7 @@ public class PTMParser {
             FloatBuffer[] texelData = getTexelDataHSH(fileName, headerData[0], headerData[1], headerData[2],
                                                     headerData[3], headerData[4], headerData[5], headerData[6]);
 
-            return new PTMObjectHSH(fileName, headerData[0], headerData[1], headerData[2],
+            return new RTIObjectHSH(fileName, headerData[0], headerData[1], headerData[2],
                                     headerData[3], headerData[4], texelData);
         }
 
@@ -88,35 +88,35 @@ public class PTMParser {
 
     /**
      * Reads the .ptm file passed in the file argument, checks the header etc., reads the data and
-     * scales/biases as appropriate to the file type, creates the new ptmCreation.PTMObject and returns that.
+     * scales/biases as appropriate to the file type, creates the new ptmCreation.RTIObject and returns that.
      *
      * @param file                  the file to create the PTM object from
-     * @return                      a new ptmCreation.PTMObject using the data in he .ptmfile
+     * @return                      a new ptmCreation.RTIObject using the data in he .ptmfile
      * @throws IOException          if there's an error when trying to access the file
-     * @throws PTMFileException     if there's an error in file type/format/parsing the file
+     * @throws RTIFileException     if there's an error in file type/format/parsing the file
      */
-    public static PTMObject createPtmFromFile(File file) throws IOException, PTMFileException{
+    public static RTIObject createPtmFromFile(File file) throws IOException, RTIFileException {
         return createPtmFromFile(file.getAbsolutePath());
     }
 
 
     /**
      * Checks that the PTM version and format type are in the accepted lists (see attributes), and throws
-     * a ptmCreation.PTMFileException if they aren't. Returns the file format if everything ok.
+     * a ptmCreation.RTIFileException if they aren't. Returns the file format if everything ok.
      *
      * @param fileName              path to the .ptm file
      * @return                      the file format,sound on line 2 in a ptm file
      * @throws IOException          if there's an error trying to access the file
-     * @throws PTMFileException     if the PTM version or format are not in the accepted types
+     * @throws RTIFileException     if the PTM version or format are not in the accepted types
      */
-    private static String getFileFormat(String fileName) throws IOException, PTMFileException{
+    private static String getFileFormat(String fileName) throws IOException, RTIFileException {
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
         String version = reader.readLine();
 
         //there should be a PTM version declaration on line 1, check it's 1.2
         if(!Utils.checkIn(version, acceptedVersions)){
-            throw new PTMFileException("File does not contain accepted version on line 1");
+            throw new RTIFileException("File does not contain accepted version on line 1");
         }
 
         if(fileName.endsWith(".ptm")){
@@ -126,7 +126,7 @@ public class PTMParser {
 
                 //check the format's an accepted version
                 if (!Utils.checkIn(fileFormat, acceptedFormats)) {
-                    throw new PTMFileException("File does nor contain accepted format on line 2");
+                    throw new RTIFileException("File does nor contain accepted format on line 2");
                 }
                 reader.close();
                 return fileFormat;
@@ -139,7 +139,7 @@ public class PTMParser {
                 reader.close();
                 return "HSH";
             }else{
-                throw new PTMFileException("File contain unaccepted RTI type: " + version);
+                throw new RTIFileException("File contain unaccepted RTI type: " + version);
             }
         }
         reader.close();
@@ -151,15 +151,15 @@ public class PTMParser {
     /**
      * Parses the header of the PTM file as appropriate to the file type. Returns an array containing
      * dataStartPos (start position of the texel data for reading), width (width of image), height
-     * (height of image). Throws a ptmCreation.PTMFileException if there's some parsing error.
+     * (height of image). Throws a ptmCreation.RTIFileException if there's some parsing error.
      *
      * @param fileName              the path to the .ptm file
      * @param format                the format of the .ptm file, see acceptedFormats
      * @return                      an array containing {dataStartPosition, width, height}
      * @throws IOException          if there's an error trying to access the file
-     * @throws PTMFileException     if there's an error parsing the .ptm file
+     * @throws RTIFileException     if there's an error parsing the .ptm file
      */
-    private static int[] getHeaderData(String fileName, String format) throws IOException, PTMFileException{
+    private static int[] getHeaderData(String fileName, String format) throws IOException, RTIFileException {
         //make a read to read in the header section of the .ptm file
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
@@ -224,7 +224,7 @@ public class PTMParser {
                 basisType = Integer.parseInt(items[5]);
                 elemSize = Integer.parseInt(items[6]);
             }catch(NumberFormatException e){
-                throw new PTMFileException("Error parsing header data from file");
+                throw new RTIFileException("Error parsing header data from file");
             }
             return new int[]{width, height, colsPerPixel,  basisTerm, basisType, elemSize, dataStartPos};
         }
@@ -233,7 +233,7 @@ public class PTMParser {
     }
 
 
-    private static int[] getStandardPTMHeader(BufferedReader reader) throws IOException, PTMFileException{
+    private static int[] getStandardPTMHeader(BufferedReader reader) throws IOException, RTIFileException {
         String header = "";
         for (int i = 0; i < 6; i++) {
             header += reader.readLine() + " ";
@@ -260,14 +260,14 @@ public class PTMParser {
                 biasCoeffs[i] = Integer.parseInt(items[i + 10]);
             }
         } catch (NumberFormatException e) {
-            throw new PTMFileException("Error parsing the header data from file");
+            throw new RTIFileException("Error parsing the header data from file");
         }
 
         return new int[]{dataStartPos, width, height};
     }
 
 
-    private static int[][] getJPEGLRGBHeader(BufferedReader reader) throws IOException, PTMFileException{
+    private static int[][] getJPEGLRGBHeader(BufferedReader reader) throws IOException, RTIFileException {
         String header = "";
         int[][] data = new int[7][];
 
@@ -325,7 +325,7 @@ public class PTMParser {
 
             return data;
         }catch (Exception e){
-            throw new PTMFileException("Error when parsing header data from file.");
+            throw new RTIFileException("Error when parsing header data from file.");
         }
     }
 
@@ -344,10 +344,10 @@ public class PTMParser {
      * @param height                height of image
      * @return                      3D texel data array
      * @throws IOException          if there's an error trying to access the file
-     * @throws PTMFileException     if there's an error parsing the .ptm file
+     * @throws RTIFileException     if there's an error parsing the .ptm file
      */
     private static IntBuffer[] getTexelDataRGB(String fileName, String format,
-                                          int startPos, int width, int height) throws IOException, PTMFileException{
+                                          int startPos, int width, int height) throws IOException, RTIFileException {
         //arrays to store coefficients for each colour, all file types will eventually return these
         IntBuffer redVals1 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer redVals2 = BufferUtils.createIntBuffer(width * height * 3);
@@ -393,7 +393,7 @@ public class PTMParser {
                 }
             }
         }catch(Exception e){
-            throw new PTMFileException("Error reading in texel data from file");
+            throw new RTIFileException("Error reading in texel data from file");
         }
         stream.close();
 
@@ -403,7 +403,7 @@ public class PTMParser {
 
 
     private static IntBuffer[] getTexelDataLRGB(String fileName, String format,
-                                         int startPos, int width, int height) throws IOException, PTMFileException{
+                                         int startPos, int width, int height) throws IOException, RTIFileException {
         IntBuffer ptmCoeffs1 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer ptmCoeffs2 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer rgbCoeffs = BufferUtils.createIntBuffer(width * height * 3);
@@ -445,7 +445,7 @@ public class PTMParser {
                 }
             }
         }catch(Exception e){
-            throw new PTMFileException("Error reading in texel data from file");
+            throw new RTIFileException("Error reading in texel data from file");
         }
 
         stream.close();
@@ -532,7 +532,8 @@ public class PTMParser {
 
 
     private static IntBuffer[] getTexelDataJPEGLRGB(String fileName, int[] headerData)
-                                                                        throws IOException, PTMFileException{
+                                                                        throws IOException, RTIFileException,
+                                                                            RuntimeException{
         int dataStartPos = headerData[0];
         int width = headerData[1];
         int height = headerData[2];
@@ -582,7 +583,7 @@ public class PTMParser {
         for(int i = 0; i < 9; i++){
             index = Utils.indexOf(orderParams, i, 9);
             if(index == -1){
-                throw new PTMFileException("Error parsing compressed texel data from file.");
+                throw new RTIFileException("Error parsing compressed texel data from file.");
             }
             if(referencePlane[index] < 0){
                 coeffs[index] = new int[planeLength[index]];

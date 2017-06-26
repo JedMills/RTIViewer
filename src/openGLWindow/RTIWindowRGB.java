@@ -114,6 +114,6 @@ public class RTIWindowRGB extends RTIWindow {
         setShaderTexture(3, ptmObjectRGB.getGreenVals2());
         setShaderTexture(4, ptmObjectRGB.getBlueVals1());
         setShaderTexture(5, ptmObjectRGB.getBlueVals2());
-        setNormalsTexture(6, ptmObject.getNormals());
+        setNormalsTexture(6, rtiObject.getNormals());
     }
 }

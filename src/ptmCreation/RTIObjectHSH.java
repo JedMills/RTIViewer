@@ -12,7 +12,7 @@ import static java.lang.Math.*;
 /**
  * Created by Jed on 17-Jun-17.
  */
-public class PTMObjectHSH extends PTMObject {
+public class RTIObjectHSH extends RTIObject {
 
     private int numColourChannels;
     private int basisTerms;
@@ -30,7 +30,7 @@ public class PTMObjectHSH extends PTMObject {
     private FloatBuffer blueVals2;
     private FloatBuffer blueVals3;
 
-    public PTMObjectHSH(String fileName, int width, int height, int numColourChannels,
+    public RTIObjectHSH(String fileName, int width, int height, int numColourChannels,
                         int basisTerms, int basisType, FloatBuffer[] texelData) {
         super(fileName, width, height);
 

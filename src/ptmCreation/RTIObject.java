@@ -1,5 +1,6 @@
 package ptmCreation;
 
+import bookmarks.Bookmark;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import org.lwjgl.BufferUtils;
@@ -7,11 +8,12 @@ import utils.Utils;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 
 /**
  * Created by jed on 16/05/17.
  */
-public abstract class PTMObject {
+public abstract class RTIObject {
 
     /**Path of the file*/
     protected String fileName;
@@ -27,8 +29,12 @@ public abstract class PTMObject {
 
     public WritableImage previewImage;
 
+
+    private ArrayList<Bookmark> bookmarks;
+
+
     /**
-     * Creates a new PTMObject. Sets the passed parameters as relevant attributes.
+     * Creates a new RTIObject. Sets the passed parameters as relevant attributes.
      * TexelData needs to be a 3D int array:
      *      - first dimension  : length = 3, for red, green then blue colour channels
      *      - second dimension : length = width * height, array for image texels
@@ -38,10 +44,19 @@ public abstract class PTMObject {
      * @param width         width of image
      * @param height        height of image
      */
-    public PTMObject(String fileName, int width, int height) {
+    public RTIObject(String fileName, int width, int height) {
         this.fileName = fileName;
         this.width = width;
         this.height = height;
+        bookmarks = new ArrayList<>();
+    }
+
+
+    public RTIObject(String fileName, int width, int height, ArrayList<Bookmark> bookmarks){
+        this.fileName = fileName;
+        this.width = width;
+        this.height = height;
+        this.bookmarks = bookmarks;
     }
 
 
@@ -126,5 +141,14 @@ public abstract class PTMObject {
 
     public FloatBuffer getNormals() {
         return normals;
+    }
+
+
+    public void setBookmarks(ArrayList<Bookmark> bookmarks) {
+        this.bookmarks = bookmarks;
+    }
+
+    public ArrayList<Bookmark> getBookmarks() {
+        return bookmarks;
     }
 }
