@@ -133,4 +133,8 @@ public class Bookmark {
     public ArrayList<Note> getNotes() {
         return notes;
     }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 }

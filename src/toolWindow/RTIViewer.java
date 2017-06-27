@@ -51,11 +51,11 @@ public class RTIViewer extends Application {
     public static FlowPane flowPane;
 
     public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
-                            IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN;}
+                            IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN}
 
 
     public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
-                                COEFF_UN_MASK;}
+                                COEFF_UN_MASK}
 
     public enum ViewerTheme{DEFAULT, METRO_DARK, METRO_LIGHT;}
 
@@ -125,7 +125,8 @@ public class RTIViewer extends Application {
         entryAlert.setTitle("Invalid Entry");
 
         fileReadingAlert = new Alert(Alert.AlertType.ERROR);
-        entryAlert.setTitle("PTM File Reading Error");
+        fileReadingAlert.setTitle("Error when reading file");
+
         BookmarkCreator.createDialog();
     }
 
@@ -242,6 +243,7 @@ public class RTIViewer extends Application {
 
 
     private void resizeGUI(){
+        flowPane.setPrefHeight(primaryStage.getHeight());
         lightControlGroup.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
         paramsPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
         bottomTabPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
@@ -287,16 +289,29 @@ public class RTIViewer extends Application {
     public static void setTheme(ViewerTheme theme){
 
         mainScene.getStylesheets().clear();
+        fileReadingAlert.getDialogPane().getStylesheets().clear();
+        entryAlert.getDialogPane().getStylesheets().clear();
         RTICreator.setLoadingDialogTheme(theme);
 
         if(theme.equals(ViewerTheme.DEFAULT)){
             mainScene.getStylesheets().add("stylesheets/default.css");
+            entryAlert.getDialogPane().getStylesheets().add("stylesheets/defaultDialog.css");
+            fileReadingAlert.getDialogPane().getStylesheets().add("stylesheets/defaultDialog.css");
         }else if(theme.equals(ViewerTheme.METRO_DARK)){
             mainScene.getStylesheets().add("stylesheets/metroDark.css");
+            entryAlert.getDialogPane().getStylesheets().add("stylesheets/metroDarkDialog.css");
+            fileReadingAlert.getDialogPane().getStylesheets().add("stylesheets/metroDarkDialog.css");
         }else if(theme.equals(ViewerTheme.METRO_LIGHT)){
             mainScene.getStylesheets().add("stylesheets/metroLight.css");
+            entryAlert.getDialogPane().getStylesheets().add("stylesheets/metroLightDialog.css");
+            fileReadingAlert.getDialogPane().getStylesheets().add("stylesheets/metroLightDialog.css");
         }
+    }
 
 
+    public static void createBookmark(String name){
+        if(selectedWindow != null){
+            selectedWindow.addBookmark(name);
+        }
     }
 }

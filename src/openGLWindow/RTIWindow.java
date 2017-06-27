@@ -1,5 +1,6 @@
 package openGLWindow;
 
+import bookmarks.Bookmark;
 import javafx.application.Platform;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
@@ -13,6 +14,8 @@ import utils.ShaderUtils;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -745,5 +748,55 @@ public abstract class RTIWindow implements Runnable{
 
         //check the viewport to make sure image is still completely in viewport
         checkViewport();
+    }
+
+
+    public void addBookmark(String name){
+        updateBookmarkIDs();
+
+        HashMap<String,Double> renderingParams = getRenderingParams();
+        Integer id = renderingParams.get("id").intValue();
+        renderingParams.remove("id");
+        ArrayList<Bookmark.Note> notes = new ArrayList<Bookmark.Note>();
+
+        Bookmark bookmark = new Bookmark(   rtiObject.getBookmarks().size(), name, "Exeter RTI Viewer",
+                                            imageScale * 100, viewportX, viewportY, RTIViewer.globalLightPos.x,
+                                            RTIViewer.globalLightPos.y, id, renderingParams, notes);
+
+        rtiObject.addBookmark(bookmark);
+    }
+
+    private void updateBookmarkIDs(){
+        for(int i = 0; i < rtiObject.getBookmarks().size(); i++){
+            rtiObject.getBookmarks().get(i).setId(i);
+        }
+    }
+
+    private HashMap<String, Double> getRenderingParams(){
+        HashMap<String, Double> params = new HashMap<>();
+        RTIViewer.ShaderProgram prog = RTIViewer.currentProgram;
+
+        if(prog.equals(RTIViewer.ShaderProgram.DEFAULT)){
+            params.put("id", 0.0);
+        }else if(prog.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
+            params.put("id", 1.0);
+            params.put("gain", RTIViewer.globalDiffGainVal);
+        }else if(prog.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
+            params.put("id", 2.0);
+            params.put("diffuseColor", RTIViewer.globalDiffColourVal);
+            params.put("specularity", RTIViewer.globalSpecularityVal);
+            params.put("highlightSize", RTIViewer.globalHighlightSizeVal);
+        }else if(prog.equals(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK)){
+            params.put("id", 3.0);
+            params.put("gain", RTIViewer.globalNormUnMaskGain);
+            params.put("environment", RTIViewer.globalNormUnMaskEnv);
+        }else if(prog.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
+            params.put("id", 4.0);
+            params.put("gain", RTIViewer.globalImgUnMaskGain);
+        }else if(prog.equals(RTIViewer.ShaderProgram.NORMALS)){
+            params.put("id", 9.0);
+        }
+
+        return params;
     }
 }

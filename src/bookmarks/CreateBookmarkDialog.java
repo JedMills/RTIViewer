@@ -1,5 +1,6 @@
 package bookmarks;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -90,8 +91,22 @@ public class CreateBookmarkDialog{
         addButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                BookmarkCreator.createNewBookmark(bookmarkNameField.getText());
-                stage.close();
+                if(bookmarkNameField.getText().replaceAll("\\s+","").equals("")){
+                    stage.close();
+                    RTIViewer.entryAlert.setContentText("Please enter a valid bookmark name.");
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            RTIViewer.entryAlert.showAndWait();
+                        }
+                    });
+                }else{
+                    BookmarkCreator.createNewBookmark(bookmarkNameField.getText());
+                    RTIViewer.createBookmark(bookmarkNameField.getText());
+                    stage.close();
+                }
+
+
                 bookmarkNameField.setText("");
             }
         });

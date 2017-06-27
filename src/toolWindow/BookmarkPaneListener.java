@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import openGLWindow.RTIWindow;
 
 
 /**
@@ -33,7 +34,9 @@ public class BookmarkPaneListener implements EventHandler<ActionEvent> {
         if(event.getSource() instanceof Button){
             Button sourceButton = (Button) event.getSource();
             if(sourceButton.getId().equals("addBookmarkButton")){
-                BookmarkCreator.showCreateBookmarkDialog();
+                if(RTIViewer.selectedWindow != null) {
+                    BookmarkCreator.showCreateBookmarkDialog();
+                }
             }else if(sourceButton.getId().equals("deleteBookmarkButton")){
                 System.out.println("Delete");
             }

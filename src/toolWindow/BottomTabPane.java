@@ -260,7 +260,7 @@ public class BottomTabPane extends TabPane {
         setPrefWidth(width - 20);
 
         if(getLayoutY() < 300){
-            setLayoutY(395);
+            setLayoutY(387);
         }
 
         setPrefHeight(height - (getLayoutY() + 45));

@@ -151,4 +151,8 @@ public abstract class RTIObject {
     public ArrayList<Bookmark> getBookmarks() {
         return bookmarks;
     }
+
+    public void addBookmark(Bookmark bookmark){
+        bookmarks.add(bookmark);
+    }
 }

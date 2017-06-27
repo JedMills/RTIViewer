@@ -65,9 +65,10 @@ public class LightControlGroup extends StackPane {
         circle.setFill(Paint.valueOf("#d3d3d3"));
         light = new Light.Point();
         light.setColor(Color.WHITE);
+        circle.setRadius(75);
 
-        light.setX(0);
-        light.setY(0);
+        light.setX(circle.getRadius());
+        light.setY(circle.getRadius());
         light.setZ(25);
 
         Lighting lighting = new Lighting();
@@ -205,7 +206,9 @@ public class LightControlGroup extends StackPane {
     public void updateSize(double width, double height){
         setPrefWidth(width - 20);
 
-        updateGlobalLightPos(new Utils.Vector2f(0, 0), LightEditor.RESIZE);
+        updateGlobalLightPos(new Utils.Vector2f(RTIViewer.globalLightPos.x,
+                                                RTIViewer.globalLightPos.y),
+                                                LightEditor.RESIZE);
 
         updateComponentSizes(width, height);
     }
@@ -214,7 +217,7 @@ public class LightControlGroup extends StackPane {
         if(height < 700){
             light.setZ(20);
             circle.setRadius(50);
-        }else if(height < 800){
+        }else if(height < 800 ||Double.isNaN(height)){
             light.setZ(25);
             circle.setRadius(75);
         }else{
