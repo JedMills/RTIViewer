@@ -26,6 +26,7 @@ import openGLWindow.RTIWindowLRGB;
 import openGLWindow.RTIWindowRGB;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -315,7 +316,7 @@ public class BottomTabPane extends TabPane {
         if(rtiWindow == currentRTIWindow){return;}
         currentRTIWindow = rtiWindow;
 
-        setFileText(rtiWindow.rtiObject.getFileName());
+        setFileText(rtiWindow.rtiObject.getFilePath());
         setWidthText(String.valueOf(rtiWindow.rtiObject.getWidth()));
         setHeightText(String.valueOf(rtiWindow.rtiObject.getHeight()));
         setBookmarks(rtiWindow.rtiObject.getBookmarks());
@@ -422,12 +423,18 @@ public class BottomTabPane extends TabPane {
         GridPane.setConstraints(notesList, 0, 1, 2, 3);
 
         notesEdit = new Button("Edit");
+        notesEdit.setId("editNote");
+        notesEdit.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(notesEdit, 2, 1, 1, 1);
 
         notesAdd = new Button("Add");
+        notesAdd.setId("addNote");
+        notesAdd.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(notesAdd, 2, 2, 1, 1);
 
         notesDel = new Button("Del");
+        notesDel.setId("delNote");
+        notesDel.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(notesDel, 2, 3, 1, 1);
 
         Label updateBookmarkLabel = new Label("Light, Zoom, Pan & Rendering:");
@@ -515,7 +522,7 @@ public class BottomTabPane extends TabPane {
     }
 
 
-    private void setBookmarks(ArrayList<Bookmark> bookmarks){
+    public void setBookmarks(ArrayList<Bookmark> bookmarks){
         bookmarkComboBox.getItems().clear();
         notesList.getItems().clear();
 
@@ -529,6 +536,7 @@ public class BottomTabPane extends TabPane {
     public void showNotes(String bookmarkName){
         notesList.getItems().clear();
         ArrayList<Bookmark> bookmarks = currentRTIWindow.rtiObject.getBookmarks();
+        System.out.println(bookmarks.size());
 
         for(Bookmark bookmark : bookmarks){
             if(bookmark.getName().equals(bookmarkName)){
@@ -549,5 +557,23 @@ public class BottomTabPane extends TabPane {
         setDefaultImage();
 
         setBookmarks(null);
+    }
+
+
+    public List<String> getCurrentBookmarkNames(){
+        return bookmarkComboBox.getItems();
+    }
+
+    public ComboBox<String> getBookmarkComboBox() {
+        return bookmarkComboBox;
+    }
+
+
+    public void setSelectedBookmark(String bookmarkName){
+        bookmarkComboBox.getSelectionModel().select(bookmarkName);
+    }
+
+    public ListView<Bookmark.Note> getNotesList() {
+        return notesList;
     }
 }

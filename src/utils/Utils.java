@@ -2,6 +2,7 @@ package utils;
 
 import java.awt.image.BufferedImage;
 import java.nio.IntBuffer;
+import java.util.List;
 
 /**
  * Contains all the utility functions that are used throughout the viewer.
@@ -25,6 +26,17 @@ public class Utils {
         }
         return false;
     }
+
+
+
+    public static boolean checkIn(String value, List<String> values){
+        for(String s : values){
+            if(value.equals(s)){return true;}
+        }
+        return false;
+    }
+
+
 
 
     /**

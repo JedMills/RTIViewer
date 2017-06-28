@@ -1,6 +1,7 @@
 package toolWindow;
 
-import bookmarks.BookmarkCreator;
+import bookmarks.Bookmark;
+import bookmarks.BookmarkManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -65,6 +66,7 @@ public class RTIViewer extends Application {
 
     public static Alert entryAlert;
     public static Alert fileReadingAlert;
+    public static Alert bookarksAlert;
     public static final FileChooser fileChooser = new FileChooser();
 
     private static ArrayList<RTIWindow> RTIWindows = new ArrayList<>();
@@ -127,7 +129,10 @@ public class RTIViewer extends Application {
         fileReadingAlert = new Alert(Alert.AlertType.ERROR);
         fileReadingAlert.setTitle("Error when reading file");
 
-        BookmarkCreator.createDialog();
+        bookarksAlert = new Alert(Alert.AlertType.ERROR);
+        bookarksAlert.setTitle("Bookmarks error");
+
+        BookmarkManager.createDialog();
     }
 
     private Scene createScene(Stage primaryStage){
@@ -312,6 +317,47 @@ public class RTIViewer extends Application {
     public static void createBookmark(String name){
         if(selectedWindow != null){
             selectedWindow.addBookmark(name);
+            setSelectedBookmark(name);
         }
+    }
+
+    public static void updateBookmarks(String rtiObjPath, ArrayList<Bookmark> bookmarks){
+        bottomTabPane.setBookmarks(bookmarks);
+
+        String fileSuffix = "";
+        if(rtiObjPath.endsWith(".rti")){
+            fileSuffix = "_rti.xmp";
+        }else if(rtiObjPath.endsWith(".ptm")){
+            fileSuffix = "_ptm.xmp";
+        }else{
+            return;
+        }
+
+        String filePrefix = rtiObjPath.substring(0, rtiObjPath.length() - 4);
+        String bookmarksFilePath = filePrefix + fileSuffix;
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    BookmarkManager.writeBookmarksToFile(bookmarksFilePath, bookmarks);
+                }catch(Exception e){
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            bookarksAlert.setContentText("Error when writing bookmarks to file." +
+                                                        " Changes have not been saved.");
+                            bookarksAlert.showAndWait();
+                        }
+                    });
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    public static void setSelectedBookmark(String bookmarkName){
+        bottomTabPane.setSelectedBookmark(bookmarkName);
     }
 }

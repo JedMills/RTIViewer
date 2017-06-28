@@ -107,7 +107,6 @@ public class FilterParamsPane extends Pane {
 
         vBox.getChildren().add(gridPane);
 
-        //getChildren().add(gridPane);
         getChildren().add(vBox);
         vBox.setAlignment(Pos.TOP_CENTER);
 
@@ -252,15 +251,19 @@ public class FilterParamsPane extends Pane {
     private void setupSliderSpinnerPair(Slider slider, Spinner spinner, String warningText,
                                         RTIViewer.GlobalParam globalParam){
 
-        slider.setOnMouseDragged(new EventHandler<MouseEvent>() {
+        EventHandler<MouseEvent> sliderEdited = new EventHandler<MouseEvent>(){
             @Override
             public void handle(MouseEvent event) {
                 spinner.getEditor().setText(String.valueOf(slider.getValue()));
                 toolWindow.setGlobalVal(globalParam, slider.getValue());
             }
-        });
+        };
+
+        slider.setOnMouseDragged(sliderEdited);
+        slider.setOnMouseClicked(sliderEdited);
         spinner.setEditable(true);
         spinner.setPrefWidth(75);
+
         spinner.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {

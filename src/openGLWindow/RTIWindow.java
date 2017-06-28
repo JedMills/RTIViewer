@@ -214,7 +214,7 @@ public abstract class RTIWindow implements Runnable{
         //create a new window, of size half image width by half image height, with file location as the title
         window = glfwCreateWindow((int)(imageWidth * 0.5),
                                   (int)(imageHeight * 0.5),
-                                   rtiObject.getFileName(), NULL, NULL);
+                                   rtiObject.getFilePath(), NULL, NULL);
 
         //allows the user to zoom in and out with the scroll wheel
         glfwSetScrollCallback(window, new GLFWScrollCallback() {
@@ -752,7 +752,7 @@ public abstract class RTIWindow implements Runnable{
 
 
     public void addBookmark(String name){
-        updateBookmarkIDs();
+        rtiObject.updateBookmarkIDs();
 
         HashMap<String,Double> renderingParams = getRenderingParams();
         Integer id = renderingParams.get("id").intValue();
@@ -766,11 +766,7 @@ public abstract class RTIWindow implements Runnable{
         rtiObject.addBookmark(bookmark);
     }
 
-    private void updateBookmarkIDs(){
-        for(int i = 0; i < rtiObject.getBookmarks().size(); i++){
-            rtiObject.getBookmarks().get(i).setId(i);
-        }
-    }
+
 
     private HashMap<String, Double> getRenderingParams(){
         HashMap<String, Double> params = new HashMap<>();
@@ -798,5 +794,12 @@ public abstract class RTIWindow implements Runnable{
         }
 
         return params;
+    }
+
+
+
+
+    public void deleteBookmark(String bookmarkName){
+        rtiObject.removeBookmark(bookmarkName);
     }
 }

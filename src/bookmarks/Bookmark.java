@@ -69,6 +69,26 @@ public class Bookmark {
         public String getComment() {
             return comment;
         }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public void setSubject(String subject) {
+            this.subject = subject;
+        }
+
+        public void setAuthor(String author) {
+            this.author = author;
+        }
+
+        public void setTimeStamp(String timeStamp) {
+            this.timeStamp = timeStamp;
+        }
+
+        public void setComment(String comment) {
+            this.comment = comment;
+        }
     }
 
 
@@ -136,5 +156,14 @@ public class Bookmark {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public void addNote(Note note){
+        notes.add(note);
+    }
+
+    public void removeNote(Note note){
+        System.out.println("Removing:" + note);
+        notes.remove(note);
     }
 }

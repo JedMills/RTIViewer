@@ -1,13 +1,11 @@
 package ptmCreation;
 
 import bookmarks.Bookmark;
-import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
-import org.lwjgl.BufferUtils;
+import toolWindow.RTIViewer;
 import utils.Utils;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 /**
@@ -16,7 +14,7 @@ import java.util.ArrayList;
 public abstract class RTIObject {
 
     /**Path of the file*/
-    protected String fileName;
+    protected String filePath;
 
     /**Width of the image*/
     protected int width;
@@ -40,20 +38,20 @@ public abstract class RTIObject {
      *      - second dimension : length = width * height, array for image texels
      *      - third dimension  : length = 6, for the 5 PTM coefficients for each texel
      *
-     * @param fileName      path to the .ptm file this object was created using
+     * @param filePath      path to the .ptm file this object was created using
      * @param width         width of image
      * @param height        height of image
      */
-    public RTIObject(String fileName, int width, int height) {
-        this.fileName = fileName;
+    public RTIObject(String filePath, int width, int height) {
+        this.filePath = filePath;
         this.width = width;
         this.height = height;
         bookmarks = new ArrayList<>();
     }
 
 
-    public RTIObject(String fileName, int width, int height, ArrayList<Bookmark> bookmarks){
-        this.fileName = fileName;
+    public RTIObject(String filePath, int width, int height, ArrayList<Bookmark> bookmarks){
+        this.filePath = filePath;
         this.width = width;
         this.height = height;
         this.bookmarks = bookmarks;
@@ -127,8 +125,8 @@ public abstract class RTIObject {
 
     protected abstract void createPreviewImage();
 
-    public String getFileName() {
-        return fileName;
+    public String getFilePath() {
+        return filePath;
     }
 
     public int getWidth() {
@@ -154,5 +152,29 @@ public abstract class RTIObject {
 
     public void addBookmark(Bookmark bookmark){
         bookmarks.add(bookmark);
+        RTIViewer.updateBookmarks(filePath, bookmarks);
+    }
+
+    public void removeBookmark(String bookmarkName){
+        for(int i = 0; i < bookmarks.size(); i++){
+            if(bookmarks.get(i).getName().equals(bookmarkName)){
+                bookmarks.remove(i);
+                break;
+            }
+        }
+        updateBookmarkIDs();
+
+        RTIViewer.updateBookmarks(filePath, bookmarks);
+    }
+
+
+    public void updateBookmarkIDs(){
+        for(int i = 0; i < bookmarks.size(); i++){
+            bookmarks.get(i).setId(i);
+
+            for(int j = 0; j < bookmarks.get(i).getNotes().size(); j++){
+                bookmarks.get(i).getNotes().get(j).setId(j);
+            }
+        }
     }
 }

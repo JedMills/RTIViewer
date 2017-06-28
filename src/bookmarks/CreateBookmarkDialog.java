@@ -17,6 +17,10 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import toolWindow.RTIViewer;
+import utils.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Jed on 25-Jun-17.
@@ -29,13 +33,15 @@ public class CreateBookmarkDialog{
     private TextField bookmarkNameField;
     private Button addButton;
     private Button cancelButton;
+    private List<String> currentBoomarkNames;
 
     public CreateBookmarkDialog(){
         stage = new Stage(StageStyle.UNIFIED);
         stage.setTitle("Create a bookmark");
-        stage.setAlwaysOnTop(true);
         stage.initModality(Modality.WINDOW_MODAL);
         stage.initOwner(RTIViewer.primaryStage);
+
+        currentBoomarkNames = new ArrayList<>();
 
         GridPane gridPane = createLayout();
         setButtonActions();
@@ -94,6 +100,15 @@ public class CreateBookmarkDialog{
                 if(bookmarkNameField.getText().replaceAll("\\s+","").equals("")){
                     stage.close();
                     RTIViewer.entryAlert.setContentText("Please enter a valid bookmark name.");
+                    bookmarkNameField.setText("");
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            RTIViewer.entryAlert.showAndWait();
+                        }
+                    });
+                }else if(Utils.checkIn(bookmarkNameField.getText(), currentBoomarkNames)){
+                    RTIViewer.entryAlert.setContentText("Please enter a unique bookmark name.");
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
@@ -101,13 +116,13 @@ public class CreateBookmarkDialog{
                         }
                     });
                 }else{
-                    BookmarkCreator.createNewBookmark(bookmarkNameField.getText());
                     RTIViewer.createBookmark(bookmarkNameField.getText());
                     stage.close();
+                    bookmarkNameField.setText("");
                 }
 
 
-                bookmarkNameField.setText("");
+
             }
         });
 
@@ -126,7 +141,6 @@ public class CreateBookmarkDialog{
         if(stage.getHeight() >= 175 && stage.getWidth() >= 375){
             fontSize = 16;
         }
-
         createNameLabel.setFont(Font.font(fontSize));
         bookmarkNameField.setFont(Font.font(fontSize));
         addButton.setFont(Font.font(fontSize));
@@ -136,6 +150,11 @@ public class CreateBookmarkDialog{
 
     public void show(){
         stage.showAndWait();
+    }
+
+
+    public void setCurrentBookmarkNames(List<String> currentBookmarkNames){
+        this.currentBoomarkNames = currentBookmarkNames;
     }
 
 }

@@ -1,7 +1,7 @@
 package ptmCreation;
 
 import bookmarks.Bookmark;
-import bookmarks.BookmarkCreator;
+import bookmarks.BookmarkManager;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -153,7 +153,7 @@ public class RTICreator implements Runnable {
 
         if(bookmarkFile.exists() && !bookmarkFile.isDirectory()){
             try{
-                bookmarks = BookmarkCreator.createBookmarksFromFile(bookmarkFile);
+                bookmarks = BookmarkManager.createBookmarksFromFile(bookmarkFile);
                 return bookmarks;
             }catch (Exception e){
                 RTIViewer.fileReadingAlert.setContentText("Error when reading bookmarks file at: " +

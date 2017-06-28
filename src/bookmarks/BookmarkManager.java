@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.w3c.dom.*;
+import ptmCreation.RTIObject;
+import toolWindow.RTIViewer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -13,16 +15,19 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
  * Created by Jed on 25-Jun-17.
  */
-public class BookmarkCreator {
+public class BookmarkManager {
 
     private static CreateBookmarkDialog createBookmarkDialog;
+    private static EditNoteDialog editNoteDialog;
     private static DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
     private static TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
@@ -37,26 +42,49 @@ public class BookmarkCreator {
     private static String commentHTMLParaEnd = "</p>";
 
 
-
-
-
     public static void createDialog(){
         createBookmarkDialog = new CreateBookmarkDialog();
+        editNoteDialog = new EditNoteDialog();
     }
 
 
-    public static void showCreateBookmarkDialog() {
+    public static void showCreateBookmarkDialog(List<String> currentBookmarkNames) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
+                createBookmarkDialog.setCurrentBookmarkNames(currentBookmarkNames);
                 createBookmarkDialog.show();
             }
         });
     }
 
+    public static void showEditNoteDialog(Bookmark.Note note, String selectedBookmarkName){
+        editNoteDialog.setTargetNote(note);
+        editNoteDialog.setTargetBookmark(selectedBookmarkName);
 
-    public static void createNewBookmark(String name){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                editNoteDialog.show();
+            }
+        });
+    }
 
+
+    public static void showAddNoteDialog(String selectedBookmarkName){
+        editNoteDialog.setTitle("New note");
+        Bookmark.Note note = new Bookmark.Note(0, "", "",
+                                            LocalDateTime.now().toString(), "");
+
+        for(Bookmark bookmark : RTIViewer.selectedWindow.rtiObject.getBookmarks()){
+            if(bookmark.getName().equals(selectedBookmarkName)){
+                bookmark.addNote(note);
+                break;
+            }
+        }
+
+
+        showEditNoteDialog(note, selectedBookmarkName);
     }
 
 
@@ -336,6 +364,18 @@ public class BookmarkCreator {
         Element element = document.createElement(name);
         element.appendChild(document.createTextNode(contents));
         parent.appendChild(element);
+    }
+
+
+    public static void deleteNote(String bookmarkName, Bookmark.Note note){
+        RTIObject rtiObject = RTIViewer.selectedWindow.rtiObject;
+        for(Bookmark bookmark : rtiObject.getBookmarks()){
+            if(bookmark.getName().equals(bookmarkName)){
+                bookmark.removeNote(note);
+                break;
+            }
+        }
+        RTIViewer.updateBookmarks(rtiObject.getFilePath(), rtiObject.getBookmarks());
     }
 
 }
