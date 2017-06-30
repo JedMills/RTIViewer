@@ -7,6 +7,10 @@ uniform float lightY;
 uniform float imageHeight;
 uniform float imageWidth;
 
+uniform float diffConst;
+uniform float specConst;
+uniform float specExConst;
+
 uniform isampler2D dataTexture;
 
 uniform sampler2D redCoeffs1;
@@ -157,5 +161,28 @@ void main() {
 
     }
 
-    colorOut = vec4(r, g, b, 1);
+
+    vec4 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0);
+
+    vec3 hVector = vec3(0.0, 0.0, 1.0);
+    hVector.x += lightX;
+    hVector.y += lightY;
+    hVector = hVector * 0.5;
+    hVector = normalize(hVector);
+
+    float nDotH = dot(hVector, normal.xyz);
+
+    if(nDotH < 0.0){nDotH = 0.0;}
+    else if(nDotH > 1.0){nDotH = 1.0;}
+    nDotH = pow(nDotH, specExConst);
+
+
+    float temp = (r + g + b) / 3;
+    float lum = temp * specConst * 4.0 * nDotH;
+
+     r = r * diffConst + lum;
+     g = g * diffConst + lum;
+     b = b * diffConst + lum;
+
+     colorOut = vec4(r, g, b, 1);
 }

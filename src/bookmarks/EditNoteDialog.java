@@ -114,7 +114,6 @@ public class EditNoteDialog {
 
                 RTIViewer.updateBookmarks(RTIViewer.selectedWindow.rtiObject.getFilePath(),
                                             RTIViewer.selectedWindow.rtiObject.getBookmarks());
-
                 RTIViewer.setSelectedBookmark(selectedBookmarkName);
 
                 stage.close();

@@ -13,6 +13,8 @@ import utils.Utils;
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGImageDecoder;
 
+import com.google.common.io.LittleEndianDataInputStream;
+
 /**
  * This class is responsible for parsing pm files and creating PTMObjects from the data. The parser accepts
  * PTM version 1.2, and the following file formats:
@@ -163,11 +165,6 @@ public class RTIParser {
         //make a read to read in the header section of the .ptm file
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
-        //read the first 6 lines fo the file for the header
-        String header = "";
-
-        int dataStartPos = 0;
-
 
         if(format.equals("PTM_FORMAT_RGB") || format.equals("PTM_FORMAT_LRGB")){
             int[] data = getStandardPTMHeader(reader);
@@ -177,7 +174,7 @@ public class RTIParser {
             int[] standardHeaderData = getStandardPTMHeader(reader);
             int[][] jpegHeaderData = getJPEGLRGBHeader(reader);
 
-            dataStartPos = standardHeaderData[0] + jpegHeaderData[0][0];
+            int dataStartPos = standardHeaderData[0] + jpegHeaderData[0][0];
 
             reader.close();
             //all the header data in total, flattened
@@ -200,33 +197,36 @@ public class RTIParser {
             }
             return totalHeaderData;
         }else if(format.equals("HSH")){
+
             String line = reader.readLine();
-            dataStartPos += line.length() + 1;
+            int startPos = line.length() + 2;
+
+
             while(line.startsWith("#")){
                 line = reader.readLine();
-                dataStartPos += line.length() + 1;
-            }
-            header += line + " ";
-            for(int i = 0; i < 2; i++){
-                line = reader.readLine() + " ";
-                dataStartPos += line.length();
-                header += line;
+                startPos += line.length() + 2;
             }
 
-            String[] items = header.split("(\\s+)|(\\n+)");
+            String firstLine = reader.readLine();
 
-            int width, height, colsPerPixel, basisTerm, basisType, elemSize;
-            try{
-                width = Integer.parseInt(items[1]);
-                height = Integer.parseInt(items[2]);
-                colsPerPixel = Integer.parseInt(items[3]);
-                basisTerm = Integer.parseInt(items[4]);
-                basisType = Integer.parseInt(items[5]);
-                elemSize = Integer.parseInt(items[6]);
-            }catch(NumberFormatException e){
-                throw new RTIFileException("Error parsing header data from file");
-            }
-            return new int[]{width, height, colsPerPixel,  basisTerm, basisType, elemSize, dataStartPos};
+            startPos += firstLine.length() + 2;
+            String[] data = firstLine.split("\\s");
+            int width = Integer.parseInt(data[0]);
+            int height = Integer.parseInt(data[1]);
+            int colourChannels = Integer.parseInt(data[2]);
+
+            String secondLine = reader.readLine();
+
+            startPos += secondLine.length() + 2;
+            data = secondLine.split("\\s");
+            int basisTerms = Integer.parseInt(data[0]);
+            int basisType = Integer.parseInt(data[1]);
+            int elementSize = Integer.parseInt(data[2]);
+
+
+            return new int[]{width, height, colourChannels,  basisTerms, basisType, elementSize, startPos};
+
+
         }
 
         return null;
@@ -455,9 +455,22 @@ public class RTIParser {
 
 
     private static FloatBuffer[] getTexelDataHSH(String fileName, int width, int height, int colsPerPixel,
-                                     int basisTerm, int basisType, int elemSize, int dataStartPos) throws IOException{
-        FloatBuffer scale = BufferUtils.createFloatBuffer(9);
-        FloatBuffer bias = BufferUtils.createFloatBuffer(9);
+                                     int basisTerms, int basisType, int elemSize, int startPos) throws IOException{
+
+
+        LittleEndianDataInputStream leStream = new LittleEndianDataInputStream(new FileInputStream(fileName));
+
+        leStream.skip(startPos);
+        float[] scale = new float[basisTerms];
+        float[] bias = new float[basisTerms];
+
+        for(int i = 0; i < basisTerms; i++){scale[i] = leStream.readFloat();}
+        for(int i = 0; i < basisTerms; i++){bias[i] = leStream.readFloat();}
+
+        leStream.close();
+
+        ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
+        stream.skip(startPos + (2 * 4 * basisTerms));
 
         int capacity = width * height * 3;
 
@@ -465,30 +478,17 @@ public class RTIParser {
         FloatBuffer greenCoeffs1 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer blueCoeffs1 = BufferUtils.createFloatBuffer(capacity);
 
-        if(basisTerm < 4){capacity = 3;}
+        if(basisTerms < 4){capacity = 3;}
 
         FloatBuffer redCoeffs2 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer greenCoeffs2 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer blueCoeffs2 = BufferUtils.createFloatBuffer(capacity);
 
-        if(basisTerm < 7){capacity = 3;}
+        if(basisTerms < 7){capacity = 3;}
 
         FloatBuffer redCoeffs3 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer greenCoeffs3 = BufferUtils.createFloatBuffer(capacity);
         FloatBuffer blueCoeffs3 = BufferUtils.createFloatBuffer(capacity);
-
-        //make a scanner to scan in all the data as characters
-        ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)));
-        stream.skip(dataStartPos + 4);
-
-        for(int i = 0; i < basisTerm; i++){
-            float a = stream.read();
-            scale.put(i, a);
-        }
-        for(int i = 0; i < basisTerm; i++){
-            float a = stream.read();
-            bias.put(i, a);
-        }
 
         int offset;
         float nextCharValue;
@@ -496,37 +496,34 @@ public class RTIParser {
             for(int x = 0; x < width; x++){
                 offset = (y * width + x) * 3;
 
-                for(int k = 0; k < basisTerm; k++){
-                    nextCharValue = (stream.read() / 255.0f) * (scale.get(k) - bias.get(k)) + bias.get(k);
-                    //nextCharValue = (stream.read() / 255.0f) * (scale.get(k)) + (bias.get(k));
+                for(int k = 0; k < basisTerms; k++){
+                    nextCharValue = (stream.read() / 255.0f) * scale[k] + bias[k];
                     if(k < 3){redCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){redCoeffs2.put(offset + k - 3, nextCharValue);}
                     else if(k < 9){redCoeffs3.put(offset + k - 6, nextCharValue);}
                 }
 
-                for(int k = 0; k < basisTerm; k++){
-                    nextCharValue = (stream.read() / 255.0f) * (scale.get(k) - bias.get(k)) + bias.get(k);
-                    //nextCharValue = (stream.read() / 255.0f) * (scale.get(k)) + (bias.get(k));
+                for(int k = 0; k < basisTerms; k++){
+                    nextCharValue = (stream.read() / 255.0f) * scale[k] + bias[k];
                     if(k < 3){greenCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){greenCoeffs2.put(offset + k - 3, nextCharValue);}
                     else if(k < 9){greenCoeffs3.put(offset + k - 6, nextCharValue);}
                 }
 
-                for(int k = 0; k < basisTerm; k++){
-                    nextCharValue = (stream.read() / 255.0f) * (scale.get(k) - bias.get(k)) + bias.get(k);
-                    //nextCharValue = (stream.read() / 255.0f) * (scale.get(k)) + (bias.get(k));
+                for(int k = 0; k < basisTerms; k++){
+                    nextCharValue = (stream.read() / 255.0f) * scale[k] + bias[k];
                     if(k < 3){blueCoeffs1.put(offset + k, nextCharValue);}
                     else if(k < 6){blueCoeffs2.put(offset + k - 3, nextCharValue);}
                     else if(k < 9){blueCoeffs3.put(offset + k - 6, nextCharValue);}
                 }
             }
         }
-        System.out.println(stream.available());
         stream.close();
 
         return new FloatBuffer[]{redCoeffs1,    redCoeffs2,     redCoeffs3,
                                  greenCoeffs1,  greenCoeffs2,   greenCoeffs3,
                                  blueCoeffs1,   blueCoeffs2,    blueCoeffs3};
+
     }
 
 

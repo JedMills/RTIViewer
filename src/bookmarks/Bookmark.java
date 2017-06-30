@@ -166,4 +166,33 @@ public class Bookmark {
         System.out.println("Removing:" + note);
         notes.remove(note);
     }
+
+
+    public void setZoom(double zoom) {
+        this.zoom = zoom;
+    }
+
+    public void setPanX(double panX) {
+        this.panX = panX;
+    }
+
+    public void setPanY(double panY) {
+        this.panY = panY;
+    }
+
+    public void setLightX(double lightX) {
+        this.lightX = lightX;
+    }
+
+    public void setLightY(double lightY) {
+        this.lightY = lightY;
+    }
+
+    public void setRenderingMode(int renderingMode) {
+        this.renderingMode = renderingMode;
+    }
+
+    public void setRenderingParams(HashMap<String, Double> renderingParams) {
+        this.renderingParams = renderingParams;
+    }
 }

@@ -4,6 +4,8 @@ import bookmarks.Bookmark;
 import bookmarks.BookmarkManager;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -37,22 +39,26 @@ public class RTIViewer extends Application {
     public static int height = 700;
 
     public static Utils.Vector2f globalLightPos = new Utils.Vector2f(0, 0);
-    public static double globalDiffGainVal = FilterParamsPane.INITIAL_DIFF_GAIN_VAL;
-    public static double globalDiffColourVal = FilterParamsPane.INITIAL_DIFF_COLOUR_VAL;
-    public static double globalSpecularityVal = FilterParamsPane.INITIAL_SPEC_VAL;
-    public static double globalHighlightSizeVal = FilterParamsPane.INITIAL_HIGHLIGHT_VAL;
-    public static double globalNormUnMaskGain = FilterParamsPane.INITIAL_NORM_UN_MASK_GAIN_VAL;
-    public static double globalNormUnMaskEnv = FilterParamsPane.INITIAL_NORM_UN_MASK_ENV_VAL;
-    public static double globalImgUnMaskGain = FilterParamsPane.INITIAL_IMG_UN_MASK_GAIN_VAL;
-    public static double globalCoeffUnMaskGain = FilterParamsPane.INITIAL_COEFF_UN_MASK_GAIN_VAL;
+    public static SimpleDoubleProperty globalDiffGainVal = new SimpleDoubleProperty(FilterParamsPane.INITIAL_DIFF_GAIN_VAL);
+
+    public static SimpleDoubleProperty globalDiffColourVal = new SimpleDoubleProperty(FilterParamsPane.INITIAL_DIFF_COLOUR_VAL);
+
+    public static SimpleDoubleProperty globalSpecularityVal = new SimpleDoubleProperty(FilterParamsPane.INITIAL_SPEC_VAL);
+
+    public static SimpleDoubleProperty globalHighlightSizeVal = new SimpleDoubleProperty(FilterParamsPane.INITIAL_HIGHLIGHT_VAL);
+
+    public static SimpleDoubleProperty globalNormUnMaskGain = new SimpleDoubleProperty(FilterParamsPane.INITIAL_NORM_UN_MASK_GAIN_VAL);
+
+    public static SimpleDoubleProperty globalNormUnMaskEnv = new SimpleDoubleProperty(FilterParamsPane.INITIAL_NORM_UN_MASK_ENV_VAL);
+
+    public static SimpleDoubleProperty globalImgUnMaskGain = new SimpleDoubleProperty(FilterParamsPane.INITIAL_IMG_UN_MASK_GAIN_VAL);
+
+    public static SimpleDoubleProperty globalCoeffUnMaskGain = new SimpleDoubleProperty(FilterParamsPane.INITIAL_COEFF_UN_MASK_GAIN_VAL);
 
     private static LightControlGroup lightControlGroup;
     private static FilterParamsPane paramsPane;
     private static BottomTabPane bottomTabPane;
     public static FlowPane flowPane;
-
-    public enum GlobalParam{DIFF_GAIN, DIFF_COLOUR, SPECULARITY, HIGHTLIGHT_SIZE, NORM_UN_MASK_GAIN, NORM_UN_MASK_ENV,
-                            IMG_UN_MASK_GAIN, COEFF_UN_MASK_GAIN}
 
 
     public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
@@ -164,17 +170,6 @@ public class RTIViewer extends Application {
     }
 
 
-    public static void setGlobalVal(GlobalParam param, double value){
-        if(param.equals(GlobalParam.DIFF_GAIN)){globalDiffGainVal = value;}
-        else if(param.equals(GlobalParam.DIFF_COLOUR)){globalDiffColourVal = value;}
-        else if(param.equals(GlobalParam.SPECULARITY)){globalSpecularityVal = value;}
-        else if(param.equals(GlobalParam.HIGHTLIGHT_SIZE)){globalHighlightSizeVal = value;}
-        else if(param.equals(GlobalParam.NORM_UN_MASK_GAIN)){globalNormUnMaskGain = value;}
-        else if(param.equals(GlobalParam.NORM_UN_MASK_ENV)){globalNormUnMaskEnv = value;}
-        else if(param.equals(GlobalParam.IMG_UN_MASK_GAIN)){globalImgUnMaskGain = value;}
-        else if(param.equals(GlobalParam.COEFF_UN_MASK_GAIN)){globalCoeffUnMaskGain = value;}
-    }
-
     public static void createNewPTMWindow(RTIObject RTIObject){
         try {
             if(RTIObject instanceof PTMObjectRGB) {
@@ -210,10 +205,14 @@ public class RTIViewer extends Application {
         else if(filterType.equals("Image unsharp masking")){programToSet = ShaderProgram.IMG_UNSHARP_MASK;}
         else if(filterType.equals("Coefficient unsharp masking")){programToSet = ShaderProgram.COEFF_UN_MASK;}
 
-        currentProgram = programToSet;
+        updateWindowFilter(programToSet);
+    }
+
+    public static void updateWindowFilter(ShaderProgram shaderProgram){
+        currentProgram = shaderProgram;
 
         for(RTIWindow RTIWindow : RTIWindows){
-            RTIWindow.setCurrentProgram(programToSet);
+            RTIWindow.setCurrentProgram(shaderProgram);
         }
     }
 
@@ -324,7 +323,7 @@ public class RTIViewer extends Application {
     public static void updateBookmarks(String rtiObjPath, ArrayList<Bookmark> bookmarks){
         bottomTabPane.setBookmarks(bookmarks);
 
-        String fileSuffix = "";
+        String fileSuffix;
         if(rtiObjPath.endsWith(".rti")){
             fileSuffix = "_rti.xmp";
         }else if(rtiObjPath.endsWith(".ptm")){
@@ -359,5 +358,47 @@ public class RTIViewer extends Application {
 
     public static void setSelectedBookmark(String bookmarkName){
         bottomTabPane.setSelectedBookmark(bookmarkName);
+    }
+
+
+    public static void setRenderParamsFromBookmark(Bookmark bookmark){
+        globalLightPos.x = (float) bookmark.getLightX();
+        globalLightPos.y = (float) bookmark.getLightY();
+
+        if(bookmark.getRenderingMode() == 0){
+            updateWindowFilter(ShaderProgram.DEFAULT);
+        }else if(bookmark.getRenderingMode() == 1){
+            updateWindowFilter(ShaderProgram.DIFF_GAIN);
+            globalDiffGainVal.set(bookmark.getRenderingParams().get("gain"));
+
+        }else if(bookmark.getRenderingMode() == 2){
+            updateWindowFilter(ShaderProgram.SPEC_ENHANCE);
+            globalSpecularityVal.set(bookmark.getRenderingParams().get("specularity"));
+            globalDiffColourVal.set(bookmark.getRenderingParams().get("diffuseColor"));
+            globalHighlightSizeVal.set(bookmark.getRenderingParams().get("highlightSize"));
+
+        }else if(bookmark.getRenderingMode() == 4){
+            updateWindowFilter(ShaderProgram.NORM_UNSHARP_MASK);
+            globalImgUnMaskGain.set(bookmark.getRenderingParams().get("gain"));
+        }else if(bookmark.getRenderingMode() == 9){
+            updateWindowFilter(ShaderProgram.NORMALS);
+        }
+
+
+        if(selectedWindow != null){
+            selectedWindow.setImageScale((float) bookmark.getZoom());
+            selectedWindow.setViewportX((float) bookmark.getPanX());
+            selectedWindow.setViewportY((float) bookmark.getPanY());
+
+        }
+
+        updateViewerControls();
+    }
+
+
+
+    private static void updateViewerControls(){
+        lightControlGroup.updateLightControls(LightControlGroup.LightEditor.RESIZE);
+        paramsPane.updateFromBookmark();
     }
 }

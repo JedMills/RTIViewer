@@ -1,5 +1,6 @@
 package toolWindow;
 
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -20,10 +21,6 @@ import javafx.scene.layout.*;
 public class FilterParamsPane extends Pane {
 
     private RTIViewer toolWindow;
-    private ComboBox<String> filterChoiceBox;
-    private Scene parent;
-    private int width;
-    private int height;
     private GridPane gridPane;
 
     public static final double INITIAL_DIFF_GAIN_VAL = 0.0;
@@ -34,6 +31,8 @@ public class FilterParamsPane extends Pane {
     public static final double INITIAL_NORM_UN_MASK_ENV_VAL = 0.0;
     public static final double INITIAL_IMG_UN_MASK_GAIN_VAL = 0.0;
     public static final double INITIAL_COEFF_UN_MASK_GAIN_VAL = 0.0;
+
+    private ComboBox<String> filterChoice;
 
     private Label gainLabel;
     private Slider gainSlider;
@@ -71,7 +70,6 @@ public class FilterParamsPane extends Pane {
 
     public FilterParamsPane(RTIViewer toolWindow, Scene parent) {
         super();
-        this.parent = parent;
         this.toolWindow = toolWindow;
 
         setWidth(parent.getWidth());
@@ -125,20 +123,20 @@ public class FilterParamsPane extends Pane {
                 "Image unsharp masking",
                 "Coefficient unsharp masking"
         );
-        ComboBox<String> comboBox = new ComboBox<>(options);
-        comboBox.getSelectionModel().select(0);
+        filterChoice = new ComboBox<>(options);
+        filterChoice.getSelectionModel().select(0);
 
-        comboBox.setOnAction(new EventHandler<ActionEvent>() {
+        filterChoice.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                setCurrentFilter(comboBox.getSelectionModel().getSelectedItem());
-                RTIViewer.updateWindowFilter(comboBox.getSelectionModel().getSelectedItem());
+                setCurrentFilter(filterChoice.getSelectionModel().getSelectedItem());
+                RTIViewer.updateWindowFilter(filterChoice.getSelectionModel().getSelectedItem());
             }
         });
 
 
-        vBox.setMargin(comboBox, new Insets(5, 0 , 5, 0));
-        vBox.getChildren().add(comboBox);
+        vBox.setMargin(filterChoice, new Insets(5, 0 , 5, 0));
+        vBox.getChildren().add(filterChoice);
     }
 
 
@@ -148,7 +146,7 @@ public class FilterParamsPane extends Pane {
         gainSlider = new Slider(0.0, 100.0, INITIAL_DIFF_GAIN_VAL);
         gainSpinner = new Spinner<>(0.0, 100.0, INITIAL_DIFF_GAIN_VAL, 1.0);
         setupSliderSpinnerPair(gainSlider, gainSpinner, "Invalid entry for diffuse gain spinner.",
-                RTIViewer.GlobalParam.DIFF_GAIN);
+                RTIViewer.globalDiffGainVal);
 
         GridPane.setConstraints(gainLabel, 0, 1);
         GridPane.setConstraints(gainSlider, 1, 1);
@@ -163,19 +161,19 @@ public class FilterParamsPane extends Pane {
         seColourSlider = new Slider(0.0, 100.0, INITIAL_DIFF_COLOUR_VAL);
         seColourSpinner = new Spinner<>(0.0, 100.0, INITIAL_DIFF_COLOUR_VAL, 1.0);
         setupSliderSpinnerPair(seColourSlider, seColourSpinner, "Invalid entry for diffuse colour spinner.",
-                RTIViewer.GlobalParam.DIFF_COLOUR);
+                RTIViewer.globalDiffColourVal);
 
         seSpecLabel = new Label("Specularity");
         seSpecSlider = new Slider(0.0, 100.0, INITIAL_SPEC_VAL);
         seSpecSpinner = new Spinner<>(0.0, 100.0, INITIAL_SPEC_VAL, 1.0);
         setupSliderSpinnerPair(seSpecSlider, seSpecSpinner, "Invalid entry for specularity spinner.",
-                RTIViewer.GlobalParam.SPECULARITY);
+                RTIViewer.globalSpecularityVal);
 
         seHighlightLabel = new Label("Highlight size");
         seHighlightSlider = new Slider(0.0, 100.0, INITIAL_HIGHLIGHT_VAL);
         seHighlightSpinner = new Spinner<>(0.0, 100.0, INITIAL_HIGHLIGHT_VAL, 1.0);
         setupSliderSpinnerPair(seHighlightSlider, seHighlightSpinner, "Invalid entry for highlight size spinner.",
-                RTIViewer.GlobalParam.HIGHTLIGHT_SIZE);
+                RTIViewer.globalHighlightSizeVal);
 
         GridPane.setConstraints(seColourLabel, 0, 1);
         GridPane.setConstraints(seColourSlider, 1, 1);
@@ -200,13 +198,13 @@ public class FilterParamsPane extends Pane {
         normUnMaskGainSlider = new Slider(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL);
         normUnMaskGainSpinner = new Spinner<>(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL, 1.0);
         setupSliderSpinnerPair(normUnMaskGainSlider, normUnMaskGainSpinner, "Invalid entry for normals unsharp masking gain slider",
-                RTIViewer.GlobalParam.NORM_UN_MASK_GAIN);
+                RTIViewer.globalNormUnMaskGain);
 
         normUnMaskEnvLabel = new Label("Environment");
         normUnMaskEnvSlider = new Slider(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL);
         normUnMaskEnvSpinner = new Spinner<>(0.0, 100.0, INITIAL_NORM_UN_MASK_GAIN_VAL, 1.0);
         setupSliderSpinnerPair(normUnMaskEnvSlider, normUnMaskEnvSpinner, "Invalid entry for normals unsharp masking environment slider",
-                RTIViewer.GlobalParam.NORM_UN_MASK_ENV);
+                RTIViewer.globalNormUnMaskEnv);
 
         GridPane.setConstraints(normUnMaskGainLabel, 0, 1);
         GridPane.setConstraints(normUnMaskGainSlider, 1, 1);
@@ -225,7 +223,7 @@ public class FilterParamsPane extends Pane {
         imgUnMaskGainSlider = new Slider(0.0, 100.0, INITIAL_IMG_UN_MASK_GAIN_VAL);
         imgUnMaskGainSpinner = new Spinner<>(0.0, 100.0, INITIAL_IMG_UN_MASK_GAIN_VAL, 1.0);
         setupSliderSpinnerPair(imgUnMaskGainSlider, imgUnMaskGainSpinner, "Invalid entry for image unsharp masking gain slider",
-                RTIViewer.GlobalParam.IMG_UN_MASK_GAIN);
+                RTIViewer.globalImgUnMaskGain);
 
         GridPane.setConstraints(imgUnMaskGainLabel, 0, 1);
         GridPane.setConstraints(imgUnMaskGainSlider, 1, 1);
@@ -239,7 +237,7 @@ public class FilterParamsPane extends Pane {
         coeffUnMaskGainSlider = new Slider(0.0, 100.0, INITIAL_COEFF_UN_MASK_GAIN_VAL);
         coeffUnMaskGainSpinner = new Spinner<>(0.0, 100.0, INITIAL_COEFF_UN_MASK_GAIN_VAL, 1.0);
         setupSliderSpinnerPair(coeffUnMaskGainSlider, coeffUnMaskGainSpinner, "Invalid entry for coefficient unsharp masking gain slider",
-                RTIViewer.GlobalParam.COEFF_UN_MASK_GAIN);
+                RTIViewer.globalCoeffUnMaskGain);
 
         GridPane.setConstraints(coeffUnMaskGainLabel, 0, 1);
         GridPane.setConstraints(coeffUnMaskGainSlider, 1, 1);
@@ -249,13 +247,13 @@ public class FilterParamsPane extends Pane {
     }
 
     private void setupSliderSpinnerPair(Slider slider, Spinner spinner, String warningText,
-                                        RTIViewer.GlobalParam globalParam){
+                                        SimpleDoubleProperty globalParam){
 
         EventHandler<MouseEvent> sliderEdited = new EventHandler<MouseEvent>(){
             @Override
             public void handle(MouseEvent event) {
                 spinner.getEditor().setText(String.valueOf(slider.getValue()));
-                toolWindow.setGlobalVal(globalParam, slider.getValue());
+                globalParam.set(slider.getValue());
             }
         };
 
@@ -264,13 +262,21 @@ public class FilterParamsPane extends Pane {
         spinner.setEditable(true);
         spinner.setPrefWidth(75);
 
+        globalParam.addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                slider.setValue(globalParam.get());
+                spinner.getEditor().setText(String.valueOf(globalParam.get()));
+            }
+        });
+
         spinner.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 try{
                     Double value = Double.parseDouble(spinner.getEditor().getText());
                     slider.setValue(value);
-                    toolWindow.setGlobalVal(globalParam, value);
+                    globalParam.set(slider.getValue());
                 }catch(NumberFormatException e){
                     toolWindow.entryAlert.setContentText(warningText);
                     toolWindow.entryAlert.showAndWait();
@@ -282,7 +288,7 @@ public class FilterParamsPane extends Pane {
             public void changed(ObservableValue observable, Object oldValue, Object newValue) {
                 Double value = Double.parseDouble(spinner.getEditor().getText());
                 slider.setValue(value);
-                toolWindow.setGlobalVal(globalParam, value);
+                globalParam.set(slider.getValue());
             }
         });
     }
@@ -325,5 +331,36 @@ public class FilterParamsPane extends Pane {
     public void updateSize(double width, double height){
         gridPane.setPrefWidth(width - 20);
         gridPane.setVgap(height / 40);
+    }
+
+
+    public void updateFromBookmark(){
+        String filterToSet = "";
+        int index = 0;
+        if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.DEFAULT)){
+            filterToSet = "Default view";
+            index = 0;
+        }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.NORMALS)){
+            filterToSet = "Normals visualisation";
+            index = 1;
+        }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
+            filterToSet = "Diffuse gain";
+            index = 2;
+        }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
+            filterToSet = "Specular enhancement";
+            index = 3;
+        }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK)){
+            filterToSet = "Normal unsharp masking";
+            index = 4;
+        }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
+            filterToSet = "Image unsharp masking";
+            index = 5;
+        }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.COEFF_UN_MASK)){
+            filterToSet = "Coefficient unsharp masking";
+            index = 6;
+        }
+
+        filterChoice.getSelectionModel().select(index);
+        setCurrentFilter(filterToSet);
     }
 }

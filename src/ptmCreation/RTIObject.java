@@ -177,4 +177,14 @@ public abstract class RTIObject {
             }
         }
     }
+
+
+    public Bookmark getBookmarkByName(String name){
+        for(Bookmark bookmark : bookmarks){
+            if (bookmark.getName().equals(name)){
+                return bookmark;
+            }
+        }
+        return null;
+    }
 }

@@ -581,18 +581,18 @@ public abstract class RTIWindow implements Runnable{
         glUniform1f(shaderViewportX, viewportX);
         glUniform1f(shaderViewportY, viewportY);
 
-        glUniform1f(diffGainRef, normaliseShaderParam(RTIViewer.globalDiffGainVal, 1.0f, 10.0f));
+        glUniform1f(diffGainRef, normaliseShaderParam(RTIViewer.globalDiffGainVal.get(), 1.0f, 10.0f));
 
-        glUniform1f(diffConstRef, normaliseShaderParam(RTIViewer.globalDiffColourVal, 0.0f, 1.0f));
-        glUniform1f(specConstRef, normaliseShaderParam(RTIViewer.globalSpecularityVal, 0.0f, 1.0f));
-        glUniform1f(specExConstRef, normaliseShaderParam(RTIViewer.globalHighlightSizeVal, 1.0f, 150.0f));
+        glUniform1f(diffConstRef, normaliseShaderParam(RTIViewer.globalDiffColourVal.get(), 0.0f, 1.0f));
+        glUniform1f(specConstRef, normaliseShaderParam(RTIViewer.globalSpecularityVal.get(), 0.0f, 1.0f));
+        glUniform1f(specExConstRef, normaliseShaderParam(RTIViewer.globalHighlightSizeVal.get(), 1.0f, 150.0f));
 
-        glUniform1f(normUnMaskGainRef, normaliseShaderParam(RTIViewer.globalNormUnMaskGain, 0.0f, 40.0f));
-        glUniform1f(normUnMaskEnvRef, normaliseShaderParam(RTIViewer.globalNormUnMaskEnv, 0.0f, 0.4f));
+        glUniform1f(normUnMaskGainRef, normaliseShaderParam(RTIViewer.globalNormUnMaskGain.get(), 0.0f, 40.0f));
+        glUniform1f(normUnMaskEnvRef, normaliseShaderParam(RTIViewer.globalNormUnMaskEnv.get(), 0.0f, 0.4f));
 
-        glUniform1f(imgUnMaskGainRef, normaliseShaderParam(RTIViewer.globalImgUnMaskGain, 0.01f, 4.0f));
+        glUniform1f(imgUnMaskGainRef, normaliseShaderParam(RTIViewer.globalImgUnMaskGain.get(), 0.01f, 4.0f));
 
-        glUniform1f(coeffUnMaskGainRef, normaliseShaderParam(RTIViewer.globalCoeffUnMaskGain, 0.01f, 6.0f));
+        glUniform1f(coeffUnMaskGainRef, normaliseShaderParam(RTIViewer.globalCoeffUnMaskGain.get(), 0.01f, 6.0f));
     }
 
 
@@ -687,6 +687,7 @@ public abstract class RTIWindow implements Runnable{
             if(Math.abs(deltaX) > 0.01 && Math.abs(deltaY) > 0.01) {
                 viewportX += 2 * deltaX / ((Math.pow(imageScale, 0.2)) * windowWidth[0]);
                 viewportY -= 2 * deltaY / ((Math.pow(imageScale, 0.2)) * windowHeight[0]);
+
             }
             //make sure the user does't pan outside the image
             checkViewport();
@@ -760,7 +761,7 @@ public abstract class RTIWindow implements Runnable{
         ArrayList<Bookmark.Note> notes = new ArrayList<Bookmark.Note>();
 
         Bookmark bookmark = new Bookmark(   rtiObject.getBookmarks().size(), name, "Exeter RTI Viewer",
-                                            imageScale * 100, viewportX, viewportY, RTIViewer.globalLightPos.x,
+                                            imageScale, viewportX, viewportY, RTIViewer.globalLightPos.x,
                                             RTIViewer.globalLightPos.y, id, renderingParams, notes);
 
         rtiObject.addBookmark(bookmark);
@@ -776,19 +777,19 @@ public abstract class RTIWindow implements Runnable{
             params.put("id", 0.0);
         }else if(prog.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
             params.put("id", 1.0);
-            params.put("gain", RTIViewer.globalDiffGainVal);
+            params.put("gain", RTIViewer.globalDiffGainVal.get());
         }else if(prog.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             params.put("id", 2.0);
-            params.put("diffuseColor", RTIViewer.globalDiffColourVal);
-            params.put("specularity", RTIViewer.globalSpecularityVal);
-            params.put("highlightSize", RTIViewer.globalHighlightSizeVal);
+            params.put("diffuseColor", RTIViewer.globalDiffColourVal.get());
+            params.put("specularity", RTIViewer.globalSpecularityVal.get());
+            params.put("highlightSize", RTIViewer.globalHighlightSizeVal.get());
         }else if(prog.equals(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK)){
             params.put("id", 3.0);
-            params.put("gain", RTIViewer.globalNormUnMaskGain);
-            params.put("environment", RTIViewer.globalNormUnMaskEnv);
+            params.put("gain", RTIViewer.globalNormUnMaskGain.get());
+            params.put("environment", RTIViewer.globalNormUnMaskEnv.get());
         }else if(prog.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
             params.put("id", 4.0);
-            params.put("gain", RTIViewer.globalImgUnMaskGain);
+            params.put("gain", RTIViewer.globalImgUnMaskGain.get());
         }else if(prog.equals(RTIViewer.ShaderProgram.NORMALS)){
             params.put("id", 9.0);
         }
@@ -797,9 +798,34 @@ public abstract class RTIWindow implements Runnable{
     }
 
 
-
-
     public void deleteBookmark(String bookmarkName){
         rtiObject.removeBookmark(bookmarkName);
+    }
+
+
+
+    public void updateBookmark(Bookmark bookmark){
+        HashMap<String, Double> renderingParams = getRenderingParams();
+        Integer id = renderingParams.get("id").intValue();
+        renderingParams.remove("id");
+
+        bookmark.setLightX(RTIViewer.globalLightPos.x);
+        bookmark.setLightY(RTIViewer.globalLightPos.y);
+        bookmark.setZoom(imageScale);
+        bookmark.setPanX(viewportX);
+        bookmark.setPanY(viewportY);
+        bookmark.setRenderingParams(renderingParams);
+    }
+
+    public void setViewportX(float viewportX) {
+        this.viewportX = viewportX;
+    }
+
+    public void setViewportY(float viewportY) {
+        this.viewportY = viewportY;
+    }
+
+    public void setImageScale(float imageScale) {
+        this.imageScale = imageScale;
     }
 }

@@ -61,6 +61,7 @@ public class BookmarkManager {
     public static void showEditNoteDialog(Bookmark.Note note, String selectedBookmarkName){
         editNoteDialog.setTargetNote(note);
         editNoteDialog.setTargetBookmark(selectedBookmarkName);
+        editNoteDialog.setTitle("Edit note");
 
         Platform.runLater(new Runnable() {
             @Override
@@ -74,7 +75,8 @@ public class BookmarkManager {
     public static void showAddNoteDialog(String selectedBookmarkName){
         editNoteDialog.setTitle("New note");
         Bookmark.Note note = new Bookmark.Note(0, "", "",
-                                            LocalDateTime.now().toString(), "");
+                                                LocalDateTime.now().toString().replaceAll("T", " "),
+                                                "");
 
         for(Bookmark bookmark : RTIViewer.selectedWindow.rtiObject.getBookmarks()){
             if(bookmark.getName().equals(selectedBookmarkName)){
@@ -110,6 +112,7 @@ public class BookmarkManager {
             HashMap<String, String> renderingInfo = getRenderingInfo(xmlBookmark);
             HashMap<String, Double> renderingParams = getRenderingParams(xmlBookmark);
             ArrayList<Bookmark.Note> notes = getBookmarkNotes(xmlBookmark);
+
 
             Bookmark bookmark = new Bookmark(   Integer.parseInt(renderingInfo.get("id")),
                                                 renderingInfo.get("name"),
@@ -287,6 +290,8 @@ public class BookmarkManager {
             createSingleAttrNode(doc, renderInfo, "rti:Zoom", bookmark.getZoom());
 
             Element pan = createNode(doc, renderInfo, "rti:Pan", true);
+
+
             createSingleAttrNode(doc, pan, "rti:x", bookmark.getPanX());
             createSingleAttrNode(doc, pan, "rti:y", bookmark.getPanY());
 
@@ -367,15 +372,34 @@ public class BookmarkManager {
     }
 
 
-    public static void deleteNote(String bookmarkName, Bookmark.Note note){
+    public static void deleteNote(Bookmark.Note note){
         RTIObject rtiObject = RTIViewer.selectedWindow.rtiObject;
-        for(Bookmark bookmark : rtiObject.getBookmarks()){
-            if(bookmark.getName().equals(bookmarkName)){
-                bookmark.removeNote(note);
-                break;
+
+        search:{
+            for (Bookmark bookmark : rtiObject.getBookmarks()) {
+                for (Bookmark.Note note1 : bookmark.getNotes()) {
+                    if (note1 == note) {
+                        bookmark.removeNote(note);
+                        break search;
+                    }
+                }
             }
         }
         RTIViewer.updateBookmarks(rtiObject.getFilePath(), rtiObject.getBookmarks());
+
     }
 
+
+    public static void updateBookmark(String bookmarkName){
+        RTIObject rtiObject = RTIViewer.selectedWindow.rtiObject;
+
+        for(Bookmark bookmark : rtiObject.getBookmarks()){
+            if(bookmark.getName().equals(bookmarkName)){
+                RTIViewer.selectedWindow.updateBookmark(bookmark);
+                RTIViewer.updateBookmarks(rtiObject.getFilePath(), rtiObject.getBookmarks());
+                RTIViewer.setSelectedBookmark(bookmarkName);
+                break;
+            }
+        }
+    }
 }

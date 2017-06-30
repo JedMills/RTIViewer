@@ -25,6 +25,7 @@ import openGLWindow.RTIWindowHSH;
 import openGLWindow.RTIWindowLRGB;
 import openGLWindow.RTIWindowRGB;
 
+import java.awt.print.Book;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -195,7 +196,9 @@ public class BottomTabPane extends TabPane {
                 if(previewRectScale > 10){previewRectScale = 10f;}
                 else if(previewRectScale < 1){previewRectScale = 1;}
 
-                RTIViewer.selectedWindow.updateViewportFromPreview(previewRectScale);
+                if(RTIViewer.selectedWindow != null) {
+                    RTIViewer.selectedWindow.updateViewportFromPreview(previewRectScale);
+                }
             }
         });
     }
@@ -223,7 +226,9 @@ public class BottomTabPane extends TabPane {
         previewWindowRect.setTranslateX((x) * imagePreview.getBoundsInParent().getWidth());
         previewWindowRect.setTranslateY((-y) * imagePreview.getBoundsInParent().getHeight());
 
-        RTIViewer.selectedWindow.updateViewportFromPreview((float)x, (float)y, previewRectScale);
+        if(RTIViewer.selectedWindow != null) {
+            RTIViewer.selectedWindow.updateViewportFromPreview((float) x, (float) y, previewRectScale);
+        }
     }
 
 
@@ -412,6 +417,8 @@ public class BottomTabPane extends TabPane {
                             tooltip.setTextAlignment(TextAlignment.JUSTIFY);
 
                             setTooltip(tooltip);
+                        }else{
+                            setText(null);
                         }
                     }
                 };
@@ -440,6 +447,8 @@ public class BottomTabPane extends TabPane {
         Label updateBookmarkLabel = new Label("Light, Zoom, Pan & Rendering:");
         GridPane.setConstraints(updateBookmarkLabel, 0, 4, 2, 1);
         updateBookmark = new Button("Update");
+        updateBookmark.setId("updateBookmark");
+        updateBookmark.setOnAction(BookmarkPaneListener.getInstance());
         GridPane.setConstraints(updateBookmark, 2, 4, 1, 1);
 
         bookmarkListPane.getChildren().addAll(  notesLabel, notesList,
@@ -535,8 +544,8 @@ public class BottomTabPane extends TabPane {
 
     public void showNotes(String bookmarkName){
         notesList.getItems().clear();
+
         ArrayList<Bookmark> bookmarks = currentRTIWindow.rtiObject.getBookmarks();
-        System.out.println(bookmarks.size());
 
         for(Bookmark bookmark : bookmarks){
             if(bookmark.getName().equals(bookmarkName)){

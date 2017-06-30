@@ -46,6 +46,12 @@ public class RTIWindowHSH extends RTIWindow {
         createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
                 "src/shaders/hshShaders/defaultFragmentShaderHSH.glsl");
 
+        createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/hshShaders/normalsFragmentShaderHSH.glsl");
+
+        createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/hshShaders/specEnhanceFragmentShaderHSH.glsl");
+
     }
 
     @Override

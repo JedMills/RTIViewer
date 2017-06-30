@@ -50,13 +50,6 @@ public class RTIObjectHSH extends RTIObject {
         blueVals2 = texelData[7];
         blueVals3 = texelData[8];
 
-        for(int i = 0; i < 10; i ++){
-            System.out.println(redVals1.get(i));
-        }
-        for(int i = 0; i < 10; i ++){
-            System.out.println(redVals2.get(i));
-        }
-
         calculateNormals();
         createPreviewImage();
     }
@@ -87,49 +80,49 @@ public class RTIObjectHSH extends RTIObject {
         Utils.Vector3f normal;
         for(int y = 0; y < height; y++){
             for(int x = 0; x < width; x++){
-                offset = y * width + x;
+                offset = (y * width + x) * 3;
                 temp.setX(0.0f);
                 temp.setY(0.0f);
                 temp.setZ(0.0f);
 
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){temp.x += redVals1.get(offset * 3 + k) * hWeights1[k];}
-                    else if(k < 6){temp.x += redVals2.get(offset * 3 + k - 3) * hWeights1[k];}
-                    else if(k < 9){temp.x += redVals3.get(offset * 3 + k - 6) * hWeights1[k];}
+                    if(k < 3){temp.x += redVals1.get(offset + k) * hWeights1[k];}
+                    else if(k < 6){temp.x += redVals2.get(offset + k - 3) * hWeights1[k];}
+                    else if(k < 9){temp.x += redVals3.get(offset + k - 6) * hWeights1[k];}
 
-                    if(k < 3){temp.y += redVals1.get(offset * 3 + k) * hWeights2[k];}
-                    else if(k < 6){temp.y += redVals2.get(offset * 3 + k - 3) * hWeights2[k];}
-                    else if(k < 9){temp.y += redVals3.get(offset * 3 + k - 6) * hWeights2[k];}
+                    if(k < 3){temp.y += redVals1.get(offset + k) * hWeights2[k];}
+                    else if(k < 6){temp.y += redVals2.get(offset + k - 3) * hWeights2[k];}
+                    else if(k < 9){temp.y += redVals3.get(offset + k - 6) * hWeights2[k];}
 
-                    if(k < 3){temp.z += redVals1.get(offset * 3 + k) * hWeights3[k];}
-                    else if(k < 6){temp.z += redVals2.get(offset * 3 + k - 3) * hWeights3[k];}
-                    else if(k < 9){temp.z += redVals3.get(offset * 3 + k - 6) * hWeights3[k];}
+                    if(k < 3){temp.z += redVals1.get(offset + k) * hWeights3[k];}
+                    else if(k < 6){temp.z += redVals2.get(offset + k - 3) * hWeights3[k];}
+                    else if(k < 9){temp.z += redVals3.get(offset + k - 6) * hWeights3[k];}
                 }
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){temp.x += greenVals1.get(offset * 3 + k) * hWeights1[k];}
-                    else if(k < 6){temp.x += greenVals2.get(offset * 3 + k - 3) * hWeights1[k];}
-                    else if(k < 9){temp.x += greenVals3.get(offset * 3 + k - 6) * hWeights1[k];}
+                    if(k < 3){temp.x += greenVals1.get(offset + k) * hWeights1[k];}
+                    else if(k < 6){temp.x += greenVals2.get(offset + k - 3) * hWeights1[k];}
+                    else if(k < 9){temp.x += greenVals3.get(offset + k - 6) * hWeights1[k];}
 
-                    if(k < 3){temp.y += greenVals1.get(offset * 3 + k) * hWeights2[k];}
-                    else if(k < 6){temp.y += greenVals2.get(offset * 3 + k - 3) * hWeights2[k];}
-                    else if(k < 9){temp.y += greenVals3.get(offset * 3 + k - 6) * hWeights2[k];}
+                    if(k < 3){temp.y += greenVals1.get(offset + k) * hWeights2[k];}
+                    else if(k < 6){temp.y += greenVals2.get(offset + k - 3) * hWeights2[k];}
+                    else if(k < 9){temp.y += greenVals3.get(offset + k - 6) * hWeights2[k];}
 
-                    if(k < 3){temp.z += greenVals1.get(offset * 3 + k) * hWeights3[k];}
-                    else if(k < 6){temp.z += greenVals2.get(offset * 3 + k - 3) * hWeights3[k];}
-                    else if(k < 9){temp.z += greenVals3.get(offset * 3 + k - 6) * hWeights3[k];}
+                    if(k < 3){temp.z += greenVals1.get(offset + k) * hWeights3[k];}
+                    else if(k < 6){temp.z += greenVals2.get(offset + k - 3) * hWeights3[k];}
+                    else if(k < 9){temp.z += greenVals3.get(offset + k - 6) * hWeights3[k];}
                 }
                 for(int k = 0; k < basisTerms; k++){
-                    if(k < 3){temp.x += blueVals1.get(offset * 3 + k) * hWeights1[k];}
-                    else if(k < 6){temp.x += blueVals2.get(offset * 3 + k - 3) * hWeights1[k];}
-                    else if(k < 9){temp.x += blueVals3.get(offset * 3 + k - 6) * hWeights1[k];}
+                    if(k < 3){temp.x += blueVals1.get(offset + k) * hWeights1[k];}
+                    else if(k < 6){temp.x += blueVals2.get(offset + k - 3) * hWeights1[k];}
+                    else if(k < 9){temp.x += blueVals3.get(offset + k - 6) * hWeights1[k];}
 
-                    if(k < 3){temp.y += blueVals1.get(offset * 3 + k) * hWeights2[k];}
-                    else if(k < 6){temp.y += blueVals2.get(offset * 3 + k - 3) * hWeights2[k];}
-                    else if(k < 9){temp.y += blueVals3.get(offset * 3 + k - 6) * hWeights2[k];}
+                    if(k < 3){temp.y += blueVals1.get(offset + k) * hWeights2[k];}
+                    else if(k < 6){temp.y += blueVals2.get(offset + k - 3) * hWeights2[k];}
+                    else if(k < 9){temp.y += blueVals3.get(offset + k - 6) * hWeights2[k];}
 
-                    if(k < 3){temp.z += blueVals1.get(offset * 3 + k) * hWeights3[k];}
-                    else if(k < 6){temp.z += blueVals2.get(offset * 3 + k - 3) * hWeights3[k];}
-                    else if(k < 9){temp.z += blueVals3.get(offset * 3 + k - 6) * hWeights3[k];}
+                    if(k < 3){temp.z += blueVals1.get(offset + k) * hWeights3[k];}
+                    else if(k < 6){temp.z += blueVals2.get(offset + k - 3) * hWeights3[k];}
+                    else if(k < 9){temp.z += blueVals3.get(offset + k - 6) * hWeights3[k];}
                 }
 
                 temp.multiply(0.33333333f);
@@ -147,8 +140,12 @@ public class RTIObjectHSH extends RTIObject {
     protected void createPreviewImage() {
         previewImage = new WritableImage(width, height);
 
-        float phi = 0.0f;
-        float theta = (float) acos(1.0);
+        float lightX = 0.0f;
+        float lightY = 0.0f;
+        float lightZ = (float) sqrt(1 - (lightX * lightX + lightY * lightY));
+
+        float phi = (float)Math.atan2(lightY, lightX);
+        float theta = (float) min(acos(lightZ), PI / 2 - 0.04);
 
         double[] hWeights = getHSH(theta, phi, basisTerms);
 
@@ -176,10 +173,6 @@ public class RTIObjectHSH extends RTIObject {
                     else if(k < 9){b += blueVals3.get(offset + k - 6) * hWeights[k];}
                 }
 
-                r /= 255.0f;
-                g /= 255.0f;
-                b /= 255.0f;
-
                 if(r > 1.0){r = 1.0f;}
                 else if(r < 0){r = 0;}
 
@@ -188,6 +181,7 @@ public class RTIObjectHSH extends RTIObject {
 
                 if(b > 1.0){b = 1.0f;}
                 else if(b < 0){b = 0;}
+
 
                 previewImage.getPixelWriter().setColor(x, y, Color.color(r, g, b) );
             }

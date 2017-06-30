@@ -189,7 +189,7 @@ public class LightControlGroup extends StackPane {
     }
 
 
-    private void updateLightControls(LightEditor source){
+    public void updateLightControls(LightEditor source){
         if(!source.equals(LightEditor.CIRCLE)){
             light.setX(circle.getRadius() + (circle.getRadius() * RTIViewer.globalLightPos.x));
             light.setY(circle.getRadius() -(circle.getRadius() * RTIViewer.globalLightPos.y));
