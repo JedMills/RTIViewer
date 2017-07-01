@@ -45,7 +45,7 @@ float applyPTM(float a0, float a1, float a2, float a3, float a4, float a5){
 }
 
 
-float applyDiffuseGain(ivec4 coeffs1, ivec4 coeffs2, vec4 normal, float modGain){
+float applyDiffuseGain(ivec3 coeffs1, ivec3 coeffs2, vec3 normal, float modGain){
     float a0 = modGain * coeffs1.x;
     float a1 = modGain * coeffs1.y;
     float a2 = modGain * coeffs1.z;
@@ -69,13 +69,13 @@ void main() {
 
     vec2 ptmCoords = convertToPTMCoords(coords);
 
-    ivec4 redCoeffs1 = texelFetch(rVals1, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 redCoeffs2 = texelFetch(rVals2, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 greenCoeffs1 = texelFetch(gVals1, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 greenCoeffs2 = texelFetch(gVals2, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 blueCoeffs1 = texelFetch(bVals1, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    ivec4 blueCoeffs2 = texelFetch(bVals2, ivec2(ptmCoords.x, ptmCoords.y), 0);
-    vec4 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0);
+    ivec3 redCoeffs1 = texelFetch(rVals1, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
+    ivec3 redCoeffs2 = texelFetch(rVals2, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
+    ivec3 greenCoeffs1 = texelFetch(gVals1, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
+    ivec3 greenCoeffs2 = texelFetch(gVals2, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
+    ivec3 blueCoeffs1 = texelFetch(bVals1, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
+    ivec3 blueCoeffs2 = texelFetch(bVals2, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
+    vec3 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0).xyz;
 
     float red = applyDiffuseGain(redCoeffs1, redCoeffs2, normal, diffGain);
     float green = applyDiffuseGain(greenCoeffs1, greenCoeffs2, normal, diffGain);

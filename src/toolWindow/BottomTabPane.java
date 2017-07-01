@@ -256,7 +256,8 @@ public class BottomTabPane extends TabPane {
     }
 
     public void setDefaultImage(){
-        imagePreview.setImage(defaultImage);
+        //imagePreview.setImage(defaultImage);
+        imagePreview.setImage(null);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
         imageBorderPane.setStyle("-fx-background-color: #ffffff;");
         previewWindowRect.setStroke(Color.TRANSPARENT);

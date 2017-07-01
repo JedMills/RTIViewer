@@ -62,14 +62,10 @@ public class RTIWindowRGB extends RTIWindow {
         createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
                 "src/shaders/rgbShaders/specEnhanceFragmentShader.glsl");
 
-        createShader(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/rgbShaders/normUnhsharpMaskFragmentShader.glsl");
 
         createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
                 "src/shaders/rgbShaders/imgUnhsharpMaskFragmentShader.glsl");
 
-        createShader(RTIViewer.ShaderProgram.COEFF_UN_MASK,"src/shaders/defaultVertexShader.glsl",
-                "src/shaders/rgbShaders/coeffUnhsharpMaskFragmentShader.glsl");
     }
 
 

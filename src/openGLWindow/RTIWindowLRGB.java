@@ -72,11 +72,6 @@ public class RTIWindowLRGB extends RTIWindow {
                 "src/shaders/lrgbShaders/specEnhanceFragmentShaderLRGB.glsl");
 
 
-        /*
-        createShader(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/rgbShaders/normUnsharpMaskFragmentShaderLRGB.glsl");
-        */
-
         createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
                 "src/shaders/lrgbShaders/imgUnsharpMaskFragmentShaderLRGB.glsl");
 

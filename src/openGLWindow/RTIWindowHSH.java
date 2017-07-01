@@ -52,6 +52,13 @@ public class RTIWindowHSH extends RTIWindow {
         createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
                 "src/shaders/hshShaders/specEnhanceFragmentShaderHSH.glsl");
 
+        createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/hshShaders/imgUnsharpMaskFragmentShaderHSH.glsl");
+
+        createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl",
+                "src/shaders/hshShaders/diffuseGainFragmentShaderHSH.glsl");
+
+
     }
 
     @Override
@@ -67,7 +74,7 @@ public class RTIWindowHSH extends RTIWindow {
         greenCoeffs2Ref = glGetUniformLocation(programID, "greenCoeffs2");
         blueCoeffs2Ref = glGetUniformLocation(programID, "blueCoeffs2");
 
-         redCoeffs3Ref = glGetUniformLocation(programID, "redCoeffs3");
+        redCoeffs3Ref = glGetUniformLocation(programID, "redCoeffs3");
         greenCoeffs3Ref = glGetUniformLocation(programID, "greenCoeffs3");
         blueCoeffs3Ref = glGetUniformLocation(programID, "blueCoeffs3");
     }

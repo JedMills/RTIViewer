@@ -13,8 +13,11 @@ import javafx.scene.effect.Lighting;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Material;
 import javafx.scene.paint.Paint;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import openGLWindow.RTIWindow;
@@ -63,6 +66,7 @@ public class LightControlGroup extends StackPane {
     private Circle createSpecularBall(){
         circle = new Circle();
         circle.setFill(Paint.valueOf("#d3d3d3"));
+
         light = new Light.Point();
         light.setColor(Color.WHITE);
         circle.setRadius(75);
@@ -134,20 +138,23 @@ public class LightControlGroup extends StackPane {
         xPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                try {
-                    Float value = Float.parseFloat(xPosBox.getEditor().getText());
-                    updateGlobalLightPos(new Utils.Vector2f(value, RTIViewer.globalLightPos.y), LightEditor.XSPINNER);
-                }catch(NumberFormatException e){
-                    RTIViewer.entryAlert.setContentText("Invalid entry for light X position.");
-                    RTIViewer.entryAlert.showAndWait();
-                }
+                updateLightFromBox(xPosBox, RTIViewer.globalLightPos.y, LightEditor.XSPINNER);
             }
         });
 
         xPosBox.valueProperty().addListener(new ChangeListener<Double>() {
             public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
-                Float value = Float.parseFloat(xPosBox.getEditor().getText());
-                updateGlobalLightPos(new Utils.Vector2f(value, RTIViewer.globalLightPos.y), LightEditor.XSPINNER);
+                updateLightFromBox(xPosBox, RTIViewer.globalLightPos.y, LightEditor.XSPINNER);
+            }
+        });
+
+
+        xPosBox.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(!newValue){
+                    updateLightFromBox(xPosBox, RTIViewer.globalLightPos.y, LightEditor.XSPINNER);
+                }
             }
         });
 
@@ -157,26 +164,50 @@ public class LightControlGroup extends StackPane {
 
         yPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                try {
-                    Float value = Float.parseFloat(yPosBox.getEditor().getText());
-                    updateGlobalLightPos(new Utils.Vector2f(RTIViewer.globalLightPos.x, value), LightEditor.YSPINNER);
-                }catch(NumberFormatException e){
-                    RTIViewer.entryAlert.setContentText("Invalid entry for light Y position.");
-                    RTIViewer.entryAlert.showAndWait();
-                }
+                updateLightFromBox(yPosBox, RTIViewer.globalLightPos.x, LightEditor.YSPINNER);
             }
         });
 
         yPosBox.valueProperty().addListener(new ChangeListener<Double>() {
             public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
-                Float value = Float.parseFloat(yPosBox.getEditor().getText());
-                updateGlobalLightPos(new Utils.Vector2f(RTIViewer.globalLightPos.x, value), LightEditor.YSPINNER);
+                updateLightFromBox(yPosBox, RTIViewer.globalLightPos.x, LightEditor.YSPINNER);
             }
         });
+
+
+        yPosBox.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(!newValue){
+                    updateLightFromBox(yPosBox, RTIViewer.globalLightPos.x, LightEditor.YSPINNER);
+                }
+            }
+        });
+
 
         gridPane.setAlignment(Pos.CENTER);
         gridPane.getChildren().addAll(xPosLabel, xPosBox, yPosLabel, yPosBox);
     }
+
+
+    private void updateLightFromBox(Spinner<Double> spinner, float constVal, LightEditor lightEditor){
+        try {
+            Float value = Float.parseFloat(spinner.getEditor().getText());
+            if(lightEditor.equals(LightEditor.XSPINNER)) {
+                updateGlobalLightPos(new Utils.Vector2f(value, constVal), lightEditor);
+            }else{
+                updateGlobalLightPos(new Utils.Vector2f(constVal, value), lightEditor);
+            }
+        }catch(NumberFormatException e){
+            if(lightEditor.equals(LightEditor.XSPINNER)) {
+                RTIViewer.entryAlert.setContentText("Invalid entry for light X position.");
+            }else{
+                RTIViewer.entryAlert.setContentText("Invalid entry for light Y position.");
+            }
+            RTIViewer.entryAlert.showAndWait();
+        }
+    }
+
 
 
     private void updateGlobalLightPos(Utils.Vector2f newLight, LightEditor source){
