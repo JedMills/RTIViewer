@@ -103,7 +103,7 @@ public class FilterParamsPane extends Pane {
         ObservableList<String> options = FXCollections.observableArrayList(
                 "Default view",
                 "Normals visualisation",
-                "Diffuse gain",
+                "Diffuse gain (PTM) | Normals enhancement (HSH)",
                 "Specular enhancement",
                 "Image unsharp masking"
         );
@@ -244,7 +244,7 @@ public class FilterParamsPane extends Pane {
         hideAllItems();
         if(filterType.equals("Default view")){}
         else if(filterType.equals("Normals visualisation")){}
-        else if(filterType.equals("Diffuse gain")){
+        else if(filterType.equals("Diffuse gain (PTM) | Normals enhancement (HSH)")){
             gainLabel.setVisible(true);
             gainSlider.setVisible(true);
             gainSpinner.setVisible(true);
@@ -267,6 +267,7 @@ public class FilterParamsPane extends Pane {
     }
 
     public void updateSize(double width, double height){
+        filterChoice.setPrefWidth(width * 0.75);
         gridPane.setPrefWidth(width - 20);
         gridPane.setVgap(height / 40);
     }
@@ -282,7 +283,7 @@ public class FilterParamsPane extends Pane {
             filterToSet = "Normals visualisation";
             index = 1;
         }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
-            filterToSet = "Diffuse gain";
+            filterToSet = "Diffuse gain (PTM) | Normals enhancement (HSH)";
             index = 2;
         }else if(RTIViewer.currentProgram.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             filterToSet = "Specular enhancement";

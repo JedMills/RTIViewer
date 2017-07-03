@@ -15,6 +15,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -25,7 +26,11 @@ import openGLWindow.RTIWindowRGB;
 import ptmCreation.*;
 import utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * Created by Jed on 29-May-17.
@@ -73,7 +78,11 @@ public class RTIViewer extends Application {
     public static Alert entryAlert;
     public static Alert fileReadingAlert;
     public static Alert bookarksAlert;
+
     public static final FileChooser fileChooser = new FileChooser();
+    public static final DirectoryChooser directoryChooser = new DirectoryChooser();
+    public static File defaultSaveDirectory;
+    public static File defaultOpenDirectory;
 
     private static ArrayList<RTIWindow> RTIWindows = new ArrayList<>();
 
@@ -83,6 +92,7 @@ public class RTIViewer extends Application {
         setupPrimaryStage();
 
         createAlerts();
+        loadPreferences();
 
         mainScene = createScene(primaryStage);
 
@@ -199,7 +209,7 @@ public class RTIViewer extends Application {
 
         if(filterType.equals("Default view")){programToSet = ShaderProgram.DEFAULT;}
         else if(filterType.equals("Normals visualisation")){programToSet = ShaderProgram.NORMALS;}
-        else if(filterType.equals("Diffuse gain")){programToSet = ShaderProgram.DIFF_GAIN;}
+        else if(filterType.equals("Diffuse gain (PTM) | Normals enhancement (HSH)")){programToSet = ShaderProgram.DIFF_GAIN;}
         else if(filterType.equals("Specular enhancement")){programToSet = ShaderProgram.SPEC_ENHANCE;}
         else if(filterType.equals("Normal unsharp masking")){programToSet = ShaderProgram.NORM_UNSHARP_MASK;}
         else if(filterType.equals("Image unsharp masking")){programToSet = ShaderProgram.IMG_UNSHARP_MASK;}
@@ -400,5 +410,41 @@ public class RTIViewer extends Application {
     private static void updateViewerControls(){
         lightControlGroup.updateLightControls(LightControlGroup.LightEditor.RESIZE);
         paramsPane.updateFromBookmark();
+    }
+
+
+    public static void saveDefaultSaveDirectory(){
+        try {
+            String location = defaultSaveDirectory.getCanonicalPath();
+            Preferences preferences = Preferences.userNodeForPackage(RTIViewer.class);
+            preferences.put("defaultSaveDir", location);
+            preferences.flush();
+        }catch(IOException|BackingStoreException e){
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void saveDefaultOpenDirectory(){
+        try{
+            String location = defaultOpenDirectory.getCanonicalPath();
+            Preferences preferences = Preferences.userNodeForPackage(RTIViewer.class);
+            preferences.put("defaultOpenDir", location);
+            preferences.flush();
+        }catch(IOException|BackingStoreException e){
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private static void loadPreferences(){
+        Preferences preferences = Preferences.userNodeForPackage(RTIViewer.class);
+        String defaultOpenPath = preferences.get("defaultOpenDir", "");
+        String defaultSavePath = preferences.get("defaultSaveDir", "");
+
+        if(!defaultOpenPath.equals("")){defaultOpenDirectory = new File(defaultOpenPath);}
+        if(!defaultSavePath.equals("")){defaultSaveDirectory = new File(defaultSavePath);}
+
     }
 }

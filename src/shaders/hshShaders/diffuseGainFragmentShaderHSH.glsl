@@ -24,8 +24,8 @@ uniform sampler2D blueCoeffs3;
 uniform sampler2D normals;
 uniform float diffGain;
 
-float diffuse = 0.5;
-float env = 0.5;
+float gain = 1.0;
+float env = 1.5;
 
 in vec2 texCoordV;
 out vec4 colorOut;
@@ -76,10 +76,36 @@ mat4x4 getHSH(float theta, float phi, int basisTerms){
 
 
 vec3 getSmoothedNormal(ivec2 ptmCoords){
+    int dist = 5;
 
+    vec3 smoothNormal = vec3(0.0, 0.0, 0.0);
+
+    for(int xOffset = -dist; xOffset <= dist; xOffset++){
+        for(int yOffset = -dist; yOffset <= dist; yOffset++){
+            smoothNormal += 5 * texelFetch(normals, ivec2(ptmCoords.x + xOffset, ptmCoords.y + yOffset), 0).xyz;
+        }
+    }
+
+    smoothNormal /= (2 * dist + 1) * (2 * dist + 1);
+
+    return normalize(smoothNormal);
 }
 
 
+
+vec3 getEnhancedNormal(vec3 normal, vec3 smoothedNormal, float gain){
+    vec3 enhancedNormal = normal + (normal - smoothedNormal) * 10 * (gain);
+    return normalize(enhancedNormal);
+}
+
+float getEnhancement(vec3 enhancedNormal, float lightX, float lightY, float lightZ){
+    float nDotL = enhancedNormal.x * lightX + enhancedNormal.y * lightY + enhancedNormal.z * lightZ;
+
+    if(nDotL < 0.0){nDotL = 0.0;}
+    else if(nDotL > 1.0){nDotL = 1.0;}
+
+    return ((diffGain) * nDotL + env) / ((diffGain) + env);
+}
 
 
 void main() {
@@ -164,7 +190,14 @@ void main() {
 
     vec3 normal = texelFetch(normals, ptmCoords, 0).xyz;
 
+    vec3 smoothedNormal = getSmoothedNormal(ptmCoords);
+    vec3 enhancedNormal = getEnhancedNormal(normal, smoothedNormal, gain);
 
+    float enhance = getEnhancement(enhancedNormal, lightX, lightY, lightZ);
+
+    r *= enhance;
+    g *= enhance;
+    b *= enhance;
 
     colorOut = vec4(r, g, b, 1);
 }

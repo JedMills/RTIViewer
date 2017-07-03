@@ -6,12 +6,15 @@ import javafx.stage.Stage;
 
 import javafx.scene.control.MenuBar;
 
+import java.util.ArrayList;
+
 /**
  * Created by Jed on 23-Jun-17.
  */
 public class TopMenuBar extends MenuBar {
 
     private Stage primaryStage;
+    private ArrayList<String> recentFilesList = new ArrayList<>();
 
     public TopMenuBar(Stage primaryStage){
         super();
@@ -31,79 +34,83 @@ public class TopMenuBar extends MenuBar {
 
     private Menu createFileMenu(){
         Menu menuFile = new Menu("File");
-        MenuItem open = new MenuItem("Open");
 
-        Image openIcon = new Image("file:rsc/images/icons/folder-4x.png");
-        ImageView openView = new ImageView(openIcon);
-        openView.setFitHeight(15);
-        openView.setFitWidth(15);
-        open.setGraphic(openView);
-        open.setOnAction(MenuBarListener.getInstance());
-        open.setId("open");
+        MenuItem open = createMenuItem("Open", "open",
+                                                "file:rsc/images/icons/folder-4x.png");
 
-        MenuItem save = new MenuItem("Save as image");
-        save.setOnAction(MenuBarListener.getInstance());
-        save.setId("saveAsImage");
-        Image saveIcon = new Image("file:rsc/images/icons/image-4x.png");
-        ImageView saveView = new ImageView(saveIcon);
-        saveView.setFitWidth(15);
-        saveView.setFitHeight(15);
-        save.setGraphic(saveView);
+        Menu openRecent = new Menu("Open recent");
+        openRecent.setId("openRecent");
+        openRecent.setOnAction(MenuBarListener.getInstance());
+        Image image = new Image("file:rsc/images/icons/clock-4x.png");
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(15);
+        imageView.setFitHeight(15);
+        openRecent.setGraphic(imageView);
 
+        MenuItem save = createMenuItem("Save as image", "saveAsImage",
+                                                "file:rsc/images/icons/image-4x.png");
 
-        MenuItem close = new MenuItem("Close");
-        close.setOnAction(MenuBarListener.getInstance());
-        close.setId("close");
-        Image closeIcon = new Image("file:rsc/images/icons/circle-x-4x.png");
-        ImageView closeView = new ImageView(closeIcon);
-        closeView.setFitHeight(15);
-        closeView.setFitWidth(15);
-        close.setGraphic(closeView);
+        MenuItem close = createMenuItem("Close", "close",
+                                                "file:rsc/images/icons/circle-x-4x.png");
 
-        MenuItem closePTMWindow = new MenuItem("Close image");
-        closePTMWindow.setOnAction(MenuBarListener.getInstance());
-        closePTMWindow.setId("closePTMWindow");
-        Image closeWinIcon = new Image("file:rsc/images/icons/x-4x.png");
-        ImageView closeWinView = new ImageView(closeWinIcon);
-        closeWinView.setFitWidth(15);
-        closeWinView.setFitHeight(15);
-        closePTMWindow.setGraphic(closeWinView);
+        MenuItem closeRTIWindow = createMenuItem("Close image", "closePTMWindow",
+                                                "file:rsc/images/icons/x-4x.png");
 
-        menuFile.getItems().addAll(open, close, save, closePTMWindow);
+        menuFile.getItems().addAll(open, openRecent, close, save, closeRTIWindow);
 
         return menuFile;
     }
 
 
     private Menu createEditMenu(){
-        Menu menuEdit = new Menu("Edit");
-
-
         Menu preferences = new Menu("Preferences");
-        preferences.setId("preferences");
-        Image prefsIcon = new Image("file:rsc/images/icons/cog-4x.png");
-        ImageView prefsView = new ImageView(prefsIcon);
-        prefsView.setFitHeight(15);
-        prefsView.setFitWidth(15);
-        preferences.setGraphic(prefsView);
 
         Menu themes = new Menu("Themes");
-        preferences.getItems().add(themes);
 
-        MenuItem deafultTheme = new MenuItem("Default");
-        deafultTheme.setId("defaultTheme");
-        deafultTheme.setOnAction(MenuBarListener.getInstance());
+        MenuItem defaultTheme = new MenuItem("Default");
+        defaultTheme.setId("defaultTheme");
+        defaultTheme.setOnAction(MenuBarListener.getInstance());
+
         MenuItem metroDarkTheme = new MenuItem("Metro Dark");
         metroDarkTheme.setId("metroDarkTheme");
         metroDarkTheme.setOnAction(MenuBarListener.getInstance());
+
         MenuItem metroLightTheme = new MenuItem("Metro Light");
         metroLightTheme.setId("metroLightTheme");
         metroLightTheme.setOnAction(MenuBarListener.getInstance());
 
-        themes.getItems().addAll(deafultTheme, metroDarkTheme, metroLightTheme);
+        themes.getItems().addAll(defaultTheme, metroDarkTheme, metroLightTheme);
 
-        menuEdit.getItems().addAll(preferences);
+        MenuItem defaultOpenFolder = createMenuItem("Set default open folder", "defaultOpenFolder",
+                                                "file:rsc/images/icons/home-4x.png");
 
-        return menuEdit;
+        MenuItem defaultSaveFolder = createMenuItem("Set default save folder", "defaultSaveFolder",
+                                                "file:rsc/images/icons/book-4x.png");
+
+        preferences.getItems().addAll(themes, defaultOpenFolder, defaultSaveFolder);
+
+        return preferences;
+    }
+
+
+
+
+    private MenuItem createMenuItem(String label, String id){
+        MenuItem menuItem = new MenuItem(label);
+        menuItem.setId(id);
+        menuItem.setOnAction(MenuBarListener.getInstance());
+
+        return menuItem;
+    }
+
+    private MenuItem createMenuItem(String label, String id, String iconLocation){
+        MenuItem menuItem = createMenuItem(label, id);
+        Image image = new Image(iconLocation);
+        ImageView imageView = new ImageView(image);
+        imageView.setFitHeight(15);
+        imageView.setFitWidth(15);
+        menuItem.setGraphic(imageView);
+
+        return menuItem;
     }
 }
