@@ -176,7 +176,6 @@ void main() {
     else if(nDotH > 1.0){nDotH = 1.0;}
     nDotH = pow(nDotH, specExConst);
 
-
     float temp = (r + g + b) / 3;
     float lum = temp * specConst * 4.0 * nDotH;
 

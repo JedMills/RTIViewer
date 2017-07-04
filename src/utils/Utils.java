@@ -1,6 +1,7 @@
 package utils;
 
 import java.awt.image.BufferedImage;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
 
@@ -78,13 +79,16 @@ public class Utils {
         return (int) intensity;
     }
 
-    public static int calcIntensity(IntBuffer coeffs1, IntBuffer coeffs2, int position, float x, float y){
+
+
+
+    public static int calcIntensity(IntBuffer coeffs1, IntBuffer coeffs2, int position, float lightX, float lightY){
         //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
-        double intensity =  (coeffs1.get(position) * x * x) +
-                (coeffs1.get(position + 1) * y * y) +
-                (coeffs1.get(position + 2) * x * y) +
-                (coeffs2.get(position) * x) +
-                (coeffs2.get(position + 1) * y) + coeffs2.get(position + 2);
+        double intensity =  (coeffs1.get(position) * lightX * lightX) +
+                (coeffs1.get(position + 1) * lightY * lightY) +
+                (coeffs1.get(position + 2) * lightX * lightY) +
+                (coeffs2.get(position) * lightX) +
+                (coeffs2.get(position + 1) * lightY) + coeffs2.get(position + 2);
 
         //threshold these to an unsigned byte for RGB
         if(intensity > 255){intensity = 255;}
@@ -92,6 +96,8 @@ public class Utils {
 
         return (int) intensity;
     }
+
+
 
 
     /**
@@ -192,6 +198,14 @@ public class Utils {
         }
 
         public float length(){return (float) Math.pow(x*x + y*y + z*z, 0.5);}
+
+        public Vector3f add(Vector3f vec){
+            return new Vector3f(x + vec.x, y + vec.y, z + vec.z);
+        }
+
+        public Vector3f minus(Vector3f vec){
+            return new Vector3f(x - vec.x, y - vec.y, z - vec.z);
+        }
     }
 
 
@@ -493,20 +507,21 @@ public class Utils {
 
     public static int[] convertNormalToColour(Vector3f normal){
 
-        int red = (int) Math.floor(((normal.x + 1) / 2) * 255.0);
-        int green = (int) Math.floor(((normal.y + 1) / 2) * 255.0);
-        int blue = (int) Math.floor((normal.z + 1) * 128.0);
-
-        if(red > 255){red = 255;}
-        else if(red < 0){red = 0;}
-
-        if(green > 255){green = 255;}
-        else if(green < 0){green = 0;}
-
-        if(blue > 255){blue = 255;}
-        else if(blue < 0){blue = 0;}
+        int red = convertNormalCoordToColour(normal.x);
+        int green = convertNormalCoordToColour(normal.y);
+        int blue = convertNormalCoordToColour(normal.z);
 
         return new int[]{red, green, blue};
+    }
+
+
+    public static int convertNormalCoordToColour(float coord){
+        int colour = (int) Math.floor(((coord + 1) / 2) * 255.0);
+
+        if(colour > 255){colour = 255;}
+        else if(colour < 0){colour = 0;}
+
+        return colour;
     }
 
     public static int toByte(float value){
@@ -624,5 +639,25 @@ public class Utils {
                 image.setRGB(i, j, image.getRGB(i, image.getHeight()-j-1));
                 image.setRGB(i, image.getHeight()-j-1, tmp);
             }
+    }
+
+
+
+
+    public static float applyDiffGain(IntBuffer coeffs1, IntBuffer coeffs2, int position, FloatBuffer normals, float lightX, float lightY, float gain){
+        //calculate the modified PTM polynomial coefficients
+        float a0 = gain * coeffs1.get(position);
+        float a1 = gain * coeffs1.get(position + 1);
+        float a2 = gain * coeffs1.get(position + 2);
+        float a3t =  ((coeffs1.get(position)<<1)*normals.get(position) + coeffs1.get(position + 2)*normals.get(position + 1));
+        float a3 = (1.0f - gain) * a3t + coeffs2.get(position);
+        float a4t = ((coeffs1.get(position + 1)<<1)*normals.get(position + 1) + coeffs1.get(position + 2)*normals.get(position));
+        float a4 = (1.0f - gain) * a4t + coeffs2.get(position + 1);
+        float a5 = (1.0f - gain) * (coeffs1.get(position)*normals.get(position)*normals.get(position) + coeffs1.get(position + 1)*normals.get(position + 1)*normals.get(position + 1)
+                + coeffs1.get(position + 2)*normals.get(position)*normals.get(position + 1)) + (coeffs2.get(position) - a3) * normals.get(position)
+                + (coeffs2.get(position + 1) - a4) * normals.get(position + 1) + coeffs2.get(position + 2);
+
+        //modified PTM polynomial
+        return a0*lightX*lightX + a1*lightY*lightY + a2*lightX*lightY + a3*lightX + a4*lightY + a5;
     }
 }

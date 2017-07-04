@@ -58,9 +58,7 @@ void main() {
     ivec4 rgbVals = texelFetch(rgbCoeffs, ivec2(ptmCoords.x, ptmCoords.y), 0);
     vec4 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0);
 
-    vec3 hVector = vec3(0.0, 0.0, 1.0);
-    hVector.x += lightX;
-    hVector.y += lightY;
+    vec3 hVector = vec3(lightX, lightY, 1.0);
     hVector = hVector * 0.5;
     hVector = normalize(hVector);
 

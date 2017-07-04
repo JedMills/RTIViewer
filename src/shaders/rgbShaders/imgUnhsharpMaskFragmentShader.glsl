@@ -34,7 +34,7 @@ float applyPTM(float a0, float a1, float a2, float a3, float a4, float a5){
             + (a4 * lightY) + a5;
 
     if(i < 0){i = 0;}
-    else if(i > 255){i =  255;}
+    else if(i > 255){i = 255;}
     i = i / 255;
 
     return i;
@@ -52,12 +52,12 @@ vec3 calcYUV(float r, float g, float b){
 
 
 float getLumFromCoord(ivec2 ptmCoords){
-    ivec4 rCoeffs1 = texelFetch(rVals1, ptmCoords, 0);
-    ivec4 rCoeffs2 = texelFetch(rVals2, ptmCoords, 0);
-    ivec4 gCoeffs1 = texelFetch(gVals1, ptmCoords, 0);
-    ivec4 gCoeffs2 = texelFetch(gVals2, ptmCoords, 0);
-    ivec4 bCoeffs1 = texelFetch(bVals1, ptmCoords, 0);
-    ivec4 bCoeffs2 = texelFetch(bVals2, ptmCoords, 0);
+    ivec3 rCoeffs1 = texelFetch(rVals1, ptmCoords, 0).xyz;
+    ivec3 rCoeffs2 = texelFetch(rVals2, ptmCoords, 0).xyz;
+    ivec3 gCoeffs1 = texelFetch(gVals1, ptmCoords, 0).xyz;
+    ivec3 gCoeffs2 = texelFetch(gVals2, ptmCoords, 0).xyz;
+    ivec3 bCoeffs1 = texelFetch(bVals1, ptmCoords, 0).xyz;
+    ivec3 bCoeffs2 = texelFetch(bVals2, ptmCoords, 0).xyz;
 
     float red = applyPTM(rCoeffs1.x, rCoeffs1.y, rCoeffs1.z, rCoeffs2.x, rCoeffs2.y, rCoeffs2.z);
     float green = applyPTM(gCoeffs1.x, gCoeffs1.y, gCoeffs1.z, gCoeffs2.x, gCoeffs2.y, gCoeffs2.z);
@@ -118,4 +118,5 @@ void main() {
     vec3 rgb = getRGB(enhancedLum, yuv.y, yuv.z);
 
     colorOut = vec4(rgb, 1);
+
 }

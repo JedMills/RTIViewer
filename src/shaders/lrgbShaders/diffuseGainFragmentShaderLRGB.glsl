@@ -44,11 +44,6 @@ float applyPTM(float a0, float a1, float a2, float a3, float a4, float a5){
 }
 
 
-float calcModifiedGain(){
-    return minGain + (diffGain * ((maxGain - minGain) / 100));
-}
-
-
 
 
 float applyDiffuseGain(ivec4 coeffs1, ivec4 coeffs2, vec4 normal, float modGain){
@@ -80,8 +75,7 @@ void main() {
     ivec4 rgbVals = texelFetch(rgbCoeffs, ivec2(ptmCoords.x, ptmCoords.y), 0);
     vec4 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0);
 
-    float modGain = calcModifiedGain();
-    float lum = applyDiffuseGain(lumVals1, lumVals2, normal, diffGain) / 256.0;
+    float lum = applyDiffuseGain(lumVals1, lumVals2, normal, diffGain) / 255.0;
 
     colorOut = vec4(rgbVals.x * lum, rgbVals.y * lum, rgbVals.z * lum, 1);
 }

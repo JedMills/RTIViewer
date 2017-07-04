@@ -581,22 +581,18 @@ public abstract class RTIWindow implements Runnable{
         glUniform1f(shaderViewportX, viewportX);
         glUniform1f(shaderViewportY, viewportY);
 
-        glUniform1f(diffGainRef, normaliseShaderParam(RTIViewer.globalDiffGainVal.get(), 1.0f, 10.0f));
+        glUniform1f(diffGainRef, normaliseDiffGainVal());
 
-        glUniform1f(diffConstRef, normaliseShaderParam(RTIViewer.globalDiffColourVal.get(), 0.0f, 1.0f));
-        glUniform1f(specConstRef, normaliseShaderParam(RTIViewer.globalSpecularityVal.get(), 0.0f, 1.0f));
-        glUniform1f(specExConstRef, normaliseShaderParam(RTIViewer.globalHighlightSizeVal.get(), 1.0f, 150.0f));
+        glUniform1f(diffConstRef, normaliseDiffColVal());
+        glUniform1f(specConstRef, normaliseSpecVal());
+        glUniform1f(specExConstRef, normaliseHighlightSizeVal());
 
-        glUniform1f(normUnMaskGainRef, normaliseShaderParam(RTIViewer.globalNormUnMaskGain.get(), 0.0f, 40.0f));
-        glUniform1f(normUnMaskEnvRef, normaliseShaderParam(RTIViewer.globalNormUnMaskEnv.get(), 0.0f, 0.4f));
+        glUniform1f(imgUnMaskGainRef, normaliseImgUnMaskGainVal());
 
-        glUniform1f(imgUnMaskGainRef, normaliseShaderParam(RTIViewer.globalImgUnMaskGain.get(), 0.01f, 4.0f));
-
-        glUniform1f(coeffUnMaskGainRef, normaliseShaderParam(RTIViewer.globalCoeffUnMaskGain.get(), 0.01f, 6.0f));
     }
 
 
-    private float normaliseShaderParam(double value, float min, float max){
+    private static float normaliseShaderParam(double value, float min, float max){
         return (float) (min + value * (max - min) / 100.0);
     }
 
@@ -827,5 +823,26 @@ public abstract class RTIWindow implements Runnable{
 
     public void setImageScale(float imageScale) {
         this.imageScale = imageScale;
+    }
+
+
+    public static float normaliseDiffGainVal(){
+        return normaliseShaderParam(RTIViewer.globalDiffGainVal.get(), 1.0f, 10.0f);
+    }
+
+    public static float normaliseDiffColVal(){
+        return normaliseShaderParam(RTIViewer.globalDiffColourVal.get(), 0.0f, 1.0f);
+    }
+
+    public static float normaliseSpecVal(){
+        return normaliseShaderParam(RTIViewer.globalSpecularityVal.get(), 0.0f, 1.0f);
+    }
+
+    public static float normaliseHighlightSizeVal(){
+        return normaliseShaderParam(RTIViewer.globalHighlightSizeVal.get(), 1.0f, 150.0f);
+    }
+
+    public static float normaliseImgUnMaskGainVal(){
+        return normaliseShaderParam(RTIViewer.globalImgUnMaskGain.get(), 0.01f, 4.0f);
     }
 }

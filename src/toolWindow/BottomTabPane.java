@@ -1,9 +1,6 @@
 package toolWindow;
 
 import bookmarks.Bookmark;
-import javafx.beans.binding.Bindings;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -25,7 +22,6 @@ import openGLWindow.RTIWindowHSH;
 import openGLWindow.RTIWindowLRGB;
 import openGLWindow.RTIWindowRGB;
 
-import java.awt.print.Book;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,14 +63,14 @@ public class BottomTabPane extends TabPane {
     private Label imageHeightLabel;
     private Label imageFormatLabel;
 
-    Label saveAsLabel;
-    Label saveChannelsLabel;
+    private Label saveAsLabel;
+    private Label saveChannelsLabel;
     RadioButton redChannelButton;
     RadioButton greenChannelButton;
     RadioButton blueChannelButton;
-    Label saveFormatLabel;
+    private Label saveFormatLabel;
     ComboBox<String> imageFormats;
-    Button saveButton;
+    private Button saveButton;
 
 
     public BottomTabPane(RTIViewer rtiViewer, Scene parent){
@@ -84,7 +80,7 @@ public class BottomTabPane extends TabPane {
 
         defaultImage = new Image("file:rsc/images/exeterUniLogoMedium.jpg");
 
-        BookmarkPaneListener.init(this);
+        BottomTabPaneListener.init(this);
         createComponents();
         setId("bottomTabPane");
     }
@@ -368,18 +364,18 @@ public class BottomTabPane extends TabPane {
         GridPane.setConstraints(bookmarkLabel, 0, 0, 1, 1);
         bookmarkComboBox = new ComboBox<>();
         bookmarkComboBox.setId("bookmarkComboBox");
-        bookmarkComboBox.setOnAction(BookmarkPaneListener.getInstance());
+        bookmarkComboBox.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(bookmarkComboBox, 1, 0, 1, 1);
 
         bookmarkAdd = new Button("Add");
         bookmarkAdd.setId("addBookmarkButton");
-        bookmarkAdd.setOnAction(BookmarkPaneListener.getInstance());
+        bookmarkAdd.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(bookmarkAdd, 2, 0, 1, 1);
 
 
         bookmarkDel = new Button("Del");
         bookmarkDel.setId("deleteBookmarkButton");
-        bookmarkDel.setOnAction(BookmarkPaneListener.getInstance());
+        bookmarkDel.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(bookmarkDel, 3, 0, 1, 1);
 
         bookmarkPane.getChildren().addAll(bookmarkLabel, bookmarkComboBox, bookmarkAdd, bookmarkDel);
@@ -432,24 +428,24 @@ public class BottomTabPane extends TabPane {
 
         notesEdit = new Button("Edit");
         notesEdit.setId("editNote");
-        notesEdit.setOnAction(BookmarkPaneListener.getInstance());
+        notesEdit.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(notesEdit, 2, 1, 1, 1);
 
         notesAdd = new Button("Add");
         notesAdd.setId("addNote");
-        notesAdd.setOnAction(BookmarkPaneListener.getInstance());
+        notesAdd.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(notesAdd, 2, 2, 1, 1);
 
         notesDel = new Button("Del");
         notesDel.setId("delNote");
-        notesDel.setOnAction(BookmarkPaneListener.getInstance());
+        notesDel.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(notesDel, 2, 3, 1, 1);
 
         Label updateBookmarkLabel = new Label("Light, Zoom, Pan & Rendering:");
         GridPane.setConstraints(updateBookmarkLabel, 0, 4, 2, 1);
         updateBookmark = new Button("Update");
         updateBookmark.setId("updateBookmark");
-        updateBookmark.setOnAction(BookmarkPaneListener.getInstance());
+        updateBookmark.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(updateBookmark, 2, 4, 1, 1);
 
         bookmarkListPane.getChildren().addAll(  notesLabel, notesList,
@@ -501,8 +497,8 @@ public class BottomTabPane extends TabPane {
 
         saveFormatLabel = new Label("Save as format:");
         imageFormats = new ComboBox<>(FXCollections.observableArrayList(
-                    ".jpg",
-                            ".png"
+                    "jpg",
+                            "png"
         ));
         imageFormats.getSelectionModel().select(0);
 
@@ -514,6 +510,8 @@ public class BottomTabPane extends TabPane {
         GridPane.setConstraints(vBox2, 1, 1, 1, 1);
 
         saveButton = new Button("Save as...");
+        saveButton.setId("saveAs");
+        saveButton.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(saveButton, 1, 2, 1, 1);
         saveButton.setAlignment(Pos.CENTER);
 
