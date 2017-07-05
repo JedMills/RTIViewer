@@ -1,9 +1,7 @@
 package imageCreation;
 
-import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.WritableImage;
-import javafx.scene.paint.*;
 import ptmCreation.PTMObjectLRGB;
 import ptmCreation.PTMObjectRGB;
 import ptmCreation.RTIObject;

@@ -58,12 +58,11 @@ public class RTIViewer extends Application {
 
     public static SimpleDoubleProperty globalImgUnMaskGain = new SimpleDoubleProperty(FilterParamsPane.INITIAL_IMG_UN_MASK_GAIN_VAL);
 
-    public static SimpleDoubleProperty globalCoeffUnMaskGain = new SimpleDoubleProperty(FilterParamsPane.INITIAL_COEFF_UN_MASK_GAIN_VAL);
 
     private static LightControlGroup lightControlGroup;
     private static FilterParamsPane paramsPane;
     private static BottomTabPane bottomTabPane;
-    public static FlowPane flowPane;
+    public static VBox flowPane;
 
 
     public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
@@ -77,7 +76,7 @@ public class RTIViewer extends Application {
 
     public static Alert entryAlert;
     public static Alert fileReadingAlert;
-    public static Alert bookarksAlert;
+    public static Alert bookmarksAlert;
 
     public static final FileChooser fileChooser = new FileChooser();
     public static final DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -95,7 +94,6 @@ public class RTIViewer extends Application {
         loadPreferences();
 
         mainScene = createScene(primaryStage);
-
         mainScene.getStylesheets().add("stylesheets/default.css");
 
         primaryStage.setScene(mainScene);
@@ -114,20 +112,21 @@ public class RTIViewer extends Application {
         RTIViewer.primaryStage.setMaxHeight(1000);
 
 
-        this.primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent event) {
                 closeEverything();
             }
         });
 
-        this.primaryStage.widthProperty().addListener(new ChangeListener<Number>() {
+        primaryStage.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 resizeGUI();
             }
         });
 
-        this.primaryStage.heightProperty().addListener(new ChangeListener<Number>() {
+
+        primaryStage.heightProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 resizeGUI();
@@ -145,14 +144,14 @@ public class RTIViewer extends Application {
         fileReadingAlert = new Alert(Alert.AlertType.ERROR);
         fileReadingAlert.setTitle("Error when reading file");
 
-        bookarksAlert = new Alert(Alert.AlertType.ERROR);
-        bookarksAlert.setTitle("Bookmarks error");
+        bookmarksAlert = new Alert(Alert.AlertType.ERROR);
+        bookmarksAlert.setTitle("Bookmarks error");
 
         BookmarkManager.createDialog();
     }
 
     private Scene createScene(Stage primaryStage){
-        flowPane = new FlowPane();
+        flowPane = new VBox();
         flowPane.setId("mainSceneFlowPane");
         Scene scene = new Scene(flowPane, width, height);
 
@@ -168,9 +167,9 @@ public class RTIViewer extends Application {
         bottomTabPane = new BottomTabPane(this, scene);
         flowPane.getChildren().add(bottomTabPane);
 
-        flowPane.setMargin(lightControlGroup, new Insets(10, 0, 5, 0));
-        flowPane.setMargin(paramsPane, new Insets(5, 0, 5, 0));
-        flowPane.setMargin(bottomTabPane, new Insets(5, 0, 0, 0));
+        flowPane.setMargin(lightControlGroup, new Insets(5, 3, 5, 3));
+        flowPane.setMargin(paramsPane, new Insets(5, 3, 5, 3));
+        flowPane.setMargin(bottomTabPane, new Insets(5, 3, 0, 3));
         flowPane.setAlignment(Pos.TOP_CENTER);
         return scene;
     }
@@ -237,10 +236,6 @@ public class RTIViewer extends Application {
         }
     }
 
-    public static void setCursor(Cursor cursor){
-        mainScene.setCursor(cursor);
-    }
-
 
     public static void setFocusedWindow(RTIWindow rtiWindow){
         selectedWindow = rtiWindow;
@@ -251,14 +246,15 @@ public class RTIViewer extends Application {
 
     private static void setNoFocusedWindow(){
         bottomTabPane.setNoFocusedWindow();
-
         selectedWindow = null;
     }
 
 
-    private void resizeGUI(){
+    public static void resizeGUI(){
         flowPane.setPrefHeight(primaryStage.getHeight());
+        flowPane.setPrefWidth(primaryStage.getWidth());
         lightControlGroup.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
+        lightControlGroup.updateLightControls(LightControlGroup.LightEditor.RESIZE);
         paramsPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
         bottomTabPane.updateSize(primaryStage.getWidth(), primaryStage.getHeight());
         if(selectedWindow != null){
@@ -274,6 +270,7 @@ public class RTIViewer extends Application {
             bottomTabPane.updateViewportRect(x, y, imageScale);
         }
     }
+
 
 
     public static int getHeight() {
@@ -299,28 +296,6 @@ public class RTIViewer extends Application {
         bottomTabPane.requestFocus();
     }
 
-
-    public static void setTheme(ViewerTheme theme){
-
-        mainScene.getStylesheets().clear();
-        fileReadingAlert.getDialogPane().getStylesheets().clear();
-        entryAlert.getDialogPane().getStylesheets().clear();
-        RTICreator.setLoadingDialogTheme(theme);
-
-        if(theme.equals(ViewerTheme.DEFAULT)){
-            mainScene.getStylesheets().add("stylesheets/default.css");
-            entryAlert.getDialogPane().getStylesheets().add("stylesheets/defaultDialog.css");
-            fileReadingAlert.getDialogPane().getStylesheets().add("stylesheets/defaultDialog.css");
-        }else if(theme.equals(ViewerTheme.METRO_DARK)){
-            mainScene.getStylesheets().add("stylesheets/metroDark.css");
-            entryAlert.getDialogPane().getStylesheets().add("stylesheets/metroDarkDialog.css");
-            fileReadingAlert.getDialogPane().getStylesheets().add("stylesheets/metroDarkDialog.css");
-        }else if(theme.equals(ViewerTheme.METRO_LIGHT)){
-            mainScene.getStylesheets().add("stylesheets/metroLight.css");
-            entryAlert.getDialogPane().getStylesheets().add("stylesheets/metroLightDialog.css");
-            fileReadingAlert.getDialogPane().getStylesheets().add("stylesheets/metroLightDialog.css");
-        }
-    }
 
 
     public static void createBookmark(String name){
@@ -354,9 +329,9 @@ public class RTIViewer extends Application {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            bookarksAlert.setContentText("Error when writing bookmarks to file." +
+                            bookmarksAlert.setContentText("Error when writing bookmarks to file." +
                                                         " Changes have not been saved.");
-                            bookarksAlert.showAndWait();
+                            bookmarksAlert.showAndWait();
                         }
                     });
                 }
@@ -399,7 +374,6 @@ public class RTIViewer extends Application {
             selectedWindow.setImageScale((float) bookmark.getZoom());
             selectedWindow.setViewportX((float) bookmark.getPanX());
             selectedWindow.setViewportY((float) bookmark.getPanY());
-
         }
 
         updateViewerControls();
@@ -446,5 +420,12 @@ public class RTIViewer extends Application {
         if(!defaultOpenPath.equals("")){defaultOpenDirectory = new File(defaultOpenPath);}
         if(!defaultSavePath.equals("")){defaultSaveDirectory = new File(defaultSavePath);}
 
+    }
+
+
+    public static void resize(int width, int height){
+        primaryStage.setWidth(width);
+        primaryStage.setHeight(height);
+        resizeGUI();
     }
 }

@@ -1,6 +1,9 @@
 package toolWindow;
 
 import bookmarks.Bookmark;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -41,7 +44,6 @@ public class BottomTabPane extends TabPane {
     private TextField imageFormat;
     private ImageView imagePreview;
     private BorderPane imageBorderPane;
-    private Image defaultImage;
 
     private VBox previewVBox;
     private StackPane imageContainerPane;
@@ -78,11 +80,36 @@ public class BottomTabPane extends TabPane {
         this.rtiViewer = rtiViewer;
         this.parent = parent;
 
-        defaultImage = new Image("file:rsc/images/exeterUniLogoMedium.jpg");
-
         BottomTabPaneListener.init(this);
         createComponents();
         setId("bottomTabPane");
+
+        setMinWidth(0);
+        setMinHeight(0);
+        setMaxHeight(Double.MAX_VALUE);
+
+
+        widthProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                setWidth((Double)newValue);
+                updateViewportOnSeperateThread();
+            }
+        });
+    }
+
+
+    private void updateViewportOnSeperateThread(){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                if(RTIViewer.selectedWindow != null) {
+                    updateViewportRect( RTIViewer.selectedWindow.getViewportX(),
+                            RTIViewer.selectedWindow.getViewportY(),
+                            RTIViewer.selectedWindow.getImageScale());
+                }
+            }
+        });
     }
 
     private void createComponents(){
@@ -117,6 +144,8 @@ public class BottomTabPane extends TabPane {
         imageFormatLabel = new Label("Format:");
         imageFormat = new TextField("");
         imageFormat.setEditable(false);
+
+        previewGridPane.setPadding(new Insets(0, 3, 0 , 3));
 
         createImagePreview();
 
@@ -165,6 +194,8 @@ public class BottomTabPane extends TabPane {
         imageBorderPane.setCenter(imageContainerPane);
         imageBorderPane.setMinWidth(0);
         imageBorderPane.setMinHeight(0);
+        imageBorderPane.prefWidthProperty().bind(RTIViewer.primaryStage.widthProperty());
+        imageBorderPane.prefHeightProperty().bind(previewVBox.heightProperty());
 
         imagePreview.fitHeightProperty().bind(imageBorderPane.heightProperty());
         imagePreview.fitWidthProperty().bind(imageBorderPane.widthProperty());
@@ -252,7 +283,6 @@ public class BottomTabPane extends TabPane {
     }
 
     public void setDefaultImage(){
-        //imagePreview.setImage(defaultImage);
         imagePreview.setImage(null);
         updateSize(rtiViewer.primaryStage.getWidth(), rtiViewer.primaryStage.getHeight());
         imageBorderPane.setStyle("-fx-background-color: #ffffff;");
@@ -260,17 +290,6 @@ public class BottomTabPane extends TabPane {
     }
 
     public void updateSize(double width, double height){
-        setPrefWidth(width - 20);
-
-        if(getLayoutY() < 300){
-            setLayoutY(387);
-        }
-
-        setPrefHeight(height - (getLayoutY() + 45));
-
-        previewVBox.setPrefWidth(width - 20);
-        previewGridPane.setPrefWidth(width - 40);
-
         imageWidthBox.setPrefWidth(width / 6);
         imageHeightBox.setPrefWidth(width / 6);
         imageFormat.setPrefWidth(width / 6);
@@ -278,7 +297,7 @@ public class BottomTabPane extends TabPane {
         bookmarkComboBox.setPrefWidth(width / 2);
         notesList.setPrefWidth(width / 1.5);
 
-        imageBorderPane.setPrefHeight(getPrefHeight() - 45);
+        updateBounds();
         setFonts(width, height);
     }
 
@@ -342,7 +361,11 @@ public class BottomTabPane extends TabPane {
         previewWindowRect.setHeight(imagePreview.getBoundsInParent().getHeight() / imageScale);
         previewWindowRect.setTranslateX((x / imageScale) * imagePreview.getBoundsInParent().getWidth() / 2);
         previewWindowRect.setTranslateY((-y / imageScale) * imagePreview.getBoundsInParent().getHeight() / 2);
+
+        //System.out.println(imagePreview.getBoundsInParent().getWidth() + ", " + imagePreview.getBoundsInParent().getHeight());
+        System.out.println(getWidth() + ", " + getHeight());
     }
+
 
 
 
@@ -392,7 +415,6 @@ public class BottomTabPane extends TabPane {
 
         notesList = new ListView<Bookmark.Note>();
 
-
         notesList.setCellFactory(new Callback<ListView<Bookmark.Note>, ListCell<Bookmark.Note>>() {
             @Override
             public ListCell<Bookmark.Note> call(ListView<Bookmark.Note> param) {
@@ -424,6 +446,7 @@ public class BottomTabPane extends TabPane {
         });
 
         notesList.setId("notesList");
+        notesList.setMinHeight(0);
         GridPane.setConstraints(notesList, 0, 1, 2, 3);
 
         notesEdit = new Button("Edit");

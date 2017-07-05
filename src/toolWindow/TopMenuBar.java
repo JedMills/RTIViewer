@@ -38,14 +38,7 @@ public class TopMenuBar extends MenuBar {
         MenuItem open = createMenuItem("Open", "open",
                                                 "file:rsc/images/icons/folder-4x.png");
 
-        Menu openRecent = new Menu("Open recent");
-        openRecent.setId("openRecent");
-        openRecent.setOnAction(MenuBarListener.getInstance());
-        Image image = new Image("file:rsc/images/icons/clock-4x.png");
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(15);
-        imageView.setFitHeight(15);
-        openRecent.setGraphic(imageView);
+        Menu openRecent = createMenu("Open recent", "openRecent", "file:rsc/images/icons/clock-4x.png");
 
         MenuItem save = createMenuItem("Save as image", "saveAsImage",
                                                 "file:rsc/images/icons/image-4x.png");
@@ -65,21 +58,6 @@ public class TopMenuBar extends MenuBar {
     private Menu createEditMenu(){
         Menu preferences = new Menu("Preferences");
 
-        Menu themes = new Menu("Themes");
-
-        MenuItem defaultTheme = new MenuItem("Default");
-        defaultTheme.setId("defaultTheme");
-        defaultTheme.setOnAction(MenuBarListener.getInstance());
-
-        MenuItem metroDarkTheme = new MenuItem("Metro Dark");
-        metroDarkTheme.setId("metroDarkTheme");
-        metroDarkTheme.setOnAction(MenuBarListener.getInstance());
-
-        MenuItem metroLightTheme = new MenuItem("Metro Light");
-        metroLightTheme.setId("metroLightTheme");
-        metroLightTheme.setOnAction(MenuBarListener.getInstance());
-
-        themes.getItems().addAll(defaultTheme, metroDarkTheme, metroLightTheme);
 
         MenuItem defaultOpenFolder = createMenuItem("Set default open folder", "defaultOpenFolder",
                                                 "file:rsc/images/icons/home-4x.png");
@@ -87,7 +65,15 @@ public class TopMenuBar extends MenuBar {
         MenuItem defaultSaveFolder = createMenuItem("Set default save folder", "defaultSaveFolder",
                                                 "file:rsc/images/icons/book-4x.png");
 
-        preferences.getItems().addAll(themes, defaultOpenFolder, defaultSaveFolder);
+        Menu setToolbarSize = createMenu("Set toolbar size", "setToolbarSize",
+                "file:rsc/images/icons/resize-both-4x.png");
+
+        MenuItem resizeSmall = createMenuItem("300 x 600", "resizeSmall");
+        MenuItem resizeMedium = createMenuItem("450 x 800", "resizeMedium");
+        MenuItem resizeLarge = createMenuItem("600 x 1000", "resizeLarge");
+
+        setToolbarSize.getItems().addAll(resizeSmall, resizeMedium, resizeLarge);
+        preferences.getItems().addAll(setToolbarSize, defaultOpenFolder, defaultSaveFolder);
 
         return preferences;
     }
@@ -112,5 +98,18 @@ public class TopMenuBar extends MenuBar {
         menuItem.setGraphic(imageView);
 
         return menuItem;
+    }
+
+
+    private Menu createMenu(String label, String id, String iconLocation){
+        Menu menu = new Menu(label);
+        menu.setId(id);
+        menu.setOnAction(MenuBarListener.getInstance());
+        Image image = new Image(iconLocation);
+        ImageView imageView = new ImageView(image);
+        imageView.setFitHeight(15);
+        imageView.setFitWidth(15);
+        menu.setGraphic(imageView);
+        return menu;
     }
 }

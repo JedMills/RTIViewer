@@ -1,5 +1,6 @@
 package toolWindow;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
@@ -49,15 +50,6 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
             }else if(source.getId().equals("saveAsImage")){
                 RTIViewer.setFocusSave();
 
-            }else if(source.getId().equals("defaultTheme")){
-                RTIViewer.setTheme(RTIViewer.ViewerTheme.DEFAULT);
-
-            }else if(source.getId().equals("metroDarkTheme")){
-                RTIViewer.setTheme(RTIViewer.ViewerTheme.METRO_DARK);
-
-            }else if(source.getId().equals("metroLightTheme")){
-                RTIViewer.setTheme(RTIViewer.ViewerTheme.METRO_LIGHT);
-
             }else if(source.getId().equals("defaultOpenFolder")){
                 RTIViewer.directoryChooser.setTitle("Set default open folder");
                 File folder = RTIViewer.directoryChooser.showDialog(RTIViewer.primaryStage);
@@ -73,7 +65,18 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
                     RTIViewer.defaultSaveDirectory = folder;
                     RTIViewer.saveDefaultSaveDirectory();
                 }
+
+            }else if(source.getId().equals("resizeSmall")){
+                RTIViewer.resize(300, 600);
+
+            }else if(source.getId().equals("resizeMedium")){
+                RTIViewer.resize(450, 800);
+
+            }else if(source.getId().equals("resizeLarge")){
+                RTIViewer.resize(600, 1000);
+
             }
         }
     }
+
 }

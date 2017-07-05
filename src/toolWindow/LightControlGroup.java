@@ -248,7 +248,7 @@ public class LightControlGroup extends StackPane {
         if(height < 700){
             light.setZ(20);
             circle.setRadius(50);
-        }else if(height < 800 ||Double.isNaN(height)){
+        }else if(height < 800 || Double.isNaN(height)){
             light.setZ(25);
             circle.setRadius(75);
         }else{

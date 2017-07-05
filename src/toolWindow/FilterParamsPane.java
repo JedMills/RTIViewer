@@ -75,13 +75,14 @@ public class FilterParamsPane extends Pane {
 
         hideAllItems();
         setId("filterParamsPane");
+        setMinHeight(162);
     }
 
     private void createComponents(){
         VBox vBox = new VBox();
         gridPane = new GridPane();
         gridPane.setHgap(20);
-        gridPane.setVgap(20);
+        gridPane.setVgap(15);
         gridPane.setAlignment(Pos.TOP_CENTER);
 
         createComboBox(vBox);
@@ -269,7 +270,6 @@ public class FilterParamsPane extends Pane {
     public void updateSize(double width, double height){
         filterChoice.setPrefWidth(width * 0.75);
         gridPane.setPrefWidth(width - 20);
-        gridPane.setVgap(height / 40);
     }
 
 
