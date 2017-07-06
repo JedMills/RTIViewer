@@ -11,7 +11,11 @@ public class ShaderUtils {
         StringBuilder source = new StringBuilder();
         try
         {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(name)));
+            //BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(name)));
+            //BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(classLoader.getResource(name).getFile()))));
+            //InputStream in = ShaderUtils.class.getResourceAsStream(name);
+            //BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(ShaderUtils.class.getResourceAsStream(name)));
 
             String line;
             while ((line = reader.readLine()) != null)

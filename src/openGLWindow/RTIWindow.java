@@ -331,9 +331,6 @@ public abstract class RTIWindow implements Runnable{
         }else if(type.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
             imgUnsharpMaskProgram = GL20.glCreateProgram();
             currentProgram = imgUnsharpMaskProgram;
-        }else if(type.equals(RTIViewer.ShaderProgram.COEFF_UN_MASK)){
-            coeffUnsharpMaskProgram = GL20.glCreateProgram();
-            currentProgram = coeffUnsharpMaskProgram;
         }
 
         //create references for the vertex and fragment shaders, which are compiled in a bit

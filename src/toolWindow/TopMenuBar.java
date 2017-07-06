@@ -36,18 +36,18 @@ public class TopMenuBar extends MenuBar {
         Menu menuFile = new Menu("File");
 
         MenuItem open = createMenuItem("Open", "open",
-                                                "file:rsc/images/icons/folder-4x.png");
+                                                "images/icons/folder-4x.png");
 
-        Menu openRecent = createMenu("Open recent", "openRecent", "file:rsc/images/icons/clock-4x.png");
+        Menu openRecent = createMenu("Open recent", "openRecent", "images/icons/clock-4x.png");
 
         MenuItem save = createMenuItem("Save as image", "saveAsImage",
-                                                "file:rsc/images/icons/image-4x.png");
+                                                "images/icons/image-4x.png");
 
         MenuItem close = createMenuItem("Close", "close",
-                                                "file:rsc/images/icons/circle-x-4x.png");
+                                                "images/icons/circle-x-4x.png");
 
         MenuItem closeRTIWindow = createMenuItem("Close image", "closePTMWindow",
-                                                "file:rsc/images/icons/x-4x.png");
+                                                "images/icons/x-4x.png");
 
         menuFile.getItems().addAll(open, openRecent, close, save, closeRTIWindow);
 
@@ -60,13 +60,13 @@ public class TopMenuBar extends MenuBar {
 
 
         MenuItem defaultOpenFolder = createMenuItem("Set default open folder", "defaultOpenFolder",
-                                                "file:rsc/images/icons/home-4x.png");
+                                                "images/icons/home-4x.png");
 
         MenuItem defaultSaveFolder = createMenuItem("Set default save folder", "defaultSaveFolder",
-                                                "file:rsc/images/icons/book-4x.png");
+                                                "images/icons/book-4x.png");
 
         Menu setToolbarSize = createMenu("Set toolbar size", "setToolbarSize",
-                "file:rsc/images/icons/resize-both-4x.png");
+                "images/icons/resize-both-4x.png");
 
         MenuItem resizeSmall = createMenuItem("300 x 600", "resizeSmall");
         MenuItem resizeMedium = createMenuItem("450 x 800", "resizeMedium");

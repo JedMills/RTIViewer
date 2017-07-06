@@ -57,23 +57,23 @@ public class RTIWindowLRGB extends RTIWindow {
 
     @Override
     protected void createShaders() throws Exception {
-        createShader(RTIViewer.ShaderProgram.DEFAULT, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/lrgbShaders/defaultFragmentShaderLRGB.glsl");
+        createShader(RTIViewer.ShaderProgram.DEFAULT, "/shaders/defaultVertexShader.glsl",
+                "/shaders/lrgbShaders/defaultFragmentShaderLRGB.glsl");
 
-        createShader(RTIViewer.ShaderProgram.NORMALS, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/lrgbShaders/normalsFragmentShaderLRGB.glsl");
-
-
-        createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/lrgbShaders/diffuseGainFragmentShaderLRGB.glsl");
+        createShader(RTIViewer.ShaderProgram.NORMALS, "/shaders/defaultVertexShader.glsl",
+                "/shaders/lrgbShaders/normalsFragmentShaderLRGB.glsl");
 
 
-        createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/lrgbShaders/specEnhanceFragmentShaderLRGB.glsl");
+        createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "/shaders/defaultVertexShader.glsl",
+                "/shaders/lrgbShaders/diffuseGainFragmentShaderLRGB.glsl");
 
 
-        createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "src/shaders/defaultVertexShader.glsl",
-                "src/shaders/lrgbShaders/imgUnsharpMaskFragmentShaderLRGB.glsl");
+        createShader(RTIViewer.ShaderProgram.SPEC_ENHANCE, "/shaders/defaultVertexShader.glsl",
+                "/shaders/lrgbShaders/specEnhanceFragmentShaderLRGB.glsl");
+
+
+        createShader(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK, "/shaders/defaultVertexShader.glsl",
+                "/shaders/lrgbShaders/imgUnsharpMaskFragmentShaderLRGB.glsl");
 
     }
 }
