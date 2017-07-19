@@ -45,7 +45,7 @@ public class EditNoteDialog {
         stage.setMinWidth(250);
         stage.setMinHeight(200);
         stage.setMaxWidth(450);
-        stage.setMaxHeight(400);
+        stage.setMaxHeight(300);
 
         VBox layout = createLayout();
         setupButtons();

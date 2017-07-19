@@ -14,6 +14,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -85,6 +86,9 @@ public class RTIViewer extends Application {
 
     private static ArrayList<RTIWindow> RTIWindows = new ArrayList<>();
 
+    public static final Image THUMBNAIL = new Image("images/rtiThumbnail.png");
+
+
     @Override
     public void start(Stage primaryStage) throws Exception {
         RTIViewer.primaryStage = primaryStage;
@@ -97,6 +101,7 @@ public class RTIViewer extends Application {
         mainScene.getStylesheets().add("stylesheets/default.css");
 
         primaryStage.setScene(mainScene);
+        primaryStage.getIcons().add(THUMBNAIL);
 
         primaryStage.show();
         primaryStage.sizeToScene();
@@ -139,16 +144,28 @@ public class RTIViewer extends Application {
 
     private void createAlerts(){
         entryAlert = new Alert(Alert.AlertType.WARNING);
+        entryAlert.setHeaderText("");
         entryAlert.setTitle("Invalid Entry");
 
         fileReadingAlert = new Alert(Alert.AlertType.ERROR);
+        fileReadingAlert.setHeaderText("");
         fileReadingAlert.setTitle("Error when reading file");
 
         bookmarksAlert = new Alert(Alert.AlertType.ERROR);
+        bookmarksAlert.setHeaderText("");
         bookmarksAlert.setTitle("Bookmarks error");
 
+        setThumbnails(entryAlert, fileReadingAlert, bookmarksAlert);
         BookmarkManager.createDialog();
     }
+
+    private void setThumbnails(Alert... alerts){
+        for(Alert alert : alerts) {
+            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(THUMBNAIL);
+        }
+    }
+
 
     private Scene createScene(Stage primaryStage){
         flowPane = new VBox();

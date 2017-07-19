@@ -7,11 +7,15 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import ptmCreation.RTIObject;
 import toolWindow.RTIViewer;
 import utils.ShaderUtils;
+import utils.Utils;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -28,6 +32,7 @@ import static org.lwjgl.opengl.GL30.GL_RGB32I;
 import static org.lwjgl.opengl.GL30.GL_RGB_INTEGER;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.system.MemoryUtil.memAllocInt;
 
 /**
  * <p>
@@ -168,6 +173,7 @@ public abstract class RTIWindow implements Runnable{
     /**Height of the image as displayed on the window, updated each frame*/
     protected int reducedHeight;
 
+    private static final String ICON_LOCATION =  "images/rtiThumbnail-32.png";
 
     /**
      * Creates a new RTIWindow, setting the passed RTIObject as this window's rtiObject, which it will
@@ -198,14 +204,6 @@ public abstract class RTIWindow implements Runnable{
 
         //don't make the window visible yet, make it resizable and display at 60Hz
         glfwDefaultWindowHints();
-
-        if(System.getProperty("os.name").toLowerCase().contains("mac")) {
-            //setting up core OpenGL version, required to get shaders to compile on macOS
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-        }
 
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -270,11 +268,31 @@ public abstract class RTIWindow implements Runnable{
         //make the new window the selected one when it appears
         glfwMakeContextCurrent(window);
 
+
+        setIcon();
+
+
         //create OpenGL capabilities and try to sync with monitor
         GL.createCapabilities();
         glfwSwapInterval(1);
     }
 
+    private void setIcon(){
+        try{
+            IntBuffer w = memAllocInt(1);
+            IntBuffer h = memAllocInt(1);
+            IntBuffer comp = memAllocInt(1);
+            ByteBuffer icon = Utils.ioResourceToByteBuffer(ICON_LOCATION, 4096);
+            GLFWImage.Buffer icons = GLFWImage.malloc(2);
+            ByteBuffer pixels = STBImage.stbi_load_from_memory(icon, w, h, comp, 4);
+            icons.position(0).width(w.get(0)).height(h.get(0)).pixels(pixels);
+            icons.position(0);
+            glfwSetWindowIcon(window, icons);
+            STBImage.stbi_image_free(pixels);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
 
 
     private void updateImageScale(double yoffset){

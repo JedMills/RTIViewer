@@ -361,9 +361,6 @@ public class BottomTabPane extends TabPane {
         previewWindowRect.setHeight(imagePreview.getBoundsInParent().getHeight() / imageScale);
         previewWindowRect.setTranslateX((x / imageScale) * imagePreview.getBoundsInParent().getWidth() / 2);
         previewWindowRect.setTranslateY((-y / imageScale) * imagePreview.getBoundsInParent().getHeight() / 2);
-
-        //System.out.println(imagePreview.getBoundsInParent().getWidth() + ", " + imagePreview.getBoundsInParent().getHeight());
-        System.out.println(getWidth() + ", " + getHeight());
     }
 
 
