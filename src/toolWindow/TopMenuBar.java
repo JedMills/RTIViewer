@@ -14,7 +14,12 @@ import java.util.ArrayList;
 public class TopMenuBar extends MenuBar {
 
     private Stage primaryStage;
-    private ArrayList<String> recentFilesList = new ArrayList<>();
+
+    private Menu openRecent;
+
+    private RadioMenuItem mipMap0;
+    private RadioMenuItem mipMap1;
+    private RadioMenuItem mipMap2;
 
     public TopMenuBar(Stage primaryStage){
         super();
@@ -27,8 +32,7 @@ public class TopMenuBar extends MenuBar {
         Menu menuFile = createFileMenu();
         Menu menuEdit = createEditMenu();
 
-        Menu menuView = new Menu("View");
-        getMenus().addAll(menuFile, menuEdit, menuView);
+        getMenus().addAll(menuFile, menuEdit);
         prefWidthProperty().bind(primaryStage.widthProperty());
     }
 
@@ -38,7 +42,9 @@ public class TopMenuBar extends MenuBar {
         MenuItem open = createMenuItem("Open", "open",
                 "images/folder-4x.png");
 
-        Menu openRecent = createMenu("Open recent", "openRecent", "images/clock-4x.png");
+        openRecent = createMenu("Open recent", "openRecent", "images/clock-4x.png");
+
+        updateOpenRecentList();
 
         MenuItem save = createMenuItem("Save as image", "saveAsImage",
                 "images/image-4x.png");
@@ -54,31 +60,72 @@ public class TopMenuBar extends MenuBar {
         return menuFile;
     }
 
+    public void updateOpenRecentList(){
+        openRecent.getItems().clear();
+
+        for(String fileName : RTIViewer.recentFiles){
+            MenuItem recentFile = new MenuItem(fileName);
+            recentFile.setOnAction(MenuBarListener.getInstance());
+            recentFile.setId("recentFileItem");
+            openRecent.getItems().add(recentFile);
+        }
+    }
+
 
     private Menu createEditMenu(){
         Menu preferences = new Menu("Preferences");
 
 
-        MenuItem defaultOpenFolder = createMenuItem("Set default open folder", "defaultOpenFolder",
-                "images/home-4x.png");
+        MenuItem defaultOpenFolder = createMenuItem("Set default open folder",
+                "defaultOpenFolder", "images/home-4x.png");
 
-        MenuItem defaultSaveFolder = createMenuItem("Set default save folder", "defaultSaveFolder",
-                "images/book-4x.png");
+        MenuItem defaultSaveFolder = createMenuItem("Set default save folder",
+                "defaultSaveFolder", "images/book-4x.png");
 
-        Menu setToolbarSize = createMenu("Set toolbar size", "setToolbarSize",
-                "images/resize-both-4x.png");
+        Menu setToolbarSize = createMenu("Set toolbar size",
+                "setToolbarSize", "images/resize-both-4x.png");
 
         MenuItem resizeSmall = createMenuItem("300 x 600", "resizeSmall");
         MenuItem resizeMedium = createMenuItem("450 x 800", "resizeMedium");
         MenuItem resizeLarge = createMenuItem("600 x 1000", "resizeLarge");
 
+        Menu mipMappingMenu = createMipMappingMenu();
+
         setToolbarSize.getItems().addAll(resizeSmall, resizeMedium, resizeLarge);
-        preferences.getItems().addAll(setToolbarSize, defaultOpenFolder, defaultSaveFolder);
+        preferences.getItems().addAll(setToolbarSize, defaultOpenFolder,
+                defaultSaveFolder, mipMappingMenu);
 
         return preferences;
     }
 
 
+    private Menu createMipMappingMenu(){
+        Menu menu = createMenu("Set mip mapping", "setMipMapping",
+                "images/layers-4x.png");
+
+        ToggleGroup toggleGroup = new ToggleGroup();
+        mipMap0 = createRadioMenuItem("No mip mapping", "mipMapping0",
+                toggleGroup);
+        mipMap1 = createRadioMenuItem("Mip map 1 ", "mipMapping1",
+                toggleGroup);
+        mipMap2 = createRadioMenuItem("Mip map 2", "mipMapping2",
+                toggleGroup);
+
+        mipMap0.setSelected(true);
+        menu.getItems().addAll(mipMap0, mipMap1, mipMap2);
+
+        return menu;
+    }
+
+
+    private RadioMenuItem createRadioMenuItem(String label, String id, ToggleGroup toggleGroup){
+        RadioMenuItem radioMenuItem = new RadioMenuItem(label);
+        radioMenuItem.setId(id);
+        radioMenuItem.setOnAction(MenuBarListener.getInstance());
+        radioMenuItem.setToggleGroup(toggleGroup);
+
+        return radioMenuItem;
+    }
 
 
     private MenuItem createMenuItem(String label, String id){
@@ -111,5 +158,17 @@ public class TopMenuBar extends MenuBar {
         imageView.setFitWidth(15);
         menu.setGraphic(imageView);
         return menu;
+    }
+
+    public boolean mipMapping0(){
+        return mipMap0.isSelected();
+    }
+
+    public boolean mipMapping1(){
+        return mipMap1.isSelected();
+    }
+
+    public boolean mipMapping2(){
+        return mipMap2.isSelected();
     }
 }

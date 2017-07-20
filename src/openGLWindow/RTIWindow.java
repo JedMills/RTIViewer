@@ -14,7 +14,6 @@ import toolWindow.RTIViewer;
 import utils.ShaderUtils;
 import utils.Utils;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -173,7 +172,8 @@ public abstract class RTIWindow implements Runnable{
     /**Height of the image as displayed on the window, updated each frame*/
     protected int reducedHeight;
 
-    private static final String ICON_LOCATION =  "images/rtiThumbnail-32.png";
+    private static final String ICON_32_LOCATION =  "images/rtiThumbnail-32.png";
+    private static final String ICON_64_LOCATION = "images/rtiThumbnail-64.png";
 
     /**
      * Creates a new RTIWindow, setting the passed RTIObject as this window's rtiObject, which it will
@@ -219,6 +219,7 @@ public abstract class RTIWindow implements Runnable{
             @Override
             public void invoke(long window, double xoffset, double yoffset) {
                 updateImageScale(yoffset);
+                RTIViewer.setFocusedWindow(RTIWindow.this);
             }
         });
 
@@ -279,16 +280,24 @@ public abstract class RTIWindow implements Runnable{
 
     private void setIcon(){
         try{
+
             IntBuffer w = memAllocInt(1);
             IntBuffer h = memAllocInt(1);
             IntBuffer comp = memAllocInt(1);
-            ByteBuffer icon = Utils.ioResourceToByteBuffer(ICON_LOCATION, 4096);
+            ByteBuffer icon32 = Utils.ioResourceToByteBuffer(ICON_32_LOCATION, 4096);
+            ByteBuffer icon64 = Utils.ioResourceToByteBuffer(ICON_64_LOCATION, 8192);
+
             GLFWImage.Buffer icons = GLFWImage.malloc(2);
-            ByteBuffer pixels = STBImage.stbi_load_from_memory(icon, w, h, comp, 4);
-            icons.position(0).width(w.get(0)).height(h.get(0)).pixels(pixels);
+            ByteBuffer pixels32 = STBImage.stbi_load_from_memory(icon32, w, h, comp, 4);
+            icons.position(0).width(w.get(0)).height(h.get(0)).pixels(pixels32);
+
+            ByteBuffer pixels64 = STBImage.stbi_load_from_memory(icon64, w, h, comp, 4);
+            icons.position(1).width(w.get(0)).height(h.get(0)).pixels(pixels64);
+
             icons.position(0);
             glfwSetWindowIcon(window, icons);
-            STBImage.stbi_image_free(pixels);
+            STBImage.stbi_image_free(pixels32);
+            STBImage.stbi_image_free(pixels64);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -580,10 +589,7 @@ public abstract class RTIWindow implements Runnable{
             program = normUnsharpMaskProgram;
         }else if(currentProgram.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
             program = imgUnsharpMaskProgram;
-        }else if(currentProgram.equals(RTIViewer.ShaderProgram.COEFF_UN_MASK)){
-            program = coeffUnsharpMaskProgram;
         }
-
 
         //use this program and rebind all the references otherwise OpenGL seems to forget about them
         GL20.glUseProgram(program);
@@ -745,8 +751,10 @@ public abstract class RTIWindow implements Runnable{
     }
 
     public void updateViewportFromPreview(float x, float y, float previewScale){
-        viewportX = x * previewScale * 2;
-        viewportY = y * previewScale * 2;
+        viewportX = x * previewScale;
+        viewportY = y * previewScale;
+
+        checkViewport();
     }
 
     public void updateViewportFromPreview(float previewScale){

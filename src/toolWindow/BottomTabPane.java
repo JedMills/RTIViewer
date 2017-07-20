@@ -197,25 +197,27 @@ public class BottomTabPane extends TabPane {
         imageBorderPane.prefWidthProperty().bind(RTIViewer.primaryStage.widthProperty());
         imageBorderPane.prefHeightProperty().bind(previewVBox.heightProperty());
 
+        previewWindowRect.setDisable(true);
+
         imagePreview.fitHeightProperty().bind(imageBorderPane.heightProperty());
         imagePreview.fitWidthProperty().bind(imageBorderPane.widthProperty());
         imagePreview.setSmooth(true);
         setDefaultImage();
 
-        imageContainerPane.setOnMouseDragged(new EventHandler<MouseEvent>() {
+        imagePreview.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
                 previewImageClicked(event.getX(), event.getY());
             }
         });
 
-        imageContainerPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+        imagePreview.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent event) {
                 previewImageClicked(event.getX(), event.getY());
             }
         });
 
-        imageContainerPane.setOnScroll(new EventHandler<ScrollEvent>() {
+        imagePreview.setOnScroll(new EventHandler<ScrollEvent>() {
             @Override
             public void handle(ScrollEvent event) {
                 //scroll up positive, scroll down negative
@@ -231,32 +233,12 @@ public class BottomTabPane extends TabPane {
     }
 
     private void previewImageClicked(double x, double y){
-        double normX = (2 * (x - (imageContainerPane.getWidth() / 2))
-                / imagePreview.getBoundsInParent().getWidth()) / Math.pow(previewRectScale, 0.1);
-        double normY = (-2 * (y - (imageContainerPane.getHeight() / 2))
-                / imagePreview.getBoundsInParent().getHeight()) / Math.pow(previewRectScale, 0.1);
+        float normX = (float)((x / imagePreview.getBoundsInParent().getWidth()) - 0.5) * 2;
+        float normY = (float)-(((y / imagePreview.getBoundsInParent().getHeight()) - 0.5) * 2);
 
-        float minX = (-1.0f + (1 / (previewRectScale))) / 2.0f;
-        float maxX = (1.0f - (1 / (previewRectScale))) / 2.0f;
-        float maxY = (1.0f - (1 / (previewRectScale))) / 2.0f;
-        float minY = (-1.0f + (1 / (previewRectScale))) / 2.0f;
-
-        if(normX > maxX){normX = maxX;}
-        else if(normX < minX){normX = minX;}
-        if(normY > maxY){normY = maxY;}
-        else if(normY < minY){normY = minY;}
-
-        previewPositionChanged(normX, normY);
+        RTIViewer.selectedWindow.updateViewportFromPreview(normX, normY, previewRectScale);
     }
 
-    private void previewPositionChanged(double x, double y){
-        previewWindowRect.setTranslateX((x) * imagePreview.getBoundsInParent().getWidth());
-        previewWindowRect.setTranslateY((-y) * imagePreview.getBoundsInParent().getHeight());
-
-        if(RTIViewer.selectedWindow != null) {
-            RTIViewer.selectedWindow.updateViewportFromPreview((float) x, (float) y, previewRectScale);
-        }
-    }
 
 
     public void setFileText(String text){
@@ -359,8 +341,13 @@ public class BottomTabPane extends TabPane {
         previewRectScale = imageScale;
         previewWindowRect.setWidth(imagePreview.getBoundsInParent().getWidth() / imageScale);
         previewWindowRect.setHeight(imagePreview.getBoundsInParent().getHeight() / imageScale);
-        previewWindowRect.setTranslateX((x / imageScale) * imagePreview.getBoundsInParent().getWidth() / 2);
-        previewWindowRect.setTranslateY((-y / imageScale) * imagePreview.getBoundsInParent().getHeight() / 2);
+
+        double mappedX = (x / imageScale) * imagePreview.getBoundsInParent().getWidth() /2;
+        double mappedY = -(y / imageScale) * imagePreview.getBoundsInParent().getHeight() / 2;
+
+
+        previewWindowRect.setTranslateX(mappedX);
+        previewWindowRect.setTranslateY(mappedY);
     }
 
 

@@ -49,7 +49,8 @@ public class RTIParser {
      * @throws IOException          if there's an error when trying to access the file
      * @throws RTIFileException     if there's an error in file type/format/parsing the file
      */
-    public static RTIObject createPtmFromFile(String fileName) throws IOException, RTIFileException, RuntimeException {
+    public static RTIObject createPtmFromFile(String fileName, int mipMappingLevel) throws IOException,
+                                                                            RTIFileException, RuntimeException {
         if(!(fileName.endsWith(".ptm") || fileName.endsWith(".rti"))){
             throw new RTIFileException("Only '.rti' and '.ptm' files accepted.");
         }
@@ -60,27 +61,35 @@ public class RTIParser {
         //get the PTM version, file format, width, height, and coefficients
         int[] headerData = getHeaderData(fileName, format);
 
+        int finalWidth = (int)  Math.floor((headerData[1]) / (Math.pow(2, mipMappingLevel)));
+        int finalHeight = (int) Math.floor((headerData[2]) / (Math.pow(2, mipMappingLevel)));
+
+
         if(format.equals("PTM_FORMAT_RGB")) {
             //get the coefficients for the individual texels
-            IntBuffer[] texelData = getTexelDataRGB(fileName, format, headerData[0], headerData[1], headerData[2]);
+            IntBuffer[] texelData = getTexelDataRGB(fileName, format, headerData[0], headerData[1],
+                    headerData[2], mipMappingLevel);
 
-            //create the ptmCreation.RTIObject from the data
-            return new PTMObjectRGB(fileName, headerData[1], headerData[2], texelData);
+            return new PTMObjectRGB(fileName, finalWidth, finalHeight, texelData);
 
         }else if(format.equals("PTM_FORMAT_LRGB")){
-            IntBuffer[] texelData = getTexelDataLRGB(fileName, format, headerData[0], headerData[1], headerData[2]);
+            IntBuffer[] texelData = getTexelDataLRGB(fileName, format, headerData[0], headerData[1],
+                    headerData[2], mipMappingLevel);
 
-            return new PTMObjectLRGB(fileName, headerData[1], headerData[2], texelData);
+            return new PTMObjectLRGB(fileName, finalWidth, finalHeight, texelData);
 
         }else if(format.equals("PTM_FORMAT_JPEG_LRGB")){
-            IntBuffer[] texelData = getTexelDataJPEGLRGB(fileName, headerData);
+            IntBuffer[] texelData = getTexelDataJPEGLRGB(fileName, headerData, mipMappingLevel);
 
-            return new PTMObjectLRGB(fileName, headerData[1], headerData[2], texelData);
+            return new PTMObjectLRGB(fileName, finalWidth, finalHeight, texelData);
         }else if(format.equals("HSH")){
             FloatBuffer[] texelData = getTexelDataHSH(fileName, headerData[0], headerData[1], headerData[2],
-                                                    headerData[3], headerData[4], headerData[5], headerData[6]);
+                    headerData[3], headerData[4], headerData[5], headerData[6], mipMappingLevel);
 
-            return new RTIObjectHSH(fileName, headerData[0], headerData[1], headerData[2],
+            finalWidth = (int)  Math.floor((headerData[0]) / (Math.pow(2, mipMappingLevel)));
+            finalHeight = (int) Math.floor((headerData[1]) / (Math.pow(2, mipMappingLevel)));
+
+            return new RTIObjectHSH(fileName, finalWidth, finalHeight, headerData[2],
                                     headerData[3], headerData[4], texelData);
         }
 
@@ -97,8 +106,8 @@ public class RTIParser {
      * @throws IOException          if there's an error when trying to access the file
      * @throws RTIFileException     if there's an error in file type/format/parsing the file
      */
-    public static RTIObject createPtmFromFile(File file) throws IOException, RTIFileException {
-        return createPtmFromFile(file.getAbsolutePath());
+    public static RTIObject createPtmFromFile(File file, int mipMapping) throws IOException, RTIFileException {
+        return createPtmFromFile(file.getAbsolutePath(), mipMapping);
     }
 
 
@@ -346,8 +355,8 @@ public class RTIParser {
      * @throws IOException          if there's an error trying to access the file
      * @throws RTIFileException     if there's an error parsing the .ptm file
      */
-    private static IntBuffer[] getTexelDataRGB(String fileName, String format,
-                                          int startPos, int width, int height) throws IOException, RTIFileException {
+    private static IntBuffer[] getTexelDataRGB(String fileName, String format, int startPos, int width,
+                                               int height, int mipMapping) throws IOException, RTIFileException {
         //arrays to store coefficients for each colour, all file types will eventually return these
         IntBuffer redVals1 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer redVals2 = BufferUtils.createIntBuffer(width * height * 3);
@@ -397,13 +406,66 @@ public class RTIParser {
         }
         stream.close();
 
+        if(mipMapping > 0){
+            redVals1 = calcMipMapping(redVals1, width, height, mipMapping);
+            redVals2 = calcMipMapping(redVals2, width, height, mipMapping);
+            greenVals1 = calcMipMapping(greenVals1, width, height, mipMapping);
+            greenVals2 = calcMipMapping(greenVals2, width, height, mipMapping);
+            blueVals1 = calcMipMapping(blueVals1, width, height, mipMapping);
+            blueVals2 = calcMipMapping(blueVals2, width, height, mipMapping);
+        }
+
         return new IntBuffer[]{redVals1, redVals2, greenVals1, greenVals2, blueVals1, blueVals2};
     }
 
 
 
-    private static IntBuffer[] getTexelDataLRGB(String fileName, String format,
-                                         int startPos, int width, int height) throws IOException, RTIFileException {
+    private static IntBuffer calcMipMapping(IntBuffer data, int width, int height, int mapLevel){
+        int newWidth = (int) (Math.floor(width / 2.0f));
+        int newHeight = (int) (Math.floor(height) / 2.0f);
+
+        IntBuffer mipMap = BufferUtils.createIntBuffer((int)Math.ceil(data.capacity() / 4.0f));
+
+        int[] avgCoeffs;
+        int offset;
+        for(int y = 0; y < height - 1; y += 2){
+            for(int x = 0; x < width - 1; x += 2){
+                offset = (((y / 2) * newWidth) + (x / 2)) * 3;
+                avgCoeffs = averageAroundPixel(data, width, height, x, y);
+
+                for(int i = 0; i < 3; i ++){mipMap.put(offset + i, avgCoeffs[i]);}
+            }
+        }
+
+        if(mapLevel == 1){
+            return mipMap;
+        }else{
+            //oooh recursion
+            return calcMipMapping(mipMap, newWidth, newHeight, mapLevel - 1);
+        }
+    }
+
+
+    private static int[] averageAroundPixel(IntBuffer data, int width, int height, int x, int y){
+        int offset;
+        int[] averages = {0, 0, 0};
+        for(int dy = 0; dy < 2; dy ++){
+            for(int dx = 0; dx < 2; dx++){
+                offset = (((y + dy) * width) + (x + dx)) * 3;
+                for(int i = 0; i < 3; i++){averages[i] += data.get(offset + i);}
+            }
+        }
+        averages[0] /= 4;
+        averages[1] /= 4;
+        averages[2] /= 4;
+
+        return averages;
+    }
+
+
+
+    private static IntBuffer[] getTexelDataLRGB(String fileName, String format, int startPos, int width,
+                                                int height, int mipMappingLevel) throws IOException, RTIFileException {
         IntBuffer ptmCoeffs1 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer ptmCoeffs2 = BufferUtils.createIntBuffer(width * height * 3);
         IntBuffer rgbCoeffs = BufferUtils.createIntBuffer(width * height * 3);
@@ -449,13 +511,65 @@ public class RTIParser {
         }
 
         stream.close();
+
+
+        if(mipMappingLevel > 0){
+            ptmCoeffs1 = calcMipMapping(ptmCoeffs1, width, height, mipMappingLevel);
+            ptmCoeffs2 = calcMipMapping(ptmCoeffs2, width, height, mipMappingLevel);
+            rgbCoeffs = calcMipMapping(rgbCoeffs, width, height, mipMappingLevel);
+        }
+
         return new IntBuffer[]{ptmCoeffs1, ptmCoeffs2, rgbCoeffs};
     }
 
 
+    private static FloatBuffer calcMipMapping(FloatBuffer data, int width, int height, int mapLevel){
+        int newWidth = (int) (Math.floor(width / 2.0f));
+        int newHeight = (int) (Math.floor(height) / 2.0f);
+
+        FloatBuffer mipMap = BufferUtils.createFloatBuffer((int)Math.ceil(data.capacity() / 4.0f));
+
+        float[] avgCoeffs;
+        int offset;
+        for(int y = 0; y < height - 1; y += 2){
+            for(int x = 0; x < width - 1; x += 2){
+                offset = (((y / 2) * newWidth) + (x / 2)) * 3;
+                avgCoeffs = averageAroundPixel(data, width, height, x, y);
+
+                for(int i = 0; i < 3; i ++){mipMap.put(offset + i, avgCoeffs[i]);}
+            }
+        }
+
+        if(mapLevel == 1){
+            return mipMap;
+        }else{
+            //oooh recursion
+            return calcMipMapping(mipMap, newWidth, newHeight, mapLevel - 1);
+        }
+    }
+
+
+    private static float[] averageAroundPixel(FloatBuffer data, int width, int height, int x, int y){
+        int offset;
+        float[] averages = {0, 0, 0};
+        for (int dy = 0; dy < 2; dy++) {
+            for (int dx = 0; dx < 2; dx++) {
+                offset = (((y + dy) * width) + (x + dx)) * 3;
+                for (int i = 0; i < 3; i++) {
+                    averages[i] += data.get(offset + i);
+                }
+            }
+        }
+        averages[0] /= 4.0f;
+        averages[1] /= 4.0f;
+        averages[2] /= 4.0f;
+
+        return averages;
+    }
+
 
     private static FloatBuffer[] getTexelDataHSH(String fileName, int width, int height, int colsPerPixel,
-                                     int basisTerms, int basisType, int elemSize, int startPos) throws IOException{
+                     int basisTerms, int basisType, int elemSize, int startPos, int mipMappingLevel) throws IOException{
 
 
         LittleEndianDataInputStream leStream = new LittleEndianDataInputStream(new FileInputStream(fileName));
@@ -520,6 +634,29 @@ public class RTIParser {
         }
         stream.close();
 
+
+        if(mipMappingLevel > 0){
+            System.out.println(redCoeffs1.capacity());
+            redCoeffs1 = calcMipMapping(redCoeffs1, width, height, mipMappingLevel);
+            System.out.println(redCoeffs1.capacity());
+            greenCoeffs1 = calcMipMapping(greenCoeffs1, width, height, mipMappingLevel);
+            blueCoeffs1 = calcMipMapping(blueCoeffs1, width, height, mipMappingLevel);
+
+            if(basisTerms > 3){
+                redCoeffs2 = calcMipMapping(redCoeffs2, width, height, mipMappingLevel);
+                greenCoeffs2 = calcMipMapping(greenCoeffs2, width, height, mipMappingLevel);
+                blueCoeffs2 = calcMipMapping(blueCoeffs2, width, height, mipMappingLevel);
+            }
+
+            if(basisTerms > 6){
+                redCoeffs3 = calcMipMapping(redCoeffs3, width, height, mipMappingLevel);
+                greenCoeffs3 = calcMipMapping(greenCoeffs3, width, height, mipMappingLevel);
+                blueCoeffs3 = calcMipMapping(blueCoeffs3, width, height, mipMappingLevel);
+            }
+        }
+
+
+
         return new FloatBuffer[]{redCoeffs1,    redCoeffs2,     redCoeffs3,
                                  greenCoeffs1,  greenCoeffs2,   greenCoeffs3,
                                  blueCoeffs1,   blueCoeffs2,    blueCoeffs3};
@@ -528,9 +665,8 @@ public class RTIParser {
 
 
 
-    private static IntBuffer[] getTexelDataJPEGLRGB(String fileName, int[] headerData)
-                                                                        throws IOException, RTIFileException,
-                                                                            RuntimeException{
+    private static IntBuffer[] getTexelDataJPEGLRGB(String fileName, int[] headerData, int mipMappingLevel)
+                                                        throws IOException, RTIFileException, RuntimeException{
         int dataStartPos = headerData[0];
         int width = headerData[1];
         int height = headerData[2];
@@ -621,8 +757,14 @@ public class RTIParser {
                 rgbCoeffs.put(offset3 + 2, coeffs[8][offset]);
             }
         }
-
         stream.close();
+
+        if(mipMappingLevel > 0){
+            ptmCoeffs1 = calcMipMapping(ptmCoeffs1, width, height, mipMappingLevel);
+            ptmCoeffs2 = calcMipMapping(ptmCoeffs2, width, height, mipMappingLevel);
+            rgbCoeffs = calcMipMapping(rgbCoeffs, width, height, mipMappingLevel);
+        }
+
         return new IntBuffer[]{ptmCoeffs1, ptmCoeffs2, rgbCoeffs};
     }
 

@@ -4,14 +4,12 @@ import bookmarks.Bookmark;
 import bookmarks.BookmarkManager;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -64,7 +62,7 @@ public class RTIViewer extends Application {
     private static FilterParamsPane paramsPane;
     private static BottomTabPane bottomTabPane;
     public static VBox flowPane;
-
+    private static TopMenuBar menuBar;
 
     public enum ShaderProgram{DEFAULT, NORMALS, DIFF_GAIN, SPEC_ENHANCE, NORM_UNSHARP_MASK, IMG_UNSHARP_MASK,
                                 COEFF_UN_MASK}
@@ -86,7 +84,9 @@ public class RTIViewer extends Application {
 
     private static ArrayList<RTIWindow> RTIWindows = new ArrayList<>();
 
-    public static final Image THUMBNAIL = new Image("images/rtiThumbnail.png");
+    public static final Image THUMBNAIL = new Image("images/rtiThumbnail-128.png");
+
+    public static ArrayList<String> recentFiles = new ArrayList<>();
 
 
     @Override
@@ -172,7 +172,7 @@ public class RTIViewer extends Application {
         flowPane.setId("mainSceneFlowPane");
         Scene scene = new Scene(flowPane, width, height);
 
-        MenuBar menuBar = new TopMenuBar(primaryStage);
+        menuBar = new TopMenuBar(primaryStage);
         flowPane.getChildren().add(menuBar);
 
         lightControlGroup = new LightControlGroup(this, primaryStage, flowPane);
@@ -428,11 +428,57 @@ public class RTIViewer extends Application {
     }
 
 
+    public static void addRecentFile(String filePath){
+        if(Utils.checkIn(filePath, recentFiles)) {
+            int index = 0;
+            for (String s : recentFiles) {
+                if (s.equals(filePath)) {
+                    break;
+                }
+                index++;
+            }
+            recentFiles.remove(index);
+        }
+
+        if(recentFiles.size() == 8){
+            recentFiles.remove(recentFiles.size() - 1);
+        }
+
+        recentFiles.add(0, filePath);
+        saveRecentFiles();
+        menuBar.updateOpenRecentList();
+    }
+
+    private static void saveRecentFiles(){
+        Preferences preferences = Preferences.userNodeForPackage(RTIViewer.class);
+
+        for(int i = 0; i < 8; i++) {
+            if (i < recentFiles.size()) {
+                preferences.put("recentFile" + String.valueOf(i), recentFiles.get(i));
+            } else {
+                preferences.put("recentFile" + String.valueOf(i), "");
+            }
+        }
+
+    }
+
+
 
     private static void loadPreferences(){
         Preferences preferences = Preferences.userNodeForPackage(RTIViewer.class);
         String defaultOpenPath = preferences.get("defaultOpenDir", "");
         String defaultSavePath = preferences.get("defaultSaveDir", "");
+
+        ArrayList<String> recentFilesList = new ArrayList<>();
+
+        for(int i = 0; i < 8 ; i++){
+            String recentFile = preferences.get("recentFile" + String.valueOf(i), "");
+            if(!recentFile.equals("")){
+                recentFilesList.add(recentFile);
+            }
+        }
+
+        recentFiles = recentFilesList;
 
         if(!defaultOpenPath.equals("")){defaultOpenDirectory = new File(defaultOpenPath);}
         if(!defaultSavePath.equals("")){defaultSaveDirectory = new File(defaultSavePath);}
@@ -444,5 +490,13 @@ public class RTIViewer extends Application {
         primaryStage.setWidth(width);
         primaryStage.setHeight(height);
         resizeGUI();
+    }
+
+    public static int getMipMapping(){
+        if(menuBar.mipMapping0()){return 0;}
+        else if(menuBar.mipMapping1()){return 1;}
+        else if(menuBar.mipMapping2()){return 2;}
+
+        return -1;
     }
 }

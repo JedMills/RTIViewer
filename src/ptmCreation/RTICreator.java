@@ -39,7 +39,7 @@ public class RTICreator implements Runnable {
                     loadingDialog.show();
                 }
             });
-            targetObject = RTIParser.createPtmFromFile(sourceFile);
+            targetObject = RTIParser.createPtmFromFile(sourceFile, RTIViewer.getMipMapping());
             ArrayList<Bookmark> bookmarks = getBookmarksFromXML(sourceFile);
 
             if(bookmarks.size() > 0){
@@ -47,17 +47,21 @@ public class RTICreator implements Runnable {
             }
 
             RTIViewer.createNewPTMWindow(targetObject);
+            RTIViewer.addRecentFile(sourceFile.getAbsolutePath());
         }catch(IOException e){
+            e.printStackTrace();
             RTIViewer.fileReadingAlert.setContentText("Error accessing file at: " +
                                                         sourceFile.getPath());
 
             showFileReadingAlert();
         }catch(RTIFileException e){
+            e.printStackTrace();
             RTIViewer.fileReadingAlert.setContentText("Error when reading file at: " +
                                                         sourceFile.getPath() + ": " +
                                                         e.getMessage());
             showFileReadingAlert();
         }catch (RuntimeException e){
+            e.printStackTrace();
             RTIViewer.fileReadingAlert.setContentText("Unknown error when reading file at: " +
                                                         sourceFile.getPath() + ".");
             showFileReadingAlert();

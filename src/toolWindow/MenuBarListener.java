@@ -75,6 +75,16 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
             }else if(source.getId().equals("resizeLarge")){
                 RTIViewer.resize(600, 1000);
 
+            }else if(source.getId().equals("recentFileItem")){
+                File file = new File(source.getText());
+
+                if(!file.exists()){
+                    RTIViewer.fileReadingAlert.setContentText("Unable to find file. Check that is still exists.");
+                    RTIViewer.fileReadingAlert.show();
+                    return;
+                }
+
+                new Thread(new RTICreator(file)).start();
             }
         }
     }
