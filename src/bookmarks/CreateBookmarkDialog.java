@@ -23,29 +23,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Jed on 25-Jun-17.
+ * This class represents a Dialog that is opened when the user clicks the 'Add' button in the
+ * {@link toolWindow.BottomTabPane} to add a {@link Bookmark} to the currently selected {@link ptmCreation.RTIObject}.
+ * The Dialog contains a text field to input the new {@link Bookmark} name, and 'Add' and 'Cancel' buttons.
+ *
+ * @see Bookmark
+ * @see toolWindow.BottomTabPane
+ *
+ * @author Jed Mills
  */
 public class CreateBookmarkDialog{
 
+    /** The stage that the dialog exists in*/
     private Stage stage;
-    private Scene scene;
-    private Label createNameLabel;
-    private TextField bookmarkNameField;
-    private Button addButton;
-    private Button cancelButton;
-    private List<String> currentBoomarkNames;
 
+    /** Scene containing the text input box and buttons */
+    private Scene scene;
+
+    /** Label for the text box to input the bookmark name into */
+    private Label createNameLabel;
+
+    /** Where the user types the new bookmark name */
+    private TextField bookmarkNameField;
+
+    /** Button to add the new bookmark */
+    private Button addButton;
+
+    /** Button to cnacel adding  anew bookmark */
+    private Button cancelButton;
+
+    /** A list of all the names of bookmarks for the current rti object, used to check names aren't repeated */
+    private List<String> currentBookmarkNames;
+
+
+    /**
+     * Creates s new BookmarkDialog. This creation involves making a new Stage for the dialog, creating the
+     * layout, which contains a TextField to input the new {@link Bookmark} name, and 'Add' and 'Cancel' buttons.
+     */
     public CreateBookmarkDialog(){
+        //the stage (window) for the dialog
         stage = new Stage(StageStyle.UNIFIED);
         stage.setTitle("Create a bookmark");
         stage.initModality(Modality.WINDOW_MODAL);
         stage.initOwner(RTIViewer.primaryStage);
 
-        currentBoomarkNames = new ArrayList<>();
+        //will be updated with RTIObjects' bookmark names to ensure no duplicate bookmarks
+        currentBookmarkNames = new ArrayList<>();
 
+        //create the layout with buttons
         GridPane gridPane = createLayout();
         setButtonActions();
 
+        //add the layout to the window and set it's min and max size
         scene = new Scene(gridPane);
         stage.setScene(scene);
         stage.setMaxHeight(200);
@@ -53,37 +82,45 @@ public class CreateBookmarkDialog{
         stage.setMinHeight(150);
         stage.setMinWidth(350);
 
-        stage.widthProperty().addListener(new ChangeListener<Number>() {
+        //bind resizing the GUI to the width hand height of the stage
+        ChangeListener changeListener = new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 resizeGUI();
             }
-        });
-
-        stage.heightProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                resizeGUI();
-            }
-        });
+        };
+        stage.widthProperty().addListener(changeListener);
+        stage.heightProperty().addListener(changeListener);
     }
 
+
+
+
+    /**
+     * Creates the component layout for the GUI of this dialog. The layout contains a label saying "Bookmark Name:",
+     * a TextField for the user to input a new {@link Bookmark} name, an "Add" button to add the new bookmark, and
+     * a "Cancel" button toclose the window without adding the bookmark.
+     *
+     * @return the generated layout
+     */
     private GridPane createLayout(){
+        //all pretty self-explanatory, just creating components and setting where they are in the grid
         GridPane gridPane = new GridPane();
 
-        createNameLabel = new Label("Bookmark Name:");
-        GridPane.setConstraints(createNameLabel, 0, 0, 1, 1);
+            createNameLabel = new Label("Bookmark Name:");
+            GridPane.setConstraints(createNameLabel, 0, 0, 1, 1);
 
-        bookmarkNameField = new TextField("");
-        bookmarkNameField.setEditable(true);
-        GridPane.setConstraints(bookmarkNameField, 0, 1, 3, 1);
+            bookmarkNameField = new TextField("");
+            bookmarkNameField.setEditable(true);
+            GridPane.setConstraints(bookmarkNameField, 0, 1, 3, 1);
 
-        addButton = new Button("Add");
-        GridPane.setConstraints(addButton, 1, 2, 1, 1);
+            addButton = new Button("Add");
+            GridPane.setConstraints(addButton, 1, 2, 1, 1);
 
-        cancelButton = new Button("Cancel");
-        GridPane.setConstraints(cancelButton, 2, 2, 1, 1);
+            cancelButton = new Button("Cancel");
+            GridPane.setConstraints(cancelButton, 2, 2, 1, 1);
 
+        //make the grid look nice
         gridPane.getChildren().addAll(createNameLabel, bookmarkNameField, addButton, cancelButton);
         gridPane.setAlignment(Pos.CENTER);
         gridPane.setHgap(10);
@@ -93,12 +130,22 @@ public class CreateBookmarkDialog{
         return gridPane;
     }
 
+
+
+
+    /**
+     * Sets the actions for the 'Add' and 'Cancel' buttons. 'Add' checks that the input name is not in the
+     * {@link CreateBookmarkDialog#currentBookmarkNames} list. If the name already exists, the button shows a
+     * dialog to the user asking for another name. If it doesn't it gets the RTIWindow to create a new one. 'Cancel'
+     * closes the dialog without doing anything.
+     */
     private void setButtonActions(){
+        //set the action for the 'Add' button
         addButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 if(bookmarkNameField.getText().replaceAll("\\s+","").equals("")){
-                    stage.close();
+                    //if the name only contains spaces, it's invalid, so show a dialog
                     RTIViewer.entryAlert.setContentText("Please enter a valid bookmark name.");
                     bookmarkNameField.setText("");
                     Platform.runLater(new Runnable() {
@@ -107,7 +154,9 @@ public class CreateBookmarkDialog{
                             RTIViewer.entryAlert.showAndWait();
                         }
                     });
-                }else if(Utils.checkIn(bookmarkNameField.getText(), currentBoomarkNames)){
+
+                }else if(Utils.checkIn(bookmarkNameField.getText(), currentBookmarkNames)){
+                    //if a bookmark with the same name already exists, show a dialog asking for a new name
                     RTIViewer.entryAlert.setContentText("Please enter a unique bookmark name.");
                     Platform.runLater(new Runnable() {
                         @Override
@@ -115,20 +164,21 @@ public class CreateBookmarkDialog{
                             RTIViewer.entryAlert.showAndWait();
                         }
                     });
+
                 }else{
+                    //otherwise, the name is ok and we can create a new bookmark
                     RTIViewer.createBookmark(bookmarkNameField.getText());
                     stage.close();
                     bookmarkNameField.setText("");
                 }
-
-
-
             }
         });
 
+        //set the action for the 'Cancel' button
         cancelButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                //just close the dialog and reset the text field
                 stage.close();
                 bookmarkNameField.setText("");
             }
@@ -136,11 +186,19 @@ public class CreateBookmarkDialog{
     }
 
 
+
+
+    /**
+     * Makes the size of the text for the 'Bookmark Name:', and the buttons bigger if the dialog's above a certain
+     * size.
+     */
     private void resizeGUI(){
         int fontSize = 12;
+        //if the dialog's big enough, make the font bigger
         if(stage.getHeight() >= 175 && stage.getWidth() >= 375){
             fontSize = 16;
         }
+        //set the font size for all the components
         createNameLabel.setFont(Font.font(fontSize));
         bookmarkNameField.setFont(Font.font(fontSize));
         addButton.setFont(Font.font(fontSize));
@@ -148,13 +206,26 @@ public class CreateBookmarkDialog{
     }
 
 
+
+
+    /**
+     * Shows the dialog.
+     */
     public void show(){
         stage.showAndWait();
     }
 
 
+
+
+    /**
+     * Sets the {@link CreateBookmarkDialog#currentBookmarkNames} attribute. This should be called when adding
+     * a new {@link Bookmark} so the dialog cancheck there ar eno duplicate {@link Bookmark}names.
+     *
+     * @param currentBookmarkNames  names of the bookmarks for the current RTIObject
+     */
     public void setCurrentBookmarkNames(List<String> currentBookmarkNames){
-        this.currentBoomarkNames = currentBookmarkNames;
+        this.currentBookmarkNames = currentBookmarkNames;
     }
 
 }
