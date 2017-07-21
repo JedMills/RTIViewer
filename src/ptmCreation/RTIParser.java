@@ -636,9 +636,7 @@ public class RTIParser {
 
 
         if(mipMappingLevel > 0){
-            System.out.println(redCoeffs1.capacity());
             redCoeffs1 = calcMipMapping(redCoeffs1, width, height, mipMappingLevel);
-            System.out.println(redCoeffs1.capacity());
             greenCoeffs1 = calcMipMapping(greenCoeffs1, width, height, mipMappingLevel);
             blueCoeffs1 = calcMipMapping(blueCoeffs1, width, height, mipMappingLevel);
 

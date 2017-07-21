@@ -32,7 +32,9 @@ public class MenuBarListener implements EventHandler<ActionEvent>{
             if(source.getId().equals("open")){
                 RTIViewer.fileChooser.setTitle("Open RTI File");
 
-                if(RTIViewer.defaultOpenDirectory.exists() && RTIViewer.defaultOpenDirectory.isDirectory()) {
+                if(RTIViewer.defaultOpenDirectory != null &&
+                        RTIViewer.defaultOpenDirectory.exists() &&
+                        RTIViewer.defaultOpenDirectory.isDirectory()) {
                     RTIViewer.fileChooser.setInitialDirectory(RTIViewer.defaultOpenDirectory);
                 }
                 File file = RTIViewer.fileChooser.showOpenDialog(RTIViewer.primaryStage);

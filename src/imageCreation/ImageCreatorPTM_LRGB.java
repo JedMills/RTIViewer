@@ -160,8 +160,6 @@ public class ImageCreatorPTM_LRGB {
                                                       boolean red, boolean green, boolean blue, float[] shaderParams){
         WritableImage image = new WritableImage(ptmObjectLRGB.getWidth(), ptmObjectLRGB.getHeight());
 
-        System.out.println("gain: " + shaderParams[0]);
-
         int position;
         float lum, r, g, b;
         for(int x = 0; x < ptmObjectLRGB.getWidth(); x++) {

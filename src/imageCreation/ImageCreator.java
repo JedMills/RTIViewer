@@ -21,7 +21,7 @@ public class ImageCreator {
 
     public static void saveImage(RTIObject rtiObject, float lightX, float lightY, RTIViewer.ShaderProgram shaderProgram,
                                     boolean red, boolean green, boolean blue, String format, File destination,
-                                    float[] shaderParams){
+                                    float[] shaderParams, boolean isGreyscale){
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -42,7 +42,7 @@ public class ImageCreator {
                 }
 
                 try{
-                    saveImage(createdImage, format, destination);
+                    saveImage(createdImage, format, destination, isGreyscale);
                 }catch (IOException e){
                     e.printStackTrace();
 
@@ -56,22 +56,44 @@ public class ImageCreator {
 
 
 
-    private static void saveImage(WritableImage writableImage, String format, File destination) throws IOException{
+    private static void saveImage(WritableImage writableImage, String format,
+                                  File destination, boolean isGreyScale) throws IOException{
         BufferedImage image = SwingFXUtils.fromFXImage(writableImage, null);
 
-        if(format.toUpperCase().equals("JPG")){
-            BufferedImage newImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        BufferedImage newImg = new BufferedImage(image.getWidth(),
+                                            image.getHeight(), BufferedImage.TYPE_INT_RGB);
 
-            for(int x = 0; x < image.getWidth(); x++){
-                for(int y = 0; y < image.getHeight(); y++){
-                    newImg.setRGB(x, y, image.getRGB(x, y));
-                }
+        int rgb;
+        for(int x = 0; x < image.getWidth(); x++){
+            for(int y = 0; y < image.getHeight(); y++){
+                rgb = image.getRGB(x, y);
+
+                if(isGreyScale){rgb = convertToGreyscale(rgb);}
+
+                newImg.setRGB(x, y, rgb);
             }
-            ImageIO.write(newImg, format.toUpperCase(), destination);
-        }else {
-            ImageIO.write(image, format.toUpperCase(), destination);
         }
+        ImageIO.write(newImg, format.toUpperCase(), destination);
+
     }
+
+
+
+
+    private static int convertToGreyscale(int rgb){
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = (rgb & 0xFF);
+
+        int grayLevel = (r + g + b) / 3;
+        int gray = (grayLevel << 16) + (grayLevel << 8) + grayLevel;
+
+        return gray;
+    }
+
+
+
+
 
     public static WritableImage createNormalsImage(RTIObject rtiObject, boolean red, boolean green, boolean blue){
         WritableImage writableImage = new WritableImage(rtiObject.getWidth(), rtiObject.getHeight());

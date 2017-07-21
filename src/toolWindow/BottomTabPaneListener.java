@@ -67,7 +67,7 @@ public class BottomTabPaneListener implements EventHandler<ActionEvent> {
                 } else if(sourceButton.getId().equals("updateBookmark")){
                     BookmarkManager.updateBookmark(selectedBookmarkName);
 
-                }else if(sourceButton.getId().equals("saveAs")){
+                }else if(sourceButton.getId().equals("saveAsButton")){
 
                     if(bottomTabPane.redChannelButton.isSelected() ||
                             bottomTabPane.greenChannelButton.isSelected() ||
@@ -75,19 +75,23 @@ public class BottomTabPaneListener implements EventHandler<ActionEvent> {
 
                         RTIViewer.fileChooser.setTitle("Save RTI as image...");
 
-                        String fileType = bottomTabPane.imageFormats.getSelectionModel().selectedItemProperty().getValue();
+                        String fileType = bottomTabPane.imageFormatsSelector.getSelectionModel().selectedItemProperty().getValue();
 
                         if(RTIViewer.defaultSaveDirectory != null){
                             RTIViewer.fileChooser.setInitialDirectory(RTIViewer.defaultSaveDirectory);
                         }
                         RTIViewer.fileChooser.getExtensionFilters().clear();
-                        RTIViewer.fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("."+fileType, "*."+fileType));
+                        RTIViewer.fileChooser.getExtensionFilters().add(
+                                new FileChooser.ExtensionFilter("." + fileType, "*." + fileType));
                         File destination = RTIViewer.fileChooser.showSaveDialog(RTIViewer.primaryStage);
 
                         if(destination == null){return;}
 
                         float[] renderParams = getCurrentRenderParams();
 
+                        boolean isGreyscale = false;
+                        String colourFormat = bottomTabPane.colourModelSelector.getValue();
+                        if(colourFormat.equals("Greyscale")){isGreyscale = true;}
 
                         ImageCreator.saveImage(RTIViewer.selectedWindow.rtiObject,
                                                 RTIViewer.globalLightPos.x, RTIViewer.globalLightPos.y,
@@ -97,7 +101,8 @@ public class BottomTabPaneListener implements EventHandler<ActionEvent> {
                                                 bottomTabPane.blueChannelButton.isSelected(),
                                                 fileType,
                                                 destination,
-                                                renderParams);
+                                                renderParams,
+                                                isGreyscale);
 
                         RTIViewer.fileChooser.getExtensionFilters().clear();
                     }else{

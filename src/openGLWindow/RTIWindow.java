@@ -172,6 +172,9 @@ public abstract class RTIWindow implements Runnable{
     /**Height of the image as displayed on the window, updated each frame*/
     protected int reducedHeight;
 
+
+    private float imageAspectRatio;
+
     private static final String ICON_32_LOCATION =  "images/rtiThumbnail-32.png";
     private static final String ICON_64_LOCATION = "images/rtiThumbnail-64.png";
 
@@ -186,6 +189,8 @@ public abstract class RTIWindow implements Runnable{
 
         imageWidth = rtiObject.getWidth();
         imageHeight = rtiObject.getHeight();
+
+        imageAspectRatio = imageHeight / imageWidth;
     }
 
 
@@ -661,10 +666,19 @@ public abstract class RTIWindow implements Runnable{
 
     /**
      * Sets the location of the RTI image in the window. Centers the image in the frame, with empty space on either
-     * side fo the image if the window is not of the same aspect ratio as the RTI image.
+     * side of the image if the window is not of the same aspect ratio as the RTI image.
      */
     private void setViewport(){
-        if(windowWidth[0] > windowHeight[0]){
+        float windowAspectRatio = ((float)windowHeight[0]) / ((float)windowWidth[0]);
+
+        if(windowAspectRatio > imageAspectRatio){
+            //there will be space on the top and bottom of the image, so translate in the y and limit the height
+            //of the image to keep the image's aspect ratio
+            reducedHeight = (int)((imageAspectRatio) * windowWidth[0]);
+            yOffset = (windowHeight[0] - reducedHeight) / 2;
+            xOffset = 0;
+            reducedWidth = windowWidth[0];
+        }else if(windowAspectRatio < imageAspectRatio){
             //there will be space on either side of the image, so translate in the x and limit the width
             //of the image to keep the image's aspect ratio
             reducedWidth = (int)((imageWidth / imageHeight) * windowHeight[0]);
@@ -672,13 +686,13 @@ public abstract class RTIWindow implements Runnable{
             yOffset = 0;
             reducedHeight = windowHeight[0];
         }else{
-            //there will be space on the top and bottom of the image, so translate in the y and limit the height
-            //of the image to keep the image's aspect ratio
-            reducedHeight = (int)((imageHeight / imageWidth) * windowWidth[0]);
-            yOffset = (windowHeight[0] - reducedHeight) / 2;
+            //otherwise the window is the perfect fit for for the image!
             xOffset = 0;
+            yOffset = 0;
             reducedWidth = windowWidth[0];
+            reducedHeight = windowHeight[0];
         }
+
         glViewport(xOffset, yOffset, reducedWidth, reducedHeight);
     }
 

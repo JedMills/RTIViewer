@@ -163,7 +163,6 @@ public class Bookmark {
     }
 
     public void removeNote(Note note){
-        System.out.println("Removing:" + note);
         notes.remove(note);
     }
 

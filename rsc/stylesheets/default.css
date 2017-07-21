@@ -1,15 +1,11 @@
-#lightControlGroup, #filterParamsPane{
-    -fx-border-color: #dddddd;
-    -fx-border-radius: 5;
-}
-
 #bottomTabPane{
     -fx-background-color: #eeeeee;
     -fx-border-color: #dddddd;
 }
 
-#bottomBookmarkPane, #bookmarkListPane, #bottomTabPaneColourChannelsPane,
-#bottomTabPaneFormatPane{
+
+.defaultBorder, #bottomBookmarkPane, #bookmarkListPane, #bottomTabPaneColourChannelsPane,
+#bottomTabPaneFormatPane, #lightControlGroup, #filterParamsPane{
     -fx-border-color: #dddddd;
     -fx-border-radius: 5;
 }

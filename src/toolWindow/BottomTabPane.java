@@ -17,7 +17,6 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 import openGLWindow.RTIWindow;
@@ -55,24 +54,12 @@ public class BottomTabPane extends TabPane {
     private Button bookmarkDel;
 
     private ListView<Bookmark.Note> notesList;
-    private Button notesEdit;
-    private Button notesAdd;
-    private Button notesDel;
-    private Button updateBookmark;
 
-    private Label fileNameLabel;
-    private Label imageWidthLabel;
-    private Label imageHeightLabel;
-    private Label imageFormatLabel;
-
-    private Label saveAsLabel;
-    private Label saveChannelsLabel;
     RadioButton redChannelButton;
     RadioButton greenChannelButton;
     RadioButton blueChannelButton;
-    private Label saveFormatLabel;
-    ComboBox<String> imageFormats;
-    private Button saveButton;
+    ComboBox<String> imageFormatsSelector;
+    ComboBox<String> colourModelSelector;
 
 
     public BottomTabPane(RTIViewer rtiViewer, Scene parent){
@@ -129,19 +116,19 @@ public class BottomTabPane extends TabPane {
 
         previewGridPane = new GridPane();
 
-        fileNameLabel = new Label("File:");
+        Label fileNameLabel = new Label("File:");
         fileName = new TextField("");
         fileName.setEditable(false);
 
-        imageWidthLabel = new Label("Width:");
+        Label imageWidthLabel = new Label("Width:");
         imageWidthBox = new TextField("");
         imageWidthBox.setEditable(false);
 
-        imageHeightLabel = new Label("Height:");
+        Label imageHeightLabel = new Label("Height:");
         imageHeightBox = new TextField("");
         imageHeightBox.setEditable(false);
 
-        imageFormatLabel = new Label("Format:");
+        Label imageFormatLabel = new Label("Format:");
         imageFormat = new TextField("");
         imageFormat.setEditable(false);
 
@@ -280,38 +267,6 @@ public class BottomTabPane extends TabPane {
         notesList.setPrefWidth(width / 1.5);
 
         updateBounds();
-        setFonts(width, height);
-    }
-
-
-    private void setFonts(double width, double height){
-        if(width < 335){
-            setComponentLabels(12, 14);
-        }else if(width < 450){
-            setComponentLabels(14, 18);
-        }else{
-            setComponentLabels(16, 21);
-        }
-    }
-
-    private void setComponentLabels(double previewFontSize, double saveFontSize){
-        for(Label label : new Label[]{saveAsLabel, saveChannelsLabel, saveChannelsLabel,
-                                        saveFormatLabel}){
-            if(label != null) {label.setFont(Font.font(saveFontSize));}
-        }
-
-        for(Label label : new Label[]{fileNameLabel, imageWidthLabel, imageHeightLabel,
-                imageFormatLabel}){
-            if(label != null){label.setFont(Font.font(previewFontSize));}
-        }
-
-        for(RadioButton button : new RadioButton[]{redChannelButton, greenChannelButton,
-                                                    blueChannelButton}){
-            if(button != null){button.setFont(Font.font(saveFontSize));}
-        }
-
-        if(imageFormats != null){imageFormats.getEditor().setFont(Font.font(saveFontSize));}
-        if(saveButton != null){saveButton.setFont(Font.font(saveFontSize));}
     }
 
 
@@ -376,12 +331,14 @@ public class BottomTabPane extends TabPane {
 
         bookmarkAdd = new Button("Add");
         bookmarkAdd.setId("addBookmarkButton");
+        bookmarkAdd.setMinWidth(Button.USE_PREF_SIZE);
         bookmarkAdd.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(bookmarkAdd, 2, 0, 1, 1);
 
 
         bookmarkDel = new Button("Del");
         bookmarkDel.setId("deleteBookmarkButton");
+        bookmarkDel.setMinWidth(Button.USE_PREF_SIZE);
         bookmarkDel.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(bookmarkDel, 3, 0, 1, 1);
 
@@ -433,24 +390,24 @@ public class BottomTabPane extends TabPane {
         notesList.setMinHeight(0);
         GridPane.setConstraints(notesList, 0, 1, 2, 3);
 
-        notesEdit = new Button("Edit");
+        Button notesEdit = new Button("Edit");
         notesEdit.setId("editNote");
         notesEdit.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(notesEdit, 2, 1, 1, 1);
 
-        notesAdd = new Button("Add");
+        Button notesAdd = new Button("Add");
         notesAdd.setId("addNote");
         notesAdd.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(notesAdd, 2, 2, 1, 1);
 
-        notesDel = new Button("Del");
+        Button notesDel = new Button("Del");
         notesDel.setId("delNote");
         notesDel.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(notesDel, 2, 3, 1, 1);
 
         Label updateBookmarkLabel = new Label("Light, Zoom, Pan & Rendering:");
         GridPane.setConstraints(updateBookmarkLabel, 0, 4, 2, 1);
-        updateBookmark = new Button("Update");
+        Button updateBookmark = new Button("Update");
         updateBookmark.setId("updateBookmark");
         updateBookmark.setOnAction(BottomTabPaneListener.getInstance());
         GridPane.setConstraints(updateBookmark, 2, 4, 1, 1);
@@ -477,63 +434,65 @@ public class BottomTabPane extends TabPane {
 
 
     private Tab createSaveImageTab(){
-        Tab imageTab = new Tab("Save");
-        imageTab.setClosable(false);
+        Tab saveTab = new Tab("Save");
+        saveTab.setClosable(false);
 
-        VBox vBox = new VBox();
+        VBox wholeTabContent = new VBox();
+            Label saveSnapshotTitle = new Label("Save Snapshot");
 
-        GridPane gridPane = new GridPane();
-        saveAsLabel = new Label("Save as image:");
-        GridPane.setConstraints(saveAsLabel, 0, 0, 1, 1);
+            HBox hBoxForOptions = new HBox();
 
-        VBox vBox1 = new VBox();
+                VBox vBoxForChannels = new VBox();
+                    Label saveChannelsLabel = new Label("Save colour channels:");
+                    redChannelButton = new RadioButton("Red");
+                    greenChannelButton = new RadioButton("Green");
+                    blueChannelButton = new RadioButton("Blue");
+                vBoxForChannels.getChildren().addAll(saveChannelsLabel, redChannelButton,
+                        greenChannelButton, blueChannelButton);
+                vBoxForChannels.getStyleClass().add("defaultBorder");
+                vBoxForChannels.setSpacing(10);
+                vBoxForChannels.setPadding(new Insets(5, 5, 5, 5));
+                vBoxForChannels.setAlignment(Pos.CENTER_LEFT);
 
-        saveChannelsLabel = new Label("Save colour channels:");
-        redChannelButton = new RadioButton("Red");
-        greenChannelButton = new RadioButton("Green");
-        blueChannelButton = new RadioButton("Blue");
-        vBox1.getChildren().addAll(saveChannelsLabel, redChannelButton, greenChannelButton, blueChannelButton);
-        vBox1.setSpacing(5);
-        GridPane.setConstraints(vBox1, 0, 1, 1, 2);
-        vBox1.setFillWidth(true);
-        vBox1.setPadding(new Insets(5, 5, 5, 5));
-        vBox1.setId("bottomTabPaneColourChannelsPane");
+                GridPane gridPaneForFormat = new GridPane();
+                    Label formatLabel = new Label("Save as format:");
+                    GridPane.setConstraints(formatLabel, 0, 0);
 
-        VBox vBox2 = new VBox();
-        vBox2.setFillWidth(true);
+                    imageFormatsSelector = new ComboBox<>(FXCollections.observableArrayList("jpg", "png"));
+                    imageFormatsSelector.getSelectionModel().select(0);
+                    imageFormatsSelector.setMaxWidth(Double.MAX_VALUE);
+                    GridPane.setConstraints(imageFormatsSelector, 1, 0);
 
-        saveFormatLabel = new Label("Save as format:");
-        imageFormats = new ComboBox<>(FXCollections.observableArrayList(
-                    "jpg",
-                            "png"
-        ));
-        imageFormats.getSelectionModel().select(0);
+                    Label greyscaleLabel = new Label("Colour model:");
+                    GridPane.setConstraints(greyscaleLabel, 0, 1);
 
-        vBox2.getChildren().addAll(saveFormatLabel, imageFormats);
-        vBox2.setId("bottomTabPaneFormatPane");
+                    colourModelSelector = new ComboBox<>(FXCollections.observableArrayList("Colour",
+                                                                                                "Greyscale"));
+                    colourModelSelector.getSelectionModel().select(0);
+                    GridPane.setConstraints(colourModelSelector, 1, 1);
+                gridPaneForFormat.getChildren().addAll( formatLabel, imageFormatsSelector,
+                                                        greyscaleLabel, colourModelSelector);
+                gridPaneForFormat.setHgap(10);
+                gridPaneForFormat.setVgap(10);
+                gridPaneForFormat.setPadding(new Insets(5, 5, 5, 5));
+                gridPaneForFormat.setAlignment(Pos.CENTER);
+                gridPaneForFormat.getStyleClass().add("defaultBorder");
 
-        vBox2.setPadding(new Insets(5, 5, 5, 5));
-        vBox.setSpacing(5);
-        GridPane.setConstraints(vBox2, 1, 1, 1, 1);
+            hBoxForOptions.getChildren().addAll(vBoxForChannels, gridPaneForFormat);
+            hBoxForOptions.setAlignment(Pos.CENTER);
+            hBoxForOptions.setSpacing(10);
 
-        saveButton = new Button("Save as...");
-        saveButton.setId("saveAs");
-        saveButton.setOnAction(BottomTabPaneListener.getInstance());
-        GridPane.setConstraints(saveButton, 1, 2, 1, 1);
-        saveButton.setAlignment(Pos.CENTER);
+            Button saveAsButton = new Button("Save As...");
+            saveAsButton.setOnAction(BottomTabPaneListener.getInstance());
+            saveAsButton.setId("saveAsButton");
 
-        gridPane.setHgap(5);
-        gridPane.setVgap(5);
+        wholeTabContent.getChildren().addAll(saveSnapshotTitle, hBoxForOptions, saveAsButton);
+        wholeTabContent.setAlignment(Pos.CENTER);
+        wholeTabContent.setSpacing(10);
 
-        gridPane.getChildren().addAll(saveAsLabel, vBox1, vBox2, saveButton);
-        vBox.getChildren().add(gridPane);
-        vBox.setAlignment(Pos.CENTER);
+        saveTab.setContent(wholeTabContent);
 
-        gridPane.setAlignment(Pos.TOP_CENTER);
-
-
-        imageTab.setContent(vBox);
-        return imageTab;
+        return saveTab;
     }
 
 
