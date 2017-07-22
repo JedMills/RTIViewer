@@ -486,6 +486,8 @@ public class RTIViewer extends Application {
     }
 
 
+
+
     public static void resize(int width, int height){
         primaryStage.setWidth(width);
         primaryStage.setHeight(height);

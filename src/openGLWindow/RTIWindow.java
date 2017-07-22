@@ -38,14 +38,22 @@ import static org.lwjgl.system.MemoryUtil.memAllocInt;
  * This class represents a window containing the RTI image that has been loaded by the user. The image in the
  * window is generated using OpenGL via the lightweight java game library (LWJGL). The RTI image can be
  * filtered and enhanced in several ways by changing the fragment shader that the textured quad on the window uses.
+ * All the shaders used for the different rendering modes are glsl shaders in the shaders package.
  * </p>
  *
  * <p>
  * Each instance holds its own shader references, and is responsible for updating them as per the values in the
- * PTMViewer window. Each instance also cleans up its own OpenGL shader programs when it the run method finishes.
+ * PTMViewer window. The current rendering parameters for the different enhancements are held as global variables in
+ * the {@link RTIViewer} class, and are updated each frame of the rendering. Each instance also cleans up its own
+ * OpenGL shader programs when it the run method finishes.
  * </p>
  *
- * Created by Jed on 03-Jun-17.
+ * @see RTIObject
+ * @see shaders.hshShaders
+ * @see shaders.lrgbShaders
+ * @see shaders.rgbShaders
+ *
+ * Created by Jed Mills
  */
 public abstract class RTIWindow implements Runnable{
 
@@ -160,10 +168,10 @@ public abstract class RTIWindow implements Runnable{
     /**Non-normalised y position of the cursor last frame, updated each frame by glfw*/
     protected double[] lastYPos = new double[1];
 
-    /**X offset for the glViewport(...) each frame, used to center image in a non-ratio window size*/
+    /**X offset for the glViewport each frame, used to center image in a non-ratio window size*/
     protected int xOffset = 0;
 
-    /**Y offset for the glViewport(...) each frame, used to center image in a non-ratio window size*/
+    /**Y offset for the glViewport each frame, used to center image in a non-ratio window size*/
     protected int yOffset = 0;
 
     /**Width of the image as displayed on the window, updated each frame*/
@@ -172,14 +180,19 @@ public abstract class RTIWindow implements Runnable{
     /**Height of the image as displayed on the window, updated each frame*/
     protected int reducedHeight;
 
-
+    /** Height / width of the RTI file, used to position the GL viewport in the center of the window*/
     private float imageAspectRatio;
 
+    /** Location of the 32 x 32 pixel RTI group icon for the window */
     private static final String ICON_32_LOCATION =  "images/rtiThumbnail-32.png";
+
+    /** Location of the 64 x 64 pixel RTI group icon for the window */
     private static final String ICON_64_LOCATION = "images/rtiThumbnail-64.png";
 
+
+
     /**
-     * Creates a new RTIWindow, setting the passed RTIObject as this window's rtiObject, which it will
+     * Creates a new RTIWindow, setting the passed {@link RTIObject }as this window's rtiObject, which it will
      * display using the parameters in the RTIViewer window.
      *
      * @param rtiObject
@@ -195,11 +208,11 @@ public abstract class RTIWindow implements Runnable{
 
 
 
+
     /**
-     * Initialises GLFW so OpenGL can be used to display the image in this window. Creates a new window, which
-     * will be the UI for this RTIWindow, sets callbacks to deal with zooming using the scroll wheel and panning
-     * with the mouse, and places the window to be in the middle of the screen. Does not actually call the window
-     * to be displayed.
+     * Initialises the GLFW  window so OpenGL can be used to display the image. Creates a new window, sets callbacks
+     * to deal with zooming using the scroll wheel and panning with the mouse, and places the window to be in the
+     * middle of the screen. Does not actually call the window to be displayed.
      */
     private void setupGLFW(){
         //initialise glfw for the calls, and throw a new exception to exit if unsuccessful
@@ -242,7 +255,7 @@ public abstract class RTIWindow implements Runnable{
             }
         });
 
-
+        //when the window is clicked on, we want the RTIViewer to switch the currently selected window to this one
         glfwSetWindowFocusCallback(window, new GLFWWindowFocusCallbackI() {
             @Override
             public void invoke(long window, boolean focused) {
@@ -283,12 +296,22 @@ public abstract class RTIWindow implements Runnable{
         glfwSwapInterval(1);
     }
 
+
+
+
+    /**
+     * Loads the icons using the paths {@link RTIWindow#ICON_32_LOCATION} and {@link RTIWindow#ICON_64_LOCATION}
+     * from the disk and  sets the GLFW window's icon as these. If an error occurns while trying the load the icons,
+     * the method just doesn't bother.
+     */
     private void setIcon(){
         try{
-
+            //used to store the current width and height of the icon, don't know what comp is
             IntBuffer w = memAllocInt(1);
             IntBuffer h = memAllocInt(1);
             IntBuffer comp = memAllocInt(1);
+
+            //actually load them, the number at the end is how many bytes the image takes up
             ByteBuffer icon32 = Utils.ioResourceToByteBuffer(ICON_32_LOCATION, 4096);
             ByteBuffer icon64 = Utils.ioResourceToByteBuffer(ICON_64_LOCATION, 8192);
 
@@ -300,7 +323,10 @@ public abstract class RTIWindow implements Runnable{
             icons.position(1).width(w.get(0)).height(h.get(0)).pixels(pixels64);
 
             icons.position(0);
+
             glfwSetWindowIcon(window, icons);
+
+            //clean up the ByteBuffers
             STBImage.stbi_image_free(pixels32);
             STBImage.stbi_image_free(pixels64);
         }catch(Exception e){
@@ -309,6 +335,16 @@ public abstract class RTIWindow implements Runnable{
     }
 
 
+
+
+    /**
+     * This mehtod is used to zoom in a nd out of the image wehn the user uses the scroll wheel. This is  done
+     * by actually enlarging the quad that the image is rendered onto, so it extends outside the bounds of the
+     * glViewport. The viewport is also checked to make sure the user can't scroll outside of the image.
+     *
+     *
+     * @param yoffset   the value produced from scrolling the mouse, scroll up = positive, scroll down = negative
+     */
     private void updateImageScale(double yoffset){
         float oldScale = imageScale;
 
@@ -325,6 +361,22 @@ public abstract class RTIWindow implements Runnable{
         checkViewport();
     }
 
+
+    /**
+     * This method represents the creation of the various shader programs that the RTIWindow uses to render
+     * the different image visualisation modes. Each shader program int this app has a vertex and fragment shader,
+     * and the fragment shaders differ depending on hich type off {@link RTIObject} is being rendered,
+     * as different algorithms have to be used as these objects ra of different formats. The shaders closely
+     * resemble the code for the image creators in the {@link imageCreation} package, but in GLSL form.
+     *
+     * @see RTIObject
+     * @see ptmCreation.RTIObjectHSH
+     * @see ptmCreation.PTMObjectRGB
+     * @see ptmCreation.PTMObjectLRGB
+     * @see shaders
+     *
+     * @throws Exception    if there was an error loading the shader files, or an OpenGL error compiling shaders
+     */
     protected abstract void createShaders() throws Exception;
 
 
@@ -417,7 +469,8 @@ public abstract class RTIWindow implements Runnable{
      * @param setTextures       whether we want to set references for textures or not
      */
     private void bindShaderReferences(int programID, boolean setTextures){
-        //get the integer OpenGL reference  from the shader program using its string value
+        //get the integer OpenGL reference  from the shader program using its string value, this is called once
+        //per frame so OpenGL knows to update the uniforms for *this* RTIWindow
         shaderWidth = glGetUniformLocation(programID, "imageWidth");
         shaderHeight = glGetUniformLocation(programID, "imageHeight");
         imageScaleRef = glGetUniformLocation(programID, "imageScale");
@@ -439,14 +492,35 @@ public abstract class RTIWindow implements Runnable{
 
         coeffUnMaskGainRef = glGetUniformLocation(programID, "coeffUnMaskGain");
 
+        //the textures containing the RTI coefficient arrays do not change during he program, so they
+        //only need to be set once when the RTIObject isl loaded, hence the optional binding of textures here
         if(setTextures){bindSpecificShaderTextures(programID);}
     }
 
 
-
+    /**
+     * As the {@link RTIObject} shown by this window can be of different types, which have different arrays
+     * of coefficients that are used to create the RTI images, the textures containing these coefficients will be
+     * different depending on what type of {@link RTIObject} this window shows. This method binds the textures for
+     * the implementing class's RTIObject to the shader program given by the shader ID. This method only needs to
+     * be called when the RTIObject is loaded as the coefficient arrays do not change during the program.
+     *
+     * @param programID the OpenGL reference for the program to bind the data textures yo
+     */
     protected abstract void bindSpecificShaderTextures(int programID);
 
+
+    /**
+     * This method is for binding the objects in the Java code to their uniforms in the GLSL code, so that OpenGL
+     * can be fed the values of these parameters (such as light X and Y position) while it is running, and the
+     * image can update. This method does not assume or change the currently active GL shader program, so needs
+     * to be called once when each shader program is created.
+     *
+     * @see RTIWindow#createShader(RTIViewer.ShaderProgram, String, String)
+     */
     protected abstract void bindShaderVals();
+
+
 
 
 
@@ -455,7 +529,7 @@ public abstract class RTIWindow implements Runnable{
      * the flattened set of three ptm coefficients (a0-a2 or a3-a5).
      *
      * @param textureNum        number of the texture to assign
-     * @param coeffArray        flattened set of 3 ptm coeffs (a0-a2 or a3-a5) toset the texture as
+     * @param coeffArray        flattened set of 3 ptm coeffs (a0-a2 or a3-a5) to set the texture as
      */
     protected void setShaderTexture(int textureNum, IntBuffer coeffArray){
         //make the active texture the one passed, create this texture and bind it
@@ -474,6 +548,20 @@ public abstract class RTIWindow implements Runnable{
 
     }
 
+
+
+
+    /**
+     * Creates a new OpenGL texture for the shader programs to use with the id as the number passed, using
+     * the flattened set of three ptm coefficients (a0-a2 or a3-a5). This method allows creation of a texture with
+     * a size that isn't the same as the RTI image size, and I have used this to be able to pass more information to
+     * OpenGL in the {@link RTIWindowHSH} when uniforms can't be used.
+     *
+     * @param textureNum        number of the texture to assign
+     * @param coeffArray        flattened set of 3 ptm coeffs (a0-a2 or a3-a5) to set the texture as
+     * @param width             custom width of the texture to be made
+     * @param height            custom height of the texture to be made
+     */
     protected void setShaderTexture(int textureNum, IntBuffer coeffArray, int width, int height){
         //make the active texture the one passed, create this texture and bind it
         GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureNum);
@@ -490,6 +578,7 @@ public abstract class RTIWindow implements Runnable{
         glBindTexture(GL_TEXTURE_2D, textureRef);
 
     }
+
 
 
 
@@ -511,6 +600,7 @@ public abstract class RTIWindow implements Runnable{
                 0, GL_RGB, GL_FLOAT, normals);
         glBindTexture(GL_TEXTURE_2D, textureRef);
     }
+
 
 
 
@@ -575,9 +665,12 @@ public abstract class RTIWindow implements Runnable{
 
 
 
+
     /**
-     * Sets the uniform values of the current program to those in the RTIViewer window, and those defined in this
-     * window such as the viewportX and viewportY.
+     * Sets the current OpenGL shader program to the program in the {@link RTIWindow#currentProgram} attribute,
+     * and sets the uniforms for this program. This needs to be called every fram to update the uniforms fed into
+     * OpenGL, and it needs to be called for the currently active program, as otherwise OpenGl doesn't update the
+     * uniforms if ti's not active, it seems.
      */
     private void setShaderParams(){
         //set the current program to the one chosen in the RTIViewer tool window
@@ -614,13 +707,25 @@ public abstract class RTIWindow implements Runnable{
         glUniform1f(specExConstRef, normaliseHighlightSizeVal());
 
         glUniform1f(imgUnMaskGainRef, normaliseImgUnMaskGainVal());
-
     }
 
 
+
+
+    /**
+     * Normalises the value passed between the min and max values. Used to map the values the user chooses on the s
+     * sliders to appropriate values in the shader programs to make the rendering look good.
+     *
+     * @param value     value to normalise
+     * @param min       min value of the normalisation
+     * @param max       max value of the normalisation
+     * @return          the value, normalised between min and max
+     */
     private static float normaliseShaderParam(double value, float min, float max){
         return (float) (min + value * (max - min) / 100.0);
     }
+
+
 
 
     /**
@@ -698,6 +803,7 @@ public abstract class RTIWindow implements Runnable{
 
 
 
+
     /**
      * Gets the x,y location of the mouse on the window. Checks if the left mouse button is held down. if it is,
      * will find the difference between its current position and last position using lastXPos and lastYPos, and will
@@ -730,6 +836,7 @@ public abstract class RTIWindow implements Runnable{
 
 
 
+
     /**
      * Sets the currentProgram attribute
      *
@@ -738,6 +845,7 @@ public abstract class RTIWindow implements Runnable{
     public void setCurrentProgram(RTIViewer.ShaderProgram currentProgram) {
         this.currentProgram = currentProgram;
     }
+
 
 
 
@@ -751,19 +859,47 @@ public abstract class RTIWindow implements Runnable{
     }
 
 
+
+
+    /**
+     * @return  {@link RTIWindow#viewportX}
+     */
     public Float getViewportX() {
         return viewportX;
     }
 
 
+
+
+    /**
+     * @return  {@link RTIWindow#viewportX}
+     */
     public Float getViewportY() {
         return viewportY;
     }
 
+
+
+
+    /**
+     * @return  {@link RTIWindow#imageScale}
+     */
     public float getImageScale() {
         return imageScale;
     }
 
+
+
+
+    /**
+     * Used to change the viewport for this window from the preview from the preview pane in the
+     * {@link toolWindow.BottomTabPane} when the (x, y) position of the rectangle is changed. Calls
+     * {@link RTIWindow#checkViewport()} to update the position of the rectangle on the preview window as well.
+     *
+     * @param x             x position of the preview rectangle
+     * @param y             y positon of the preview rectangle
+     * @param previewScale  scale of the image rectangle, 1 = size of the image, 2 = half the size of the image etc.
+     */
     public void updateViewportFromPreview(float x, float y, float previewScale){
         viewportX = x * previewScale;
         viewportY = y * previewScale;
@@ -771,6 +907,15 @@ public abstract class RTIWindow implements Runnable{
         checkViewport();
     }
 
+
+
+    /**
+     * Used to change the viewport for this window from the preview from the preview pane in the
+     * {@link toolWindow.BottomTabPane} when the size of the rectangle is changed. Calls
+     * {@link RTIWindow#checkViewport()} to update the position of the rectangle on the preview window as well.
+     *
+     * @param previewScale  scale of the image rectangle, 1 = size of the image, 2 = half the size of the image etc.
+     */
     public void updateViewportFromPreview(float previewScale){
         float oldScale = imageScale;
 
@@ -785,14 +930,28 @@ public abstract class RTIWindow implements Runnable{
     }
 
 
+
+
+    /**
+     * Creates a new {@link Bookmark} with the given name, with the current rendering mode, rendering parameters,
+     * pan, zoom and light position of this window, and adds the new {@link Bookmark} to this window's
+     * {@link RTIWindow#rtiObject}'s bookmark list.
+     *
+     * @see Bookmark
+     * @see RTIObject
+     *
+     * @param name      name of the new bookmark
+     */
     public void addBookmark(String name){
         rtiObject.updateBookmarkIDs();
 
+        //get this window's rendering params, eg. gain. diff colour etc.
         HashMap<String,Double> renderingParams = getRenderingParams();
         Integer id = renderingParams.get("id").intValue();
         renderingParams.remove("id");
         ArrayList<Bookmark.Note> notes = new ArrayList<Bookmark.Note>();
 
+        //make a new bookmark with all this info and add it to the RTIObject
         Bookmark bookmark = new Bookmark(   rtiObject.getBookmarks().size(), name, "Exeter RTI Viewer",
                                             imageScale, viewportX, viewportY, RTIViewer.globalLightPos.x,
                                             RTIViewer.globalLightPos.y, id, renderingParams, notes);
@@ -802,46 +961,80 @@ public abstract class RTIWindow implements Runnable{
 
 
 
+
+    /**
+     * Gets the list of relevant rendering parameters from the {@link RTIViewer} class's global rendering parameters
+     * that are relevant for the current rendering mode, eg. diffuse gain woulf get gain, spec. enhance would have
+     * diff colour, spec. and highlight size, etc...
+     *
+     * @return  a map of the name of the rendering param, and its double value
+     */
     private HashMap<String, Double> getRenderingParams(){
         HashMap<String, Double> params = new HashMap<>();
         RTIViewer.ShaderProgram prog = RTIViewer.currentProgram;
 
+        //egt the relevant rendering parameters for the current rendering mode
         if(prog.equals(RTIViewer.ShaderProgram.DEFAULT)){
             params.put("id", 0.0);
+
         }else if(prog.equals(RTIViewer.ShaderProgram.DIFF_GAIN)){
             params.put("id", 1.0);
             params.put("gain", RTIViewer.globalDiffGainVal.get());
+
         }else if(prog.equals(RTIViewer.ShaderProgram.SPEC_ENHANCE)){
             params.put("id", 2.0);
             params.put("diffuseColor", RTIViewer.globalDiffColourVal.get());
             params.put("specularity", RTIViewer.globalSpecularityVal.get());
             params.put("highlightSize", RTIViewer.globalHighlightSizeVal.get());
+
         }else if(prog.equals(RTIViewer.ShaderProgram.NORM_UNSHARP_MASK)){
             params.put("id", 3.0);
             params.put("gain", RTIViewer.globalNormUnMaskGain.get());
             params.put("environment", RTIViewer.globalNormUnMaskEnv.get());
+
         }else if(prog.equals(RTIViewer.ShaderProgram.IMG_UNSHARP_MASK)){
             params.put("id", 4.0);
             params.put("gain", RTIViewer.globalImgUnMaskGain.get());
+
         }else if(prog.equals(RTIViewer.ShaderProgram.NORMALS)){
             params.put("id", 9.0);
-        }
 
+        }
         return params;
     }
 
 
+
+
+    /**
+     * Removes the {@link Bookmark} with the given name from this RTIWindow's {@link RTIWindow#rtiObject}.
+     *
+     * @param bookmarkName  name fo the bookmark to remove
+     */
     public void deleteBookmark(String bookmarkName){
         rtiObject.removeBookmark(bookmarkName);
     }
 
 
 
+
+    /**
+     * Used for whe nthe user clicks the 'Update bookmark' button. Sets the vales inthe {@link Bookmark} to the
+     * current rendering values, eg. the light X and Y postion, pan, zoom, rendering mode etc.
+     *
+     * @see Bookmark
+     *
+     * @param bookmark  bookmark to update
+     */
     public void updateBookmark(Bookmark bookmark){
+        //get the relevant rendering parameters for this bookmark's rendering mode
         HashMap<String, Double> renderingParams = getRenderingParams();
+
+        //get the id of out of the rendering params as it's stored in a different attribute in the bookmark object
         Integer id = renderingParams.get("id").intValue();
         renderingParams.remove("id");
 
+        //set all those attributes
         bookmark.setLightX(RTIViewer.globalLightPos.x);
         bookmark.setLightY(RTIViewer.globalLightPos.y);
         bookmark.setZoom(imageScale);
@@ -850,35 +1043,97 @@ public abstract class RTIWindow implements Runnable{
         bookmark.setRenderingParams(renderingParams);
     }
 
+
+
+
+    /**
+     * @param viewportX     set {@link RTIWindow#viewportX}
+     */
     public void setViewportX(float viewportX) {
         this.viewportX = viewportX;
     }
 
+
+
+
+    /**
+     * @param viewportY     set {@link RTIWindow#viewportY}
+     */
     public void setViewportY(float viewportY) {
         this.viewportY = viewportY;
     }
 
+
+
+
+    /**
+     * @param imageScale    set {@link  RTIWindow#imageScale}
+     */
     public void setImageScale(float imageScale) {
         this.imageScale = imageScale;
     }
 
 
+
+
+    /**
+     * Normalises the {@link RTIViewer#globalDiffGainVal} between 1.0 and 10.0 as these seem like
+     * good values to clamp between for diffuse gain.
+     *
+     * @return  the global diff gain val clamped between 1.0 and 10.0
+     */
     public static float normaliseDiffGainVal(){
         return normaliseShaderParam(RTIViewer.globalDiffGainVal.get(), 1.0f, 10.0f);
     }
 
+
+
+
+    /**
+     * Normalises the {@link RTIViewer#globalDiffColourVal} between 0.0 and 10.0 as these seem like
+     * good values to clamp between for diffuse colour.
+     *
+     * @return  the global diff gain colour clamped between 0.0 and 10.0
+     */
     public static float normaliseDiffColVal(){
         return normaliseShaderParam(RTIViewer.globalDiffColourVal.get(), 0.0f, 1.0f);
     }
 
+
+
+
+    /**
+     * Normalises the {@link RTIViewer#globalSpecularityVal} between 0.0 and 1.0 as these seem like
+     * good values to clamp between for specularity.
+     *
+     * @return  the global diff gain colour clamped between 0.0 and 1.0
+     */
     public static float normaliseSpecVal(){
         return normaliseShaderParam(RTIViewer.globalSpecularityVal.get(), 0.0f, 1.0f);
     }
 
+
+
+
+    /**
+     * Normalises the {@link RTIViewer#globalHighlightSizeVal} between 0.0 and 150.0 as these seem like
+     * good values to clamp between for highlight size.
+     *
+     * @return  the global diff gain colour clamped between 0.0 and 150.0
+     */
     public static float normaliseHighlightSizeVal(){
         return normaliseShaderParam(RTIViewer.globalHighlightSizeVal.get(), 1.0f, 150.0f);
     }
 
+
+
+
+    /**
+     * Normalises the {@link RTIViewer#globalImgUnMaskGain} between 0.0 and 4.0 as these seem like
+     * good values to clamp between for image gain.
+     *
+     * @return  the global diff gain colour clamped between 0.0 and 4.0
+     */
     public static float normaliseImgUnMaskGainVal(){
         return normaliseShaderParam(RTIViewer.globalImgUnMaskGain.get(), 0.01f, 4.0f);
     }

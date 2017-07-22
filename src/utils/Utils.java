@@ -16,6 +16,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static java.lang.Math.*;
+import static java.lang.Math.sin;
+
 /**
  * Contains all the utility functions that are used throughout the viewer.
  *
@@ -705,5 +708,49 @@ public class Utils {
 
         //modified PTM polynomial
         return a0*lightX*lightX + a1*lightY*lightY + a2*lightX*lightY + a3*lightX + a4*lightY + a5;
+    }
+
+
+    /**
+     * Calculates the hemispherical weighting for the given incident light vector angles. Will only calculate the first
+     * n terms up to basisTerms, and will leave the rest as zero. The maths for this function comes from the original
+     * RTIViewer.
+     *
+     * @param theta         angle round circle of incident light vector
+     * @param phi           azimuthal angle of incident light vector
+     * @param basisTerms    number of HSH terms used for the RTIObject
+     * @return              the hWeights for this light angle
+     */
+    public static double[] createHWeights(double theta, double phi, int basisTerms){
+        double[] hWeights = new double[16];
+
+        double cosPhi = cos(phi);
+        double cosTheta = cos(theta);
+        double cosTheta2 = cosTheta * cosTheta;
+
+        hWeights[0] = 1/sqrt(2*PI);
+        hWeights[1] = sqrt(6/PI)      *  (cosPhi*sqrt(cosTheta-cosTheta2));
+        hWeights[2] = sqrt(3/(2*PI))  *  (-1.0 + 2.0*cosTheta);
+        hWeights[3] = sqrt(6/PI)      *  (sqrt(cosTheta - cosTheta2)*sin(phi));
+
+        if (basisTerms > 4) {
+            hWeights[4] = sqrt(30/PI)     *  (cos(2.0*phi)*(-cosTheta + cosTheta2));
+            hWeights[5] = sqrt(30/PI)     *  (cosPhi*(-1.0 + 2.0*cosTheta)*sqrt(cosTheta - cosTheta2));
+            hWeights[6] = sqrt(5/(2*PI))  *  (1 - 6.0*cosTheta + 6.0*cosTheta2);
+            hWeights[7] = sqrt(30/PI)     *  ((-1 + 2.0*cosTheta)*sqrt(cosTheta - cosTheta2)*sin(phi));
+            hWeights[8] = sqrt(30/PI)     *  ((-cosTheta + cosTheta2)*sin(2.0*phi));
+        }
+
+        if (basisTerms > 9) {
+            hWeights[9] = 2*sqrt(35/PI)	*	(cos(3.0*phi)*pow((cosTheta - cosTheta2), 1.5f));
+            hWeights[10] = sqrt(210/PI)	*	(cos(2.0*phi)*(-1 + 2*cosTheta)*(-cosTheta + cosTheta2));
+            hWeights[11] = 2*sqrt(21/PI)  *	(cos(phi)*sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2));
+            hWeights[12] = sqrt(7/(2*PI)) *	(-1 + 12*cosTheta - 30*cosTheta2 + 20*cosTheta2*cosTheta);
+            hWeights[13] = 2*sqrt(21/PI)  *	(sqrt(cosTheta - cosTheta2)*(1 - 5*cosTheta + 5*cosTheta2)*sin(phi));
+            hWeights[14] = sqrt(210/PI)   *	(-1 + 2*cosTheta)*(-cosTheta + cosTheta2)*sin(2*phi);
+            hWeights[15] = 2*sqrt(35/PI)  *	pow((cosTheta - cosTheta2), 1.5f)*sin(3*phi);
+        }
+
+        return hWeights;
     }
 }
