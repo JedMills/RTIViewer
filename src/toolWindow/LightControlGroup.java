@@ -26,36 +26,51 @@ import utils.Utils;
 import static java.lang.Math.*;
 
 /**
- * Created by Jed on 14-Jun-17.
+ * The pane containing the specular ball control and the x and y light position boxes.
  */
 public class LightControlGroup extends StackPane {
 
-
-    private RTIViewer rtiViewer;
-    private Pane parent;
-    private Stage primaryStgae;
+    /** The light thatshines on the specular ball and is moved by the user*/
     private Light.Point light;
+
+    /** The specular ball that the light shines on*/
     private Circle circle;
-    private Spinner<Double> xPosBox, yPosBox;
+
+    /** The spinner for th light x position */
+    private Spinner<Double> xPosBox;
+
+    /** The spinner for the light y position */
+    private Spinner<Double> yPosBox;
+
+    /** Used to prevent feedback loop in updating the light from the spinners and ball */
     public enum LightEditor{CIRCLE, XSPINNER, YSPINNER, RESIZE;}
 
+    /** StackPane containing the specular ball and the light  */
     private StackPane stackPane;
+
+    /** HBox containing the ball and spinners in the horizontal layout */
     private HBox hBox;
+
+    /** GridPane for the spinners */
     private GridPane gridPane;
+
+    /** HBox containing the ball and spinners in the vertical layout */
     private VBox vBox;
 
+    /** Label for the x spinner */
     private Label xPosLabel;
+
+    /** Label for the y spinner*/
     private Label yPosLabel;
 
+    /** Used to change between vertical and horizontal layouts */
     private boolean wasVertical = true;
 
 
-
-    public LightControlGroup(RTIViewer rtiViewer, Stage primaryStage, Pane parent) {
-        this.rtiViewer = rtiViewer;
-        this.parent = parent;
-        this.primaryStgae = primaryStage;
-
+    /**
+     * Creates a new LightControlGroup.
+     */
+    public LightControlGroup() {
         createLightControl();
         setId("lightControlGroup");
         setAlignment(Pos.CENTER);
@@ -63,14 +78,23 @@ public class LightControlGroup extends StackPane {
     }
 
 
+    /**
+     * Creates the grey specular ball, and the light that shines on it.Also adds the listeners to mouse events
+     * to make the light position change with the mouse.
+     *
+     * @return  the grey specular ball widget
+     */
     private Circle createSpecularBall(){
+        //the ball, a nice grey colour
         circle = new Circle();
         circle.setFill(Paint.valueOf("#d3d3d3"));
 
+        //the light that shines from above
         light = new Light.Point();
         light.setColor(Color.WHITE);
         circle.setRadius(75);
 
+        //set the light in the center, and 25px away is quite a good distance
         light.setX(circle.getRadius());
         light.setY(circle.getRadius());
         light.setZ(25);
@@ -79,6 +103,7 @@ public class LightControlGroup extends StackPane {
         lighting.setLight(light);
         circle.setEffect(lighting);
 
+        //move the light to the mouse position on click
         circle.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
@@ -86,10 +111,12 @@ public class LightControlGroup extends StackPane {
                 light.setY(event.getY() + circle.getRadius());
                 Utils.Vector2f normalised = new Utils.Vector2f((float)(event.getX() / circle.getRadius()),
                         (float)(-event.getY() / circle.getRadius()));
+                //update the global light position for rendering
                 updateGlobalLightPos(normalised, LightEditor.CIRCLE);
             }
         });
 
+        //move the light to the mouse position on mouse drag
         circle.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
@@ -100,6 +127,7 @@ public class LightControlGroup extends StackPane {
                     light.setX(event.getX() + circle.getRadius());
                     light.setY(event.getY() + circle.getRadius());
                 }else{
+                    //if the mouse is outside the circle, constrain it using polar coordinates
                     double theta = Math.atan2(event.getY(), event.getX());
                     double x = circle.getRadius() + (circle.getRadius() * Math.cos(theta));
                     double y = circle.getRadius() + (circle.getRadius() * Math.sin(theta));
@@ -116,14 +144,21 @@ public class LightControlGroup extends StackPane {
     }
 
 
+    /**
+     * Creates the light control layout, with the specular ball and linked x and y spinners.
+     */
     private void createLightControl(){
+        //hbox for horizontal layout
         hBox = new HBox();
+        //vbox for vertical layout
         vBox = new VBox();
+        //stacjkpane for circle and light
         stackPane = new StackPane();
 
         stackPane.setAlignment(Pos.TOP_CENTER);
         gridPane = new GridPane();
 
+        //the specular circle
         Circle circle = createSpecularBall();
 
         stackPane.getChildren().add(circle);
@@ -135,6 +170,7 @@ public class LightControlGroup extends StackPane {
         xPosBox.setEditable(true);
         xPosBox.setMinHeight(0);
 
+        //update the global light position from the x spinner when typed in
         xPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -142,13 +178,14 @@ public class LightControlGroup extends StackPane {
             }
         });
 
+        //update the global light position from the x spinner when clicked
         xPosBox.valueProperty().addListener(new ChangeListener<Double>() {
             public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
                 updateLightFromBox(xPosBox, RTIViewer.globalLightPos.y, LightEditor.XSPINNER);
             }
         });
 
-
+        //if the x position box is unfocused, update the light position from what's in it
         xPosBox.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -162,12 +199,14 @@ public class LightControlGroup extends StackPane {
         yPosBox.setEditable(true);
         yPosBox.setMinHeight(0);
 
+        //update the global light position from the y spinner when typed in
         yPosBox.getEditor().setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 updateLightFromBox(yPosBox, RTIViewer.globalLightPos.x, LightEditor.YSPINNER);
             }
         });
 
+        //update the global light position from the y spinner when clicked
         yPosBox.valueProperty().addListener(new ChangeListener<Double>() {
             public void changed(ObservableValue<? extends Double> observable, Double oldValue, Double newValue) {
                 updateLightFromBox(yPosBox, RTIViewer.globalLightPos.x, LightEditor.YSPINNER);
@@ -175,6 +214,7 @@ public class LightControlGroup extends StackPane {
         });
 
 
+        //if the y position box is unfocused, update the light position from what's in it
         yPosBox.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -190,15 +230,24 @@ public class LightControlGroup extends StackPane {
     }
 
 
+    /**
+     * Updates the light position from a spinner.
+     *
+     * @param spinner           spinner that caused the change
+     * @param constVal          the value that is not the one to be changed
+     * @param lightEditor       wether the thing that changed the light position was a spinner or the ball widget
+     */
     private void updateLightFromBox(Spinner<Double> spinner, float constVal, LightEditor lightEditor){
         try {
             Float value = Float.parseFloat(spinner.getEditor().getText());
+            //update the global position of the light
             if(lightEditor.equals(LightEditor.XSPINNER)) {
                 updateGlobalLightPos(new Utils.Vector2f(value, constVal), lightEditor);
             }else{
                 updateGlobalLightPos(new Utils.Vector2f(constVal, value), lightEditor);
             }
         }catch(NumberFormatException e){
+            //the user typed in a non number
             if(lightEditor.equals(LightEditor.XSPINNER)) {
                 RTIViewer.entryAlert.setContentText("Invalid entry for light X position.");
             }else{

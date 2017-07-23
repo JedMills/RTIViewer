@@ -98,7 +98,7 @@ public class RTIWindowHSH extends RTIWindow {
                 "/shaders/hshShaders/imgUnsharpMaskFragmentShaderHSH.glsl");
 
         createShader(RTIViewer.ShaderProgram.DIFF_GAIN, "/shaders/defaultVertexShader.glsl",
-                "/shaders/hshShaders/diffuseGainFragmentShaderHSH.glsl");
+                "/shaders/hshShaders/normalsEnhanceFragmentShaderHSH.glsl");
 
 
     }

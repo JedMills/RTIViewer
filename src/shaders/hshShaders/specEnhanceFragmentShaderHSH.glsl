@@ -1,48 +1,68 @@
 #version 330
+//FRAGMENT_SHADER
 
 #define PI 3.1415926535
 
+//x and y position of the light, normalised between -1.0 and +!.0
 uniform float lightX;
 uniform float lightY;
+
+//height and width of the ptm to render
 uniform float imageHeight;
 uniform float imageWidth;
 
-uniform float diffConst;
-uniform float specConst;
-uniform float specExConst;
-
+//texture cotainingthe single vec4, which has the basis terms in the x value
 uniform isampler2D dataTexture;
 
+//the textures containing the HSH coeffs for the red channel redCoeffs2 and redCoeffs3
+//may only by 1x1 textures if the number of basisTerms are small
 uniform sampler2D redCoeffs1;
 uniform sampler2D redCoeffs2;
 uniform sampler2D redCoeffs3;
 
+//same for green textures
 uniform sampler2D greenCoeffs1;
 uniform sampler2D greenCoeffs2;
 uniform sampler2D greenCoeffs3;
 
+//same for blue textures
 uniform sampler2D blueCoeffs1;
 uniform sampler2D blueCoeffs2;
 uniform sampler2D blueCoeffs3;
 
+//texture containing the normals vector for each pixel
 uniform sampler2D normals;
 
+//the gain parameter for the image gain that the user canset with the slider
+uniform float imgUnMaskGain;
 
+//coordinate on textures with the pan from the vertex shader
 in vec2 texCoordV;
+
+//colour to write to the pixel this shader is being executed for
 out vec4 colorOut;
 
+//the three specular enhancement parameters that the use can change with the sliders
+uniform float diffConst;
+uniform float specConst;
+uniform float specExConst;
 
+
+//convert openGL coords with (0, 0) at the center to coords with (0, 0) in the top left
 vec2 convertCoords(vec2 coords){
     return vec2((coords.x + 1) / 2, (1 - coords.y) / 2);
 }
 
 
+//scale the coords which are 0.0 - 1.0 to 0 - imageHeight and 0 - imageWidth
 vec2 convertToPTMCoords(vec2 coords){
     return vec2(coords.x * imageWidth,
                 coords.y * imageHeight);
 }
 
 
+//calculates the (up to) 16 hWeights. the maths for this was taken from the original viewer, and comes from
+//the original HSH paper, which there is a link for in the user guide
 mat4x4 getHSH(float theta, float phi, int basisTerms){
         mat4x4 hweights = mat4x4(0);
 
@@ -80,12 +100,17 @@ mat4x4 getHSH(float theta, float phi, int basisTerms){
 
 
 void main() {
+    //convert coords so top left is (0, 0)
     vec2 coords = convertCoords(texCoordV);
 
+    //map coords from 0.0 - 1.0 to real coords in texture
     ivec2 ptmCoords = ivec2(convertToPTMCoords(coords));
 
+    //get the light z from the x and y pos, used to turn the coords to spherical coords
     float lightZ = sqrt(1 - (lightX * lightX) - (lightY * lightY));
 
+
+    //now turn into spherical coords
     float phi = atan(lightY, lightX);
 
     if(phi < 0){
@@ -94,32 +119,40 @@ void main() {
 
     float theta = min(acos(lightZ), PI /2 - 0.04);
 
+    //which we canfeed into the hWeights function getget the HSH values for this light position,
+    //using the basis terms stored in the x pos of the 1x1 data tecture
     int basisTerms = texelFetch(dataTexture, ivec2(0, 0), 0).x;
-
     mat4x4 hWeights = getHSH(theta, phi, basisTerms);
 
-    vec4 redVals1 = texelFetch(redCoeffs1, ptmCoords, 0);
-    vec4 redVals2;
-    vec4 redVals3;
 
-    vec4 greenVals1 = texelFetch(greenCoeffs1, ptmCoords, 0);
-    vec4 greenVals2;
-    vec4 greenVals3;
+    //only get the HSH data from textures that have been filled. All HSH will have at least one term,
+    //so all need the first texture
+    vec3 redVals1 = texelFetch(redCoeffs1, ptmCoords, 0).xyz;
+    vec3 redVals2;
+    vec3 redVals3;
 
-    vec4 blueVals1 = texelFetch(blueCoeffs1, ptmCoords, 0);
-    vec4 blueVals2;
-    vec4 blueVals3;
+    vec3 greenVals1 = texelFetch(greenCoeffs1, ptmCoords, 0).xyz;
+    vec3 greenVals2;
+    vec3 greenVals3;
 
+    vec3 blueVals1 = texelFetch(blueCoeffs1, ptmCoords, 0).xyz;
+    vec3 blueVals2;
+    vec3 blueVals3;
+
+
+    //but only > 3 basis terms will have coefficients stored in the second texture
     if(basisTerms > 3){
-        redVals2 = texelFetch(redCoeffs2, ptmCoords, 0);
-        greenVals2 = texelFetch(greenCoeffs2, ptmCoords, 0);
-        blueVals2 = texelFetch(blueCoeffs2, ptmCoords, 0);
+        redVals2 = texelFetch(redCoeffs2, ptmCoords, 0).xyz;
+        greenVals2 = texelFetch(greenCoeffs2, ptmCoords, 0).xyz;
+        blueVals2 = texelFetch(blueCoeffs2, ptmCoords, 0).xyz;
     }
 
+
+    //and the same for 6
     if(basisTerms > 6){
-         redVals3 = texelFetch(redCoeffs3, ptmCoords, 0);
-         greenVals3 = texelFetch(greenCoeffs3, ptmCoords, 0);
-         blueVals3 = texelFetch(blueCoeffs3, ptmCoords, 0);
+         redVals3 = texelFetch(redCoeffs3, ptmCoords, 0).xyz;
+         greenVals3 = texelFetch(greenCoeffs3, ptmCoords, 0).xyz;
+         blueVals3 = texelFetch(blueCoeffs3, ptmCoords, 0).xyz;
     }
 
 
@@ -127,7 +160,7 @@ void main() {
     float g = 0.0;
     float b = 0.0;
 
-
+    //only add up HSH cciefficients multiplied by the hWeights up to the number of basis terms
     for(int k = 0; k < basisTerms; k++){
         if      (k == 0){r += redVals1.x   * hWeights[0][0];}
         else if (k == 1){r += redVals1.y   * hWeights[1][0];}
@@ -161,7 +194,8 @@ void main() {
 
     }
 
-
+    //get the normal vector and the hVector, the details for whoihc are given inthe original PTM paper, which
+    //there is a link for in the user guide for this app
     vec4 normal = texelFetch(normals, ivec2(ptmCoords.x, ptmCoords.y), 0);
 
     vec3 hVector = vec3(0.0, 0.0, 1.0);
@@ -170,12 +204,15 @@ void main() {
     hVector = hVector * 0.5;
     hVector = normalize(hVector);
 
+    //dot the vector and clamp it
     float nDotH = dot(hVector, normal.xyz);
 
     if(nDotH < 0.0){nDotH = 0.0;}
     else if(nDotH > 1.0){nDotH = 1.0;}
+    //the highlight specularity contributes a lot to the luminance
     nDotH = pow(nDotH, specExConst);
 
+    //enhance the rgb using the spec enhancement
     float temp = (r + g + b) / 3;
     float lum = temp * specConst * 4.0 * nDotH;
 
@@ -183,5 +220,6 @@ void main() {
      g = g * diffConst + lum;
      b = b * diffConst + lum;
 
+    //send the colour to be written to the screen, the 1 is the a of rgba (the transparency)
      colorOut = vec4(r, g, b, 1);
 }

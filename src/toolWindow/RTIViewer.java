@@ -175,13 +175,13 @@ public class RTIViewer extends Application {
         menuBar = new TopMenuBar(primaryStage);
         flowPane.getChildren().add(menuBar);
 
-        lightControlGroup = new LightControlGroup(this, primaryStage, flowPane);
+        lightControlGroup = new LightControlGroup();
         flowPane.getChildren().add(lightControlGroup);
 
         paramsPane = new FilterParamsPane(this, scene);
         flowPane.getChildren().add(paramsPane);
 
-        bottomTabPane = new BottomTabPane(this, scene);
+        bottomTabPane = new BottomTabPane();
         flowPane.getChildren().add(bottomTabPane);
 
         flowPane.setMargin(lightControlGroup, new Insets(5, 3, 5, 3));

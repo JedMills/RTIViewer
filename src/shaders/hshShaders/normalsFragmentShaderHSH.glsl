@@ -1,44 +1,38 @@
 #version 330
+//FRAGMENT_SHADER
 
-#define PI 3.1415926535
-
+//x and y position of the light, normalised between -1.0 and +!.0
 uniform float lightX;
 uniform float lightY;
+
+//height and width of the ptm to render
 uniform float imageHeight;
 uniform float imageWidth;
 
-uniform isampler2D dataTexture;
-
-uniform sampler2D redCoeffs1;
-uniform sampler2D redCoeffs2;
-uniform sampler2D redCoeffs3;
-
-uniform sampler2D greenCoeffs1;
-uniform sampler2D greenCoeffs2;
-uniform sampler2D greenCoeffs3;
-
-uniform sampler2D blueCoeffs1;
-uniform sampler2D blueCoeffs2;
-uniform sampler2D blueCoeffs3;
-
+//texture containing the normals vector for each pixel
 uniform sampler2D normals;
 
 
+//coordinate on textures with the pan from the vertex shader
 in vec2 texCoordV;
+
+//colour to write to the pixel this shader is being executed for
 out vec4 colorOut;
 
 
+//convert openGL coords with (0, 0) at the center to coords with (0, 0) in the top left
 vec2 convertCoords(vec2 coords){
     return vec2((coords.x + 1) / 2, (1 - coords.y) / 2);
 }
 
 
+//scale the coords which are 0.0 - 1.0 to 0 - imageHeight and 0 - imageWidth
 vec2 convertToPTMCoords(vec2 coords){
     return vec2(coords.x * imageWidth,
                 coords.y * imageHeight);
 }
 
-
+//converts the normal vector to a colour, blue = z, green = y, red = x
 vec3 convertNormalToColour(vec3 normal){
     float red = ((normal.x + 1.0) / 2.0);
     float green = ((normal.y + 1.0) / 2.0);
@@ -49,14 +43,17 @@ vec3 convertNormalToColour(vec3 normal){
 
 
 void main() {
+    //convert coords so top left is (0, 0)
     vec2 coords = convertCoords(texCoordV);
 
+    //map coords from 0.0 - 1.0 to real coords in texture
     ivec2 ptmCoords = ivec2(convertToPTMCoords(coords));
 
+    //convert the normal to a colour
     vec3 normal = texelFetch(normals, ptmCoords, 0).xyz;
-
     vec3 color = convertNormalToColour(vec3(normal.x, normal.y, normal.z));
 
+    //send the colour to be written to the screen, the 1 is the a of rgba (the transparency)
     colorOut = vec4(color, 1.0);
 
 }

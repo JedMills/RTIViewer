@@ -76,7 +76,7 @@ void main() {
     ivec3 blueCoeffs1 = texelFetch(bVals1, ptmCoords, 0).xyz;
     ivec3 blueCoeffs2 = texelFetch(bVals2, ptmCoords, 0).xyz;
 
-    //get the normal vector for the pixel this shader is being execute for
+    //get the normal vector for the pixel this shader is being executed for
     vec3 normal = texelFetch(normals, ptmCoords, 0).xyz;
 
     //for details on the hVector see the original PTM paper, the link for which is in the user guide
@@ -101,7 +101,7 @@ void main() {
     float b = applyPTM( blueCoeffs1.x, blueCoeffs1.y, blueCoeffs1.z,
                         blueCoeffs2.x, blueCoeffs2.y, blueCoeffs2.z);
 
-    //enhance the gb using the spec enhancement
+    //enhance the rgb using the spec enhancement
     float temp = (r + g + b) / 3;
     temp = temp * specConst * 2 * nDotH;
 
