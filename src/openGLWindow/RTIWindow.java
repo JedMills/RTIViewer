@@ -11,7 +11,6 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import ptmCreation.RTIObject;
 import toolWindow.RTIViewer;
-import utils.ShaderUtils;
 import utils.Utils;
 
 import java.nio.ByteBuffer;
@@ -422,8 +421,8 @@ public abstract class RTIWindow implements Runnable{
         int fragShader = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER);
 
         //parse the source files
-        String vertSource = ShaderUtils.readFromFile(vertShaderFile);
-        String fragSource = ShaderUtils.readFromFile(fragShaderFile);
+        String vertSource = Utils.readFromFile(vertShaderFile);
+        String fragSource = Utils.readFromFile(fragShaderFile);
 
         //assign and compile the shaders for this program
         GL20.glShaderSource(vertShader, vertSource);

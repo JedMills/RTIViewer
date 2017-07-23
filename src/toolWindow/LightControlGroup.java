@@ -258,18 +258,33 @@ public class LightControlGroup extends StackPane {
     }
 
 
-
+    /**
+     * Used for updating the {@link RTIViewer#globalLightPos} from the light control widgets.
+     *
+     * @param newLight      the light position to change to
+     * @param source        the widget that caused the light position to change
+     */
     private void updateGlobalLightPos(Utils.Vector2f newLight, LightEditor source){
+        //the light can never be greater than one in length, as PTM and SH assumes <= 1
         if(newLight.length() > 1.0) {
             RTIViewer.globalLightPos = newLight.normalise();
         }else{
             RTIViewer.globalLightPos = newLight;
         }
+        //update all the other light control widgets with the changed light
         updateLightControls(source);
     }
 
 
+    /**
+     * Updates all the light controls with the {@link RTIViewer#globalLightPos}. Used when one widget changes the
+     * position of the light and the other widgets need to be updated.
+     *
+     * @param source    the widget that chaged the light position
+     */
     public void updateLightControls(LightEditor source){
+        //update only the widgets that didn't cause the change in light pos so there isn't a feedback
+        //loop with a widget keeps changing itself
         if(!source.equals(LightEditor.CIRCLE)){
             light.setX(circle.getRadius() + (circle.getRadius() * RTIViewer.globalLightPos.x));
             light.setY(circle.getRadius() -(circle.getRadius() * RTIViewer.globalLightPos.y));
@@ -283,17 +298,33 @@ public class LightControlGroup extends StackPane {
     }
 
 
+    /**
+     * Updates the size of the light control widget pane. Can cause change in layout from horizontal to vertical.
+     *
+     * @param width         width of the main window the pane is in
+     * @param height        height of the main window the pane is in
+     */
     public void updateSize(double width, double height){
         setPrefWidth(width - 20);
 
+        //make the light position stay in the same place as the specular ball moves about
         updateGlobalLightPos(new Utils.Vector2f(RTIViewer.globalLightPos.x,
                                                 RTIViewer.globalLightPos.y),
                                                 LightEditor.RESIZE);
 
+        //update the size of the widget, maybe change to vertical/horizontal layout
         updateComponentSizes(width, height);
     }
 
+    /**
+     * Updates the size of the widgets in the light control pane and switches between horizontal and vertical layout
+     * when the width and height are past certain values.
+     *
+     * @param width         width of the main window the pane is in
+     * @param height        height of the main window the pane is in
+     */
     private void updateComponentSizes(double width, double height){
+        //makes the specular ball bigger and move the light back so that it scales nicely with the ball
         if(height < 700){
             light.setZ(20);
             circle.setRadius(50);
@@ -305,6 +336,8 @@ public class LightControlGroup extends StackPane {
             circle.setRadius(90);
         }
 
+        //switching between horizontal and vertical layout, wasVertical bool needed because otherwise
+        //the layout sometimess flip or rearrange when resizing without changing layout
         if(width < 335){
             setSpinnerSizesForVertical(width);
             if(!wasVertical) {
@@ -322,6 +355,11 @@ public class LightControlGroup extends StackPane {
     }
 
 
+    /**
+     * Sets the sizes of spinners for alignment of specular ball and spinner.
+     *
+     * @param height    height of the main toolbar
+     */
     private void setSpinnerSizesForVertical(double height){
         if(height < 700){
             setSpinnerSizes(10, 10, 20, 60);
@@ -333,7 +371,14 @@ public class LightControlGroup extends StackPane {
     }
 
 
-
+    /**
+     * convenience method to set the sizes of all the spinners and fonts in the light control widget pane.
+     *
+     * @param labelFontSize         size of the XPos and YPos labels
+     * @param spinnerFontSize       size of the font in the spinners
+     * @param spinnerHeight         height to set the spinners
+     * @param spinnerWidth          width to set the spinners
+     */
     private void setSpinnerSizes(int labelFontSize, int spinnerFontSize, int spinnerHeight, int spinnerWidth){
         xPosBox.setPrefWidth(spinnerWidth);
         xPosBox.setPrefHeight(spinnerHeight);
@@ -347,7 +392,13 @@ public class LightControlGroup extends StackPane {
         yPosLabel.setFont(Font.font(labelFontSize));
     }
 
+
+
+    /**
+     * Sets the light control widget group to have the vertical alignment, with spinners below the specular ball.
+     */
     private void setVerticalAlignment(){
+        //remove everything from the horizontal alignment box
         hBox.getChildren().removeAll(stackPane, gridPane);
         vBox.getChildren().removeAll(stackPane, gridPane);
         getChildren().removeAll(hBox, vBox);
@@ -361,12 +412,19 @@ public class LightControlGroup extends StackPane {
         gridPane.setHgap(5);
         gridPane.setAlignment(Pos.CENTER);
 
+        //add them to the vertical alignment
         vBox.getChildren().addAll(stackPane, gridPane);
         getChildren().add(vBox);
     }
 
 
+
+    /**
+     * Sets the light control widget group to have the horizontal alignment, with spinners to the right of the
+     * specular ball.
+     */
     private void setHorizontalAlignment(){
+        //remove the widgets from the vertical alignment
         hBox.getChildren().removeAll(stackPane, gridPane);
         vBox.getChildren().removeAll(stackPane, gridPane);
         getChildren().removeAll(hBox, vBox);
@@ -383,6 +441,7 @@ public class LightControlGroup extends StackPane {
         gridPane.setVgap(10);
         gridPane.setHgap(5);
 
+        //add them to horizontal alignment
         hBox.getChildren().addAll(stackPane, gridPane);
         getChildren().add(hBox);
     }

@@ -3,8 +3,10 @@ package utils;
 import org.lwjgl.BufferUtils;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -22,17 +24,18 @@ import static java.lang.Math.sin;
 /**
  * Contains all the utility functions that are used throughout the viewer.
  *
- * Created by jed on 16/05/17.
+ * Created by Jed Mills
  */
 public class Utils {
 
+    /** Basically zero */
     public static final float ZEROTOL = 0.00001f;
 
     /**
      * Returns true if value is in the array, false if not.
      *
      * @param value     value to find
-     * @param values    array tp find it in
+     * @param values    array to find it in
      * @return          whether value is in the array
      */
     public static boolean checkIn(String value, String[] values){
@@ -43,7 +46,13 @@ public class Utils {
     }
 
 
-
+    /**
+     * Returns true if value is in the array, false if not.
+     *
+     * @param value     value to find
+     * @param values    array to find it in
+     * @return          whether value is in the array
+     */
     public static boolean checkIn(String value, List<String> values){
         for(String s : values){
             if(value.equals(s)){return true;}
@@ -52,6 +61,33 @@ public class Utils {
     }
 
 
+    /**
+     * Read as plain text file as a string, used for building the OpenGl shaders from the .glsl files.
+     *
+     * @param name  path to file
+     * @return      the file as a string
+     */
+    public static String readFromFile(String name) {
+        StringBuilder source = new StringBuilder();
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(Utils.class.getResourceAsStream(name)));
+
+            String line;
+            while ((line = reader.readLine()) != null)
+            {
+                source.append(line).append("\n");
+            }
+
+            reader.close();
+        }
+        catch (Exception e) {
+            System.err.println("Error loading source code: " + name);
+            e.printStackTrace();
+        }
+
+        return source.toString();
+    }
+
 
 
     /**
@@ -59,43 +95,13 @@ public class Utils {
      * I = (a0 * Lx^2) + (a1 * ly^2) + (a2 * Lx * Ly) + (a3 * Lx) + (a4 * Ly)+ a5
      * Thresholds value between 0 and 255.
      *
-     * @param coeffs    array of the six PTM polynomial coefficients a0-a5
-     * @param light     light vector
+     * @param coeffs1   first 3 PTM polynomial coefficients a0-a2
+     * @param coeffs2   last 3 PTM polynomial coefficients a3-a5
+     * @param lightX    light vector x pos
+     * @param lightY    light vector y pos
+     * @param position  position in the flattened 2D array to get the PTM coeffs from
      * @return
      */
-    public static int calcIntensity(int[] coeffs, Vector2f light){
-        //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
-        double intensity =  (coeffs[0] * light.getX() * light.getX()) +
-                (coeffs[1] * light.getY() * light.getY()) +
-                (coeffs[2] * light.getX() * light.getY()) +
-                (coeffs[3] * light.getX()) +
-                (coeffs[4] * light.getY()) + coeffs[5];
-
-        //threshold these to an unsigned byte for RGB
-        if(intensity > 255){intensity = 255;}
-        else if(intensity < 0){intensity = 0;}
-
-        return (int) intensity;
-    }
-
-    public static int calcIntensity(int[] coeffs, float x, float y){
-        //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
-        double intensity =  (coeffs[0] * x * x) +
-                (coeffs[1] * y * y) +
-                (coeffs[2] * x * y) +
-                (coeffs[3] * x) +
-                (coeffs[4] * y) + coeffs[5];
-
-        //threshold these to an unsigned byte for RGB
-        if(intensity > 255){intensity = 255;}
-        else if(intensity < 0){intensity = 0;}
-
-        return (int) intensity;
-    }
-
-
-
-
     public static int calcIntensity(IntBuffer coeffs1, IntBuffer coeffs2, int position, float lightX, float lightY){
         //i = (a0 * Lu^2) + (a1 * Lv^2) + (a2 * Lu * Lv) + (a3 * Lu) + (a4 * Lv) + a5
         double intensity =  (coeffs1.get(position) * lightX * lightX) +
@@ -120,6 +126,7 @@ public class Utils {
      * Created by jed on 16/05/17.
      */
     public static class Vector3f{
+
         /**The x component*/
         public float x;
         /**The y component*/
@@ -182,7 +189,7 @@ public class Utils {
         }
 
         /**
-         * @return  a new vector with normalised lengths
+         * @return  a new vector with normalised length
          */
         public Vector3f normalise(){
             Vector3f v = new Vector3f(0f, 0f, 0f);
@@ -195,28 +202,63 @@ public class Utils {
             return v;
         }
 
+        /**
+         * Gets the element at index i, returns
+         *
+         * @param i     position in the vector to get
+         * @return      the element of the vector at index i
+         */
         public float get(int i){
             if(i == 0){return x;}
             else if(i == 1){return y;}
             else if(i == 2){return z;}
 
-            return 0;
+            throw new RuntimeException("Index not in 0 - 2 for 3D vector");
         }
 
+        /**
+         * Returns the scalar product of this vector and the other vector.
+         *
+         * @param v     vector to dot this vector with
+         * @return      the dot product
+         */
         public float dot(Vector3f v){
             return (x * v.x) + (y * v.y) + (z * v.z);
         }
 
+        /**
+         * Returns the vector multiplied by constant a.
+         *
+         * @param a     constant to multiply this vector by
+         * @return      this vector multiplied by constant a
+         */
         public Vector3f multiply(float a){
             return new Vector3f(this.x * a, this.y * a, this.z * a);
         }
 
+        /**
+         * Returns the length of the vector
+         *
+         * @return  the length of the vector
+         */
         public float length(){return (float) Math.pow(x*x + y*y + z*z, 0.5);}
 
+        /**
+         * Returns the sum of this vector and the passed vector.
+         *
+         * @param vec   the vector to add to thsi one
+         * @return      the sum of this vector and the passed vector
+         */
         public Vector3f add(Vector3f vec){
             return new Vector3f(x + vec.x, y + vec.y, z + vec.z);
         }
 
+        /**
+         * Returns this sum fo this vector minus the passed vector.
+         *
+         * @param vec       vector to take from this vector
+         * @return          the sum of this vector minus the passed vector
+         */
         public Vector3f minus(Vector3f vec){
             return new Vector3f(x - vec.x, y - vec.y, z - vec.z);
         }
@@ -225,31 +267,53 @@ public class Utils {
 
     public static class Vector2f{
 
+        /**The x component*/
         public float x;
-
+        /**The y component*/
         public float y;
 
+
+        /**
+         *
+         * @param x     for the x component of the vector
+         * @param y     for the y component of the vector
+         */
         public Vector2f(float x, float y) {
             this.x = x;
             this.y = y;
         }
 
+        /**
+         * @return x component of the vector
+         */
         public float getX() {
             return x;
         }
 
+        /**
+         * @param x set the x component of the vector
+         */
         public void setX(float x) {
             this.x = x;
         }
 
+        /**
+         * @return y component of the vector
+         */
         public float getY() {
             return y;
         }
 
+        /**
+         * @param y set the y component of the vector
+         */
         public void setY(float y) {
             this.y = y;
         }
 
+        /**
+         * @return  a new vector with normalised length
+         */
         public Vector2f normalise(){
             Vector2f v = new Vector2f(0.0f, 0.0f);
             float length = (float) Math.sqrt(x*x + y*y);
@@ -260,13 +324,25 @@ public class Utils {
             return v;
         }
 
+        /**
+         * Returns the length of the vector
+         *
+         * @return  the length of the vector
+         */
         public float length(){
             return (float) Math.sqrt(x*x + y*y);
         }
     }
 
 
-
+    /**
+     * The maths for this method comes from the original viewer. It is used in computing the normal vectors for the
+     * RTIObject from the coefficients.
+     *
+     * @param a         not sure what this is
+     * @param lengths   or this
+     * @return          the maximum on...the..circle...?
+     */
     public static int computeMaximumOnCircle(float[] a, Vector3f lengths){
         float db0, db1, db2, db3, db4;
         float[] roots = new float[4];
@@ -350,6 +426,13 @@ public class Utils {
     }
 
 
+    /**
+     * Solves a quartic equation. The maths for this comes from the original viewer.
+     *
+     * @param c         the coeffs of the quartic in descending polynomial order
+     * @param solutions the array to write the solutions to
+     * @return          the number of unique solutions to the quadratic
+     */
     public static int solveQuartic(float[] c, float[] solutions){
         float[] coeffs = new float[4];
         float z, u, v, sub;
@@ -419,7 +502,13 @@ public class Utils {
     }
 
 
-
+    /**
+     * Solves a cubic equation. The maths for this comes from the original viewer.
+     *
+     * @param c         the coeffs of the cubic in descending polynomial order
+     * @param solutions the array to write the solutions to
+     * @return          the number of unique solutions to the quadratic
+     */
     public static int solveCubic(float[] c, float[] solutions){
         int i, num;
         float sub;
@@ -477,10 +566,25 @@ public class Utils {
     }
 
 
-    public static int solveQuadratic(float[] c, float[]solutions){
+    /**
+     * Solves a quadratic equation. The maths for this comes from the original viewer.
+     *
+     * @param c         the coeffs of the quadratic in descending polynomial order
+     * @param solutions the array to write the solutions to
+     * @return          the number of unique solutions to the quadratic
+     */
+    public static int solveQuadratic(float[] c, float[] solutions){
         return solveQuadratic(c, solutions, 0);
     }
 
+    /**
+     * Solves a quadratic equation. The maths for this comes from the original viewer.
+     *
+     * @param c         the coeffs of the quadratic in descending polynomial order
+     * @param solutions the array to write the solutions to
+     * @param n         number of already known solutions that re in the solutions array
+     * @return          the number of unique solutions to the quadratic
+     */
     public static int solveQuadratic(float[] c, float[] solutions, int n){
         float p, q, D;
 
@@ -504,12 +608,24 @@ public class Utils {
     }
 
 
+    /**
+     * Check if a number is within the {@link Utils#ZEROTOL}
+     *
+     * @param x     the number to check
+     * @return      whether it's basically zero
+     */
     public static boolean isZero(float x){
         float limit = 1e-9f;
         return x > -limit && x < limit;
     }
 
 
+    /**
+     * Cube roots a number, return the cube root with the right sign.
+     *
+     * @param x     number to cube root
+     * @return      the cube root of x
+     */
     public static float cubeRoot(float x){
         if (x > 0) {
             return (float) Math.pow(x, 1.0f / 3.0f);
@@ -519,16 +635,14 @@ public class Utils {
         return 0;
     }
 
-    public static int[] convertNormalToColour(Vector3f normal){
 
-        int red = convertNormalCoordToColour(normal.x);
-        int green = convertNormalCoordToColour(normal.y);
-        int blue = convertNormalCoordToColour(normal.z);
-
-        return new int[]{red, green, blue};
-    }
-
-
+    /**
+     * Coverts a normal vector coordinate (in cartesian) to a 0 - 255 colour value, Used for normals
+     * visualisation.
+     *
+     * @param coord     noral coord to convert
+     * @return          the colour val in the range 0 - 255
+     */
     public static int convertNormalCoordToColour(float coord){
         int colour = (int) Math.floor(((coord + 1) / 2) * 255.0);
 
@@ -538,6 +652,14 @@ public class Utils {
         return colour;
     }
 
+
+    /**
+     * Converts a float in the range 0.0 - 255.0 to its int value. If the value is not in the range it will
+     * be clamped to this range.
+     *
+     * @param value     value to convert to int
+     * @return          the value as an int, clamped between 0 - 255
+     */
     public static int toByte(float value){
         if(value < 0.0){return 0;}
         else if(value > 255.0){return 255;}
@@ -545,7 +667,13 @@ public class Utils {
     }
 
 
-
+    /**
+     * Multiplies a 3x3 matrix with a vector of length 3.
+     *
+     * @param mat       matrix to multiple
+     * @param vec       vector to multiply
+     * @return          the resultant vector
+     */
     public static Vector3f mat3x3_mul_vec3(float[][] mat, Vector3f vec){
         Vector3f returnVec = new Vector3f(0, 0, 0);
 
@@ -557,7 +685,14 @@ public class Utils {
     }
 
 
-
+    /**
+     * Converts a list of strings to integers. Will only convert up to index num.
+     *
+     * @param strings                   strings to convert
+     * @param num                       number of string in array to convert
+     * @return                          array of strings converted to ints
+     * @throws NumberFormatException    if one of the strings up to num couldn't be converted to an int
+     */
     public static int[] intsFromStrings(String[] strings, int num) throws NumberFormatException{
         int[] returnItems = new int[num];
         for(int i = 0; i < num; i ++){
@@ -567,6 +702,12 @@ public class Utils {
     }
 
 
+    /**
+     * Flattens a 2d array to a 1D array. Throws a runtime exception if the the 2D array is ragged.
+     *
+     * @param array     the 2d array to flatten
+     * @return          the 2D array, flattened
+     */
     public static int[] flatten(int[][] array){
         int sideLength = array[0].length;
         for(int i = 0; i < array.length; i++){
@@ -587,6 +728,14 @@ public class Utils {
     }
 
 
+    /**
+     * Returns a sub-array from index [start] to index [end - 1]
+     *
+     * @param array     array to slice
+     * @param start     start index
+     * @param end       end index
+     * @return          the sliced array
+     */
     public static int[] sliceArray(int[] array, int start, int end){
         int length = end - start;
         int[] slice = new int[length];
@@ -598,6 +747,15 @@ public class Utils {
     }
 
 
+    /**
+     * Finds the first index of an element with the same value of x, up to size. Returns -1 if it couldn't
+     * find the value within size values.
+     *
+     * @param array     array to search
+     * @param x         value to find
+     * @param size      number of values to search up to
+     * @return          firs tindex fo the element wit hsame value as x
+     */
     public static int indexOf(int[] array, int x, int size){
         int index = -1;
         for(int i = 0; i < size; i++){
@@ -608,6 +766,15 @@ public class Utils {
         return index;
     }
 
+
+    /**
+     * Combines reference planes and stuff. Something to do with jpeg. This comes from the original viewer.
+     *
+     * @param ref           reference plane...?
+     * @param plane         plane to combine it with...?
+     * @param size          size to combine up ti
+     * @return              the combined planes
+     */
     public static int[] combine(int[] ref, int[] plane, int size){
         int[] returnArray = new int[size];
         for(int i = 0; i < size; i++){
@@ -619,6 +786,14 @@ public class Utils {
         return returnArray;
     }
 
+
+    /**
+     * Inverts the source array so all elements are 255 - i.
+     *
+     * @param source        the source to invert
+     * @param size          the size of the source
+     * @return              the course inverted
+     */
     public static int[] invert(int[] source, int size){
         int[] result = new int[size];
         for(int i = 0; i < size; i++){
@@ -628,6 +803,15 @@ public class Utils {
     }
 
 
+    /**
+     * Comes from the original viewer. Dun no what it is or what it does. Used in decompressing jpegs.
+     *
+     * @param c             unknown
+     * @param info          unknown
+     * @param sizeInfo      unknown
+     * @param w             unknown
+     * @param h             unknown
+     */
     public static void correctCoeff(int[] c, byte[] info, int sizeInfo, int w, int h){
         for(int i = 0; i < sizeInfo; i++){
             int p3 = info[i];
@@ -645,6 +829,11 @@ public class Utils {
     }
 
 
+    /**
+     * Flips a buffered image vertically, used for decompressing jpegs.
+     *
+     * @param image image to flip vertically
+     */
     public static void flip(BufferedImage image){
         for (int i=0;i<image.getWidth();i++)
             for (int j=0;j<image.getHeight()/2;j++)
@@ -655,6 +844,16 @@ public class Utils {
             }
     }
 
+
+    /**
+     * Convertes the image file at the given location to a ByteBuffer. This is used to put the thumbnails of the RTI
+     * logo in the GLFW windows.
+     *
+     * @param resource          path to the image file
+     * @param bufferSize        size of the buffer to be created, number of bytes
+     * @return                  the image as a bytebuffer
+     * @throws IOException      if there was an error loading the image
+     */
     public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) throws IOException {
         ByteBuffer buffer;
 
@@ -685,6 +884,15 @@ public class Utils {
         return buffer;
     }
 
+
+    /**
+     * Creates a new buffer with the same elements as the old buffer, but with bigger capacity, the new capacity is
+     * filled with zeros.
+     *
+     * @param buffer                buffer to add capacity to
+     * @param newCapacity           the new capacity required
+     * @return                      the resized buffer
+     */
     private static ByteBuffer resizeBuffer(ByteBuffer buffer, int newCapacity) {
         ByteBuffer newBuffer = BufferUtils.createByteBuffer(newCapacity);
         buffer.flip();
@@ -693,6 +901,19 @@ public class Utils {
     }
 
 
+    /**
+     * Applies the diffuse gain function to the 6 PTM coefficients at given position. See the original PTM paper for
+     * details about the function, the link for which is given in the user guide for this app.
+     *
+     * @param coeffs1       flattened array containing the the first 3 coeffs for all pixels in the ptm
+     * @param coeffs2       flattened array containing the the last 3 coeffs for all pixels in the ptm
+     * @param position      position in the flattened array to get the 6 coeffs from
+     * @param normals       flattened array containing the normals for all pixels in the ptm
+     * @param lightX        light x position
+     * @param lightY        light y position
+     * @param gain          diffuse gain to apply
+     * @return              the colour of the pixel, diffuse gain value
+     */
     public static float applyDiffGain(IntBuffer coeffs1, IntBuffer coeffs2, int position, FloatBuffer normals, float lightX, float lightY, float gain){
         //calculate the modified PTM polynomial coefficients
         float a0 = gain * coeffs1.get(position);
